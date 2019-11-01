@@ -2,7 +2,13 @@
 
 The GeiCar project is a project carried out by students at [INSA Toulouse](http://www.insa-toulouse.fr/fr/index.html). This project consists in developing the software of a autonomous car in order to carry out different missions. Several projects are exposed on the [official website] (https://sites.google.com/site/projetsecinsa/).
 
-This repository is intended to provide a basis for students starting a new project on the GeiCar. The present code as well as the documentation is the result of the combination of the various projects carried out by:
+We are the Rhaegal team, participating in one of the 2019 projects. Our subject is "deep roadsign analysis". It must allow the presented car to detect, classify and react to traffic signs.
+
+You can have more information by visiting [the official website of our project] (https://sites.google.com/site/projetsecinsa/projets-2019-2020/project-rhaegal).
+
+This repository contains an modified "example" project created by various students and professors at INSA Toulouse. We have taken it back to add our features. 
+
+The example project has been carried out by : 
 
 * DJELASSI Amandine, ANGLERAUD Alexandre, MAYIMA Amandine, MOUSTAID Jamal, PHAN Vu Hoang, RAKOTOPARE Marcy
 * GUGLIELMINOTTI-GHERMOTTI Pierre, JACQUES Lucas, GERMAIN Clement, VERTUEUX Noemie, VIGUIER Florian, ZERBIB Lea.
@@ -10,7 +16,8 @@ This repository is intended to provide a basis for students starting a new proje
 * SELLAM Nabil, ZHANG Guang Xue, BONIN Antoine, CHADUC Clement, DUCONGE Kevin, REBOUCAS MAIA  Lucas.
 * BENAZECH Alexandre, BRIARD Sébastien, CASSAGNE Ludovic, DOTHEE Solène, SARTHOU Guillaume.
 * COMBATTELLI Julien, EGRETEAU Corentin, DE BRITO Guillaume, DUPERON Liliane, CHATAIGNON Mickael.
-* DEBAILLEUX Margaux, COMBES Jean, FARO Mathias, FAYARD Baptiste, GANDOU Thomas.
+* DEBAILLEUX Margaux, COMBES Jean, FARO Mathias, FAYARD Baptiste, 
+GANDOU Thomas.
 * GISSOT Lucas, LUBAT Eric, LARSSON Léo, LOUPIAS Delia, TAMIMO Volamiary.
 * MEDRANO Johan, MIRAULT Clara, MONNERET Vivien, PORTES Quentin, SHIN Sohun, IGLESIS Enzo.
 * ANTUNES COELHO Carolina, CHATELAIN Vincent, JOURDE Tanguy, PUECHMAILLE David, SIRGABSOU Yandika
