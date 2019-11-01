@@ -2,7 +2,7 @@
 
 The GeiCar project is a project carried out by students at [INSA Toulouse](http://www.insa-toulouse.fr/fr/index.html). This project consists in developing the software of a autonomous car in order to carry out different missions. Several projects are exposed on the [official website] (https://sites.google.com/site/projetsecinsa/).
 
-We are the Rhaegal team, participating in one of the 2019 projects. Our subject is "deep roadsign analysis". It must allow the presented car to detect, classify and react to traffic signs.
+We are the Rhaegal team, participating in one of the 2019 projects. Our subject is "deep roadsign analysis". It must allow the presented car to detect, classify and react to traffic signs using deep learning methods (specifically Convolutional Neural Networks (CNN) have been used). 
 
 You can have more information by visiting [the official website of our project] (https://sites.google.com/site/projetsecinsa/projets-2019-2020/project-rhaegal).
 
