@@ -39,7 +39,7 @@ K.set_image_data_format('channels_first')
 
 # graphical representation imports
 from matplotlib import pyplot as plt
-exec(%matplotlib inline)
+#exec(%matplotlib inline)
 
 # number of different signs in the dataset
 NUM_CLASSES = 43
