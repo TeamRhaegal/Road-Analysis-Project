@@ -45,6 +45,9 @@ from matplotlib import pyplot as plt
 NUM_CLASSES = 43
 # squared image size we want (lenght X height) : The larger the image (high resolution), the longer the calculations will be.
 IMG_SIZE = 48
+# Data augmentation defines if we want to create new images from existing images
+# for example take an image of a stop sign and copy it multiple times with different characteristics (contrast, light, saturation, angle...)
+DATA_AUGMENTATION = True
 
 """
     Function used to :
@@ -158,7 +161,7 @@ def lr_schedule(epoch):
 """
 
 if __name__ == "__main__":
-        
+
     root_dir = 'GTSRB/Final_Training/Images/'
     imgs = []
     labels = []
@@ -179,6 +182,7 @@ if __name__ == "__main__":
     X = np.array(imgs, dtype='float32') # convert images array to universal format float 32
     # Make one hot targets
     Y = np.eye(NUM_CLASSES, dtype='uint8')[labels]  # matrix of "num NUM_CLASSES x NUM_CLASSES". Contains the number "1" in diagonal. "[labels]" point on a certain row of this matrix
+    print("\nImage processed and new dataset created !")
 
     """
         Train the model using SGD : Stochastic gradient descent optimizer. Includes support for momentum, learning rate decay, and Nesterov momentum.
@@ -201,6 +205,7 @@ if __name__ == "__main__":
               optimizer=sgd,
               metrics=['accuracy'])
 
+    print("\nModel Compiled !")
     batch_size = 32
     epochs = 30
 
@@ -220,3 +225,107 @@ if __name__ == "__main__":
               callbacks=[LearningRateScheduler(lr_schedule),
                          ModelCheckpoint('model.h5', save_best_only=True)]  # pass to save checkpoints of trained model on the hard drive disk
               )
+
+    print ("\nModel Fitted !")
+
+    """
+        Load test data, verify the model and print the accuracy of the model
+            - read csv file containing for each image :
+                    - its name (reference : 'Filename')
+                    - its class id (reference : 'ClassID')
+            - create a new dataset:
+                    - for each image, save its value (RGB) + its class id
+            - test the model using 'predict_classes' function
+            - print the recognition accuracy (in percentage) : sum of (prediction == test value) / total number of test values
+    """
+    test = pd.read_csv('GT-final_test.csv',sep=';')
+
+    X_test = []
+    y_test = []
+    i = 0
+    for file_name, class_id  in zip(list(test['Filename']), list(test['ClassId'])):
+        img_path = os.path.join('GTSRB/Final_Test/Images/',file_name)
+        X_test.append(preprocess_img(io.imread(img_path)))
+        y_test.append(class_id)
+
+    X_test = np.array(X_test)
+    y_test = np.array(y_test)
+
+    y_pred = model.predict_classes(X_test)
+    acc = np.sum(y_pred==y_test)/np.size(y_pred)
+    print("Test accuracy = {}".format(acc))
+
+    """
+        Next paragraph process data augmentation.
+        The objective is to create a dataset larger than the provided dataset, by taking existing images and duplicating them.
+        For each duplication, the image characteristics are modified so that the model can recognize signs in as many situations as possible (night, day, fog, light effects...)
+        In the end, starting from a model trained on 50,000 images, we will be able to arrive at a model trained with more than 100,000 images.
+        This improves the accuracy of the model by modifying the variables in the neural network.
+
+            sklearn 'train_test_split' function : Split arrays or matrices into random train and test subsets
+            - test_size : If float, should be between 0.0 and 1.0 and represent the proportion of the dataset to include in the test split.
+            - random_state : If int, random_state is the seed used by the random number generator
+
+            Keras 'ImageDataGenerator' function : Generate batches of tensor image data with real-time data augmentation. The data will be looped over (in batches).
+                - featurewise_center : Boolean. Set input mean to 0 over the dataset, feature-wise.
+                - featurewise_std_normalization : Boolean. Divide inputs by std of the dataset, feature-wise.
+                - width_shift_range : Float, 1-D array-like or int
+                                        - float: fraction of total width, if < 1, or pixels if >= 1.
+                - zoom_range : Float or [lower, upper]. Range for random zoom. If a float, [lower, upper] = [1-zoom_range, 1+zoom_range].
+                - shear_range : Float. Shear Intensity (Shear angle in counter-clockwise direction in degrees)
+                - rotation_range : Int. Degree range for random rotations.
+    """
+    if (DATA_AUGMENTATION):
+        # next line split arrays or matrices into random train and test subsets
+        # parameters : Arrays (X,Y) of data,
+        X_train, X_val, Y_train, Y_val = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+        datagen = ImageDataGenerator(featurewise_center=False,
+                                    featurewise_std_normalization=False,
+                                    width_shift_range=0.1,
+                                    height_shift_range=0.1,
+                                    zoom_range=0.2,
+                                    shear_range=0.1,
+                                    rotation_range=10.,)
+
+        # fit generated images to the existing dataset
+        datagen.fit(X_train)
+
+        # Reinstallise models
+        model = cnn_model()
+        # let's train the model using SGD + momentum
+        lr = 0.01
+        sgd = SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True)
+        model.compile(loss='categorical_crossentropy',
+                  optimizer=sgd,
+                  metrics=['accuracy'])
+
+        nb_epoch = 30
+        """
+            datagen.flow function : Takes data & label arrays, generates batches of augmented data.
+                - x : Input data. Numpy array of rank 4 or a tuple
+                - y : Labels
+                - batch_size : Int (default: 32).
+
+            fit_generator function : Trains the model on data generated batch-by-batch by a Python generator (or an instance of Sequence).
+                - generator (datagen) : A generator or an instance of Sequence (keras.utils.Sequence) object in order to avoid duplicate data when using multiprocessing
+                - steps_per_epoch: Integer. Total number of steps (batches of samples) to yield from generator before declaring one epoch finished and starting the next epoch
+                - epochs: Integer. Number of epochs to train the model. An epoch is an iteration over the entire data provided, as defined by steps_per_epoch
+                - validation data : This can be a generator or a Sequence object for the validation data, or a tuple (x_val, y_val)
+                - callbacks: List of keras.callbacks.Callback instances. List of callbacks to apply during training.
+
+
+        """
+        model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size),
+                                    steps_per_epoch=X_train.shape[0],
+                                    epochs=nb_epoch,
+                                    validation_data=(X_val, Y_val),
+                                    callbacks=[LearningRateScheduler(lr_schedule),
+                                               ModelCheckpoint('model.h5',save_best_only=True)]
+                                   )
+        # printtest the model and check accuracy again
+        y_pred = model.predict_classes(X_test)
+        acc = np.sum(y_pred==y_test)/np.size(y_pred)
+        print("Test accuracy = {}".format(acc))
+
+        model.summary()
