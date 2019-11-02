@@ -301,6 +301,8 @@ if __name__ == "__main__":
                   optimizer=sgd,
                   metrics=['accuracy'])
 
+	print("\nAugmented data model compiled !")
+
         nb_epoch = 30
         """
             datagen.flow function : Takes data & label arrays, generates batches of augmented data.
@@ -330,3 +332,5 @@ if __name__ == "__main__":
         print("Test accuracy = {}".format(acc))
 
         model.summary()
+
+	print("\nAugmented data model fitted !")
