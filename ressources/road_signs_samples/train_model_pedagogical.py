@@ -31,6 +31,7 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import MaxPooling2D
 
 # training and test imports
+import pandas as pd
 from keras.optimizers import SGD
 from keras.utils import np_utils
 from keras.callbacks import LearningRateScheduler, ModelCheckpoint
