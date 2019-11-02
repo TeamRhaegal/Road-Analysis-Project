@@ -16,7 +16,7 @@ The tools used are:
 # image processing imports
 import numpy as np
 from skimage import io, color, exposure, transform
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 # system imports
 import os
