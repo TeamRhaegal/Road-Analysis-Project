@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Authors :
     code : https://github.com/chsasank/Traffic-Sign-Classification.keras
@@ -301,7 +303,7 @@ if __name__ == "__main__":
                   optimizer=sgd,
                   metrics=['accuracy'])
 
-	print("\nAugmented data model compiled !")
+        print("\nAugmented data model compiled !")
 
         nb_epoch = 30
         """
@@ -316,8 +318,6 @@ if __name__ == "__main__":
                 - epochs: Integer. Number of epochs to train the model. An epoch is an iteration over the entire data provided, as defined by steps_per_epoch
                 - validation data : This can be a generator or a Sequence object for the validation data, or a tuple (x_val, y_val)
                 - callbacks: List of keras.callbacks.Callback instances. List of callbacks to apply during training.
-
-
         """
         model.fit_generator(datagen.flow(X_train, Y_train, batch_size=batch_size),
                                     steps_per_epoch=X_train.shape[0],
@@ -333,4 +333,4 @@ if __name__ == "__main__":
 
         model.summary()
 
-	print("\nAugmented data model fitted !")
+        print("\nAugmented data model fitted !")
