@@ -241,7 +241,7 @@ if __name__ == "__main__":
             - test the model using 'predict_classes' function
             - print the recognition accuracy (in percentage) : sum of (prediction == test value) / total number of test values
     """
-    test = pd.read_csv('GT-final_test.csv',sep=';')
+    test = pd.read_csv('GTSRB/GT-final_test.csv',sep=';')
 
     X_test = []
     y_test = []
