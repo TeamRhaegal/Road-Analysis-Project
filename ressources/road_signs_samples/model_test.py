@@ -44,7 +44,7 @@ from keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from keras import backend as K
 K.set_image_data_format('channels_first')
 
-# number of different signs in the dataset
+# number of different road sign types in the dataset
 NUM_CLASSES = 43
 
 # meaning of each 43 classes of road signs, and a path to an image of each road sign
