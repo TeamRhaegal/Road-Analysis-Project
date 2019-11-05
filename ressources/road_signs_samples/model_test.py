@@ -1,5 +1,27 @@
 #!/usr/bin/env python
 
+"""
+
+    UNDER CONSTRUCTION :
+        VERSION : 1.0.1
+        DATE : 2019/11/06
+
+"""
+
+
+"""
+    Program objective :
+        - define specification of the raspberry pi camera (raspicam) : color, save format (ppm), resolution ...
+        - capture an image with the raspicam
+        - do an algorithm to detect the position of a road sign (if there is one) in the image
+        - crop the image to the defined position, then "pre process" it according to the model used :
+                - normalize its histogram (technique used to adapt contrast)
+                - crop image in the center (if not already done)
+                - resize the image (extra/interpolation) to the required size for the model input
+        - process the croped image to the neural network and get the type of road sign found
+        - if "DEBUG" option is activated, show a preview of what the camera "sees" and what kind of panel has been recognised
+"""
+
 # system imports
 import os
 import h5py     # h5py allows to save trained models in HDF5 file format : more information here : https://www.h5py.org/
@@ -24,17 +46,66 @@ K.set_image_data_format('channels_first')
 
 # number of different signs in the dataset
 NUM_CLASSES = 43
+
+# meaning of each 43 classes of road signs, and a path to an image of each road sign
+roadsign_types : [  ["speed limit 20",                              "roadsigns_representation/00000/speed_limit_20.ppm"]
+                    ["speed limit 30",                              "roadsigns_representation/00001/speed_limit_30.ppm"]
+                    ["speed limit 50",                              "roadsigns_representation/00002/speed_limit_50.ppm"]
+                    ["speed limit 60",                              "roadsigns_representation/00003/speed_limit_60.ppm"]
+                    ["speed limit 70",                              "roadsigns_representation/00004/speed_limit_70.ppm"]
+                    ["speed limit 80",                              "roadsigns_representation/00005/speed_limit_80.ppm"]
+                    ["end of speed limit 80",                       "roadsigns_representation/00006/end_speed_limit_80.ppm"]
+                    ["speed limit 100",                             "roadsigns_representation/00007/speed_limit_100.ppm"]
+                    ["speed limit 120",                             "roadsigns_representation/00008/speed_limit_120.ppm"]
+                    ["forbidden to overtake car",                   "roadsigns_representation/00009/forbidden_overtake.ppm"]
+                    ["forbidden for truck to overtake",             "roadsigns_representation/00010/forbidden_overtake_truck.ppm"]
+                    ["priority for the next cross",                 "roadsigns_representation/00011/priority_road_sign.ppm"]
+                    ["priority road",                               "roadsigns_representation/00012/priority_sign.ppm"]
+                    ["give way",                                    "roadsigns_representation/00013/let_priority_sign.ppm"]
+                    ["stop",                                        "roadsigns_representation/00014/stop.ppm"]
+                    ["forbidden for motored vehicles",              "roadsigns_representation/00015/forbidden_motored_vehicle.ppm"]
+                    ["forbidden for trucks",                        "roadsigns_representation/00016/forbidden_truck.ppm"]
+                    ["prohibited way",                              "roadsigns_representation/00017/prohibited_way.ppm"]
+                    ["warning",                                     "roadsigns_representation/00018/warning.ppm"]
+                    ["dangerous turn left",                         "roadsigns_representation/00019/dangerous_turn_left.ppm"]
+                    ["dangerous turn right",                        "roadsigns_representation/00020/dangerous_turn_right.ppm"]
+                    ["multiple turn left",                          "roadsigns_representation/00021/multiple_turn_left.ppm"]
+                    ["bump ahead",                                  "roadsigns_representation/00022/bump.ppm"]
+                    ["warning slippy road",                         "roadsigns_representation/00023/warning_slip.ppm"]
+                    ["tighter way right",                           "roadsigns_representation/00024/tighter_way_right.ppm"]
+                    ["road works ahead",                            "roadsigns_representation/00025/roadworks.ppm"]
+                    ["traffic light ahead",                         "roadsigns_representation/00026/traffic_light.ppm"]
+                    ["warning pedestrian",                          "roadsigns_representation/00027/warning_pedestrian.ppm"]
+                    ["warning childs",                              "roadsigns_representation/00028/warning_pedestrian_child.ppm"]
+                    ["warning bycicles",                            "roadsigns_representation/00029/warning_bycicle.ppm"]
+                    ["presence of snow",                            "roadsigns_representation/00030/warning_snow.ppm"]
+                    ["warning wild animals",                        "roadsigns_representation/00031/warning_wild_animal.ppm"]
+                    ["enf of last speed limit",                     "roadsigns_representation/00032/end_last_speed_limit.ppm"]
+                    ["indication : turn right",                     "roadsigns_representation/00033/indication_right_turn.ppm"]
+                    ["indication : turn left",                      "roadsigns_representation/00034/indication_left_turn.ppm"]
+                    ["indication : straight line",                  "roadsigns_representation/00035/indication_straight_line.ppm"]
+                    ["indication : straight + right",               "roadsigns_representation/00036/indication_straight_right.ppm"]
+                    ["indication : straight + left",                "roadsigns_representation/00037/indication_straight_left.ppm"]
+                    ["go right side",                               "roadsigns_representation/00038/go_right_mandatory.ppm"]
+                    ["go left side",                                "roadsigns_representation/00039/go_left_mandatory.ppm"]
+                    ["roundabout ahead",                            "roadsigns_representation/00040/roundabout.ppm"]
+                    ["end of forbidden overtake for cars",          "roadsigns_representation/00041/end_forbidden_overtake.ppm"]
+                    ["end of forbidden overtake for trucks",        "roadsigns_representation/00042/end_forbidden_overtake_truck.ppm"]
+                ]
+
+
 # image size we want (lenght X height) : The larger the image (high resolution), the longer the calculations will be.
 IMG_SIZE_X = 1920
 IMG_SIZE_Y = 1080
 
+# size of the croped image containing the detected road sign
 IMG_SIZE_SQUARE = 48
 
 # do you want to use raspicam camera to capture an image and detect road sign in it ?
 # if "false", example image file will be taken
-RASPICAM_ENABLE = False
-# do you want the raspberry to print the images captured on screen ?
-RASPICAM_PREVIEW = False
+RASPICAM_ENABLE = True
+# do you want the program to be "verbose" like ? (show preview of the camera and images of recognized road signs)
+DEBUG = True
 
 # Specify image path if you want to try the road sign recognition without raspicam camera.
 IMAGE_PATH = "/home/vincent/Documents/images_samples/FullIJCNN2013/00086.ppm"
@@ -82,7 +153,7 @@ if __name__ == "__main__":
             camera.resolution = (IMG_SIZE_X, IMG_SIZE_Y)
 
             # print image captured on screen if activated
-            if(RASPICAM_PREVIEW):
+            if(DEBUG):
                 camera.start_preview()
 
             # capture a first image
