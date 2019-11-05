@@ -41,7 +41,7 @@ from keras import backend as K
 K.set_image_data_format('channels_first')
 
 # graphical representation imports
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 #exec(%matplotlib inline)
 
 # number of different signs in the dataset
@@ -50,7 +50,7 @@ NUM_CLASSES = 43
 IMG_SIZE = 48
 # Data augmentation defines if we want to create new images from existing images
 # for example take an image of a stop sign and copy it multiple times with different characteristics (contrast, light, saturation, angle...)
-DATA_AUGMENTATION = True
+DATA_AUGMENTATION = False
 
 """
     Function used to :
@@ -257,6 +257,9 @@ if __name__ == "__main__":
     y_pred = model.predict_classes(X_test)
     acc = np.sum(y_pred==y_test)/np.size(y_pred)
     print("Test accuracy = {}".format(acc))
+
+    # final save of the model
+    model.save("model.h5")
 
     """
         Next paragraph process data augmentation.
