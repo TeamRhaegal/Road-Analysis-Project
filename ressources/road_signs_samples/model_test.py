@@ -44,10 +44,36 @@ from keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from keras import backend as K
 K.set_image_data_format('channels_first')
 
-# number of different road sign types in the dataset
-NUM_CLASSES = 43
+# graphic interface
+from tkinter import *
 
-# meaning of each 43 classes of road signs, and a path to an image of each road sign
+"""
+    PROGRAM PARAMETERS :
+        - NUM_CLASSES : number of different road sign types in the dataset
+        - IMG_SIZE_X : input image size (x axis : length)  -> works with raspberry raspicam
+        - IMG_SIZE_Y : input image size (y axis : heigh)   -> works with raspberry raspicam
+        - IMG_SIZE_SQUARE : size of the croped image containing the detected road sign (from the "big" input image)
+        - RASPICAM_ENABLE : do you want to use raspicam camera to capture an image and detect road sign in it ? if "false", example image file will be taken
+        - DEBUG : Use "debug = true" if you want the program to save captured image at each process (big image, cropped, with histogram equalization...)
+        - IMAGE_PATH :
+"""
+
+NUM_CLASSES = 43
+IMG_SIZE_X = 1920
+IMG_SIZE_Y = 1080
+IMG_SIZE_SQUARE = 48
+RASPICAM_ENABLE = False
+VISUALISATION = False
+DEBUG = True
+IMAGE_PATH = "/home/vincent/Documents/images_samples/FullIJCNN2013/00086.ppm"
+
+"""
+    OBJECT INSTANCES AND CONSTANTS
+        - roadsign_types : meaning of each 43 classes of road signs, and a path to an image of each road sign
+
+
+"""
+
 roadsign_types = [  ["speed limit 20",                              "roadsigns_representation/00000/speed_limit_20.ppm"],
                     ["speed limit 30",                              "roadsigns_representation/00001/speed_limit_30.ppm"],
                     ["speed limit 50",                              "roadsigns_representation/00002/speed_limit_50.ppm"],
@@ -93,25 +119,24 @@ roadsign_types = [  ["speed limit 20",                              "roadsigns_r
                     ["end of forbidden overtake for trucks",        "roadsigns_representation/00042/end_forbidden_overtake_truck.ppm"]
                 ]
 
+"""
+    Function init_viewWindow :
+    Used to :
+        - create a window on the screen
+        - configure its size and position
 
-# image size we want (lenght X height) : The larger the image (high resolution), the longer the calculations will be.
-IMG_SIZE_X = 1920
-IMG_SIZE_Y = 1080
+    the window will then be used to print image of detected road signs in real time
+"""
 
-# size of the croped image containing the detected road sign
-IMG_SIZE_SQUARE = 48
+def init_viewWindow():
+    # create window
+    window = Tk()
+    window.geometry("700x900+1280+360") #Width x Height
 
-# do you want to use raspicam camera to capture an image and detect road sign in it ?
-# if "false", example image file will be taken
-RASPICAM_ENABLE = False
-# do you want the program to be "verbose" like ? (show preview of the camera and images of recognized road signs)
-VISUALISATION = False
 
-# Use "debug = true" if you want the program to save captured image at each process (big image, cropped, with histogram equalization...)
-DEBUG = True
 
-# Specify image path if you want to try the road sign recognition without raspicam camera.
-IMAGE_PATH = "/home/vincent/Documents/images_samples/FullIJCNN2013/00086.ppm"
+    return window
+
 
 """
     Function used to :
@@ -156,9 +181,18 @@ def preprocess_img(img):
     return img
 
 
+
+
+
+"""
+    MAIN FUNCTION
+
+"""
 if __name__ == "__main__":
 
     try:
+        # create window on screen
+        result_window = init_viewWindow()
         # load trained neural network model
         model = load_model('model.h5')
 
@@ -180,10 +214,10 @@ if __name__ == "__main__":
             # capture input image from folder and process it
             input_image = io.imread(IMAGE_PATH)
 
-            if(DEBUG):
-                io.imsave("0_initial_image.ppm", input_image)
+        if(DEBUG):
+            io.imsave("0_initial_image.ppm", input_image)
 
-            test_image = preprocess_img(input_image)
+        test_image = preprocess_img(input_image)
         """
         left = 48
         top = 48
