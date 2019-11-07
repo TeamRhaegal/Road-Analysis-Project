@@ -3,8 +3,8 @@
 """
 
     UNDER CONSTRUCTION :
-        VERSION : 1.0.1
-        DATE : 2019/11/06
+        VERSION : 1.0.2
+        DATE : 2019/11/07
 
 """
 
