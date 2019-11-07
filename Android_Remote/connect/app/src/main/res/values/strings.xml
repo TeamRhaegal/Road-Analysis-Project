@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">ProjectRomero</string>
+
+    <string name="scan">Scan</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting…</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="autonomous">Autonomous</string>
+    <string name="manual">Manual</string>
+    <string name="turbo">Turbo</string>
+    <string name="speed">0.0 km/h</string>
+
+
+</resources>
+

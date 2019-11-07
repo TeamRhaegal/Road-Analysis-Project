@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">ProjectRomero</string>
+
+    <string name="scan">Escanear</string>
+    <string name="start">Empezar</string>
+    <string name="stop">Detener</string>
+    <string name="connect">Conectar</string>
+    <string name="connecting">Conectando…</string>
+    <string name="disconnect">Disconectar</string>
+    <string name="autonomous">Autonome</string>
+    <string name="manual">Manuel</string>
+    <string name="turbo">Turbo</string>
+
+</resources>
+
