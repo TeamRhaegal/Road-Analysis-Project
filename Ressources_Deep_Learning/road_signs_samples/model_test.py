@@ -28,7 +28,7 @@ import h5py     # h5py allows to save trained models in HDF5 file format : more 
 import sys, traceback
 
 # threads imports
-from multiprocessing import *
+from threading import Thread
 
 # image processing imports
 import numpy as np
@@ -36,6 +36,7 @@ from skimage import io, color, exposure, transform
 from sklearn.model_selection import train_test_split
 
 #import cv2, picamera
+#import picamera
 
 # model training and processing imports
 from keras.models import load_model
@@ -71,9 +72,9 @@ IMG_SIZE_X = 1920
 IMG_SIZE_Y = 1080
 IMG_SIZE_SQUARE = 48
 RASPICAM_ENABLE = False
-VISUALISATION = False
+VISUALISATION = True
 DEBUG = True
-IMAGE_PATH = "/home/vincent/Documents/images_samples/FullIJCNN2013/00086.ppm"
+IMAGE_PATH = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/ressources/road_signs_samples/test4.ppm"
 
 """
     OBJECT INSTANCES AND CONSTANTS
@@ -132,7 +133,7 @@ roadsign_types = [  ["speed limit 20",                              "roadsigns_r
 
     the window will then be used to print image of detected road signs in real time
 """
-def init_viewWindow():
+def init_window():
     # create window
     window = Tk()
     window.title("result : estimated road sign")
@@ -140,13 +141,19 @@ def init_viewWindow():
     #window.geometry("((0.4)*SCREEN_SIZE_X)x((0.7)*SCREEN_SIZE_Y)+((0.6)*SCREEN_SIZE_X)+((0.2)*SCREEN_SIZE_Y)") #Width x Height
     window.geometry("700x900+1280+360") #Width x Height
     window.resizable(0,0) # image has constant size
-
+    # create canvas for image display
     canvas = Canvas(window, width = 600, height = 600)
     canvas.pack()
 
-    window.mainloop()
-
     return window, canvas
+
+"""
+    Function view_window :
+        - show the window in input.
+        Please use this function in a separated thread as it blocks the code from executing itself.
+"""
+def view_window(window):
+    window.mainloop()
 
 """
     Function show_resultOnWindow :
@@ -156,7 +163,7 @@ def init_viewWindow():
 """
 def show_resultOnWindow(result, window, canvas):
     # show result image on window
-    #canvas.delete("all")
+    canvas.delete("all")
     img = PhotoImage(file=roadsign_types[result][1])
     canvas.create_image(0,0, image=img)
 
@@ -176,6 +183,8 @@ def init_camera():
             camera.start_preview()
 
         return camera
+    else:
+        return -1
 
 """
     function capture_image:
@@ -241,11 +250,16 @@ if __name__ == "__main__":
 
     try:
         # create window on screen
-        result_window, canvas = init_viewWindow()
+        result_window, canvas = init_window()
+        # window thread initialisation and run
+        #thread_window = Thread(target = view_window, args = (result_window, ))
+        #thread_window.start()
+
         # load trained neural network model
         model = load_model('model.h5')
         # init camera instance if RASPICAM_ENABLE = 1
         camera = init_camera()
+        # capture one image on raspberry or example image
         input_image = capture_image()
 
         if(DEBUG):
@@ -260,6 +274,8 @@ if __name__ == "__main__":
         # print image of recognised road sign
         print ("this is the result : {}".format(result))
         show_resultOnWindow(result, result_window, canvas)
+
+        view_window(result_window)
 
         """
         left = 48
@@ -277,6 +293,8 @@ if __name__ == "__main__":
             width = 0
             heigh = heigh + top
         """
+
+        thread_window.join()
     except Exception as e:
         print(traceback.format_exc())
         #print("Error : an exception has been noticed.\nError message : '"+str(e)+"'")
