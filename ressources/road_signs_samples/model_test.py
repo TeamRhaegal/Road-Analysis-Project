@@ -25,6 +25,7 @@
 # system imports
 import os
 import h5py     # h5py allows to save trained models in HDF5 file format : more information here : https://www.h5py.org/
+import sys, traceback
 
 # image processing imports
 import numpy as np
@@ -45,20 +46,24 @@ from keras import backend as K
 K.set_image_data_format('channels_first')
 
 # graphic interface
-from tkinter import *
+from Tkinter import *
 
 """
     PROGRAM PARAMETERS :
         - NUM_CLASSES : number of different road sign types in the dataset
         - IMG_SIZE_X : input image size (x axis : length)  -> works with raspberry raspicam
         - IMG_SIZE_Y : input image size (y axis : heigh)   -> works with raspberry raspicam
+        - SCREEN_SIZE_X : length of the screen (in pixels) where the result window is showed
+        - SCREEN_SIZE_Y : heigh of the screen (in pixels) where the result window is showed
         - IMG_SIZE_SQUARE : size of the croped image containing the detected road sign (from the "big" input image)
         - RASPICAM_ENABLE : do you want to use raspicam camera to capture an image and detect road sign in it ? if "false", example image file will be taken
         - DEBUG : Use "debug = true" if you want the program to save captured image at each process (big image, cropped, with histogram equalization...)
-        - IMAGE_PATH :
+        - IMAGE_PATH : path of an example image
 """
 
 NUM_CLASSES = 43
+SCREEN_SIZE_X = 1920
+SCREEN_SIZE_Y = 1080
 IMG_SIZE_X = 1920
 IMG_SIZE_Y = 1080
 IMG_SIZE_SQUARE = 48
@@ -131,12 +136,30 @@ roadsign_types = [  ["speed limit 20",                              "roadsigns_r
 def init_viewWindow():
     # create window
     window = Tk()
+    window.title("result : estimated road sign")
+
+    #window.geometry("((0.4)*SCREEN_SIZE_X)x((0.7)*SCREEN_SIZE_Y)+((0.6)*SCREEN_SIZE_X)+((0.2)*SCREEN_SIZE_Y)") #Width x Height
     window.geometry("700x900+1280+360") #Width x Height
+    window.resizable(0,0) # image has constant size
 
+    canvas = Canvas(window, width = 600, height = 600)
+    canvas.pack()
 
+    window.mainloop()
 
-    return window
+    return window, canvas
 
+"""
+    Function show_resultOnWindow :
+    Used to :
+        - show an image of road sign classified from the train model, and recognised in an input photo
+
+"""
+def show_resultOnWindow(result, window, canvas):
+    # show result image on window
+    #canvas.delete("all")
+    img = PhotoImage(file=roadsign_types[result][1])
+    canvas.create_image(0,0, image=img)
 
 """
     Function used to :
@@ -172,17 +195,10 @@ def preprocess_img(img):
     if(DEBUG):
         io.imsave("3_image_after_resize.ppm", img)
 
-    # roll color axis to axis 0
+    # roll color axis (RGB) to axis 0 : NEW IMAGE : (RGB, X, Y) instead of (X, Y, RGB)
     img = np.rollaxis(img,-1)
 
-    if(DEBUG):
-        io.imsave("4_image_after_rollaxis.ppm", img)
-
     return img
-
-
-
-
 
 """
     MAIN FUNCTION
@@ -192,7 +208,7 @@ if __name__ == "__main__":
 
     try:
         # create window on screen
-        result_window = init_viewWindow()
+        result_window, canvas = init_viewWindow()
         # load trained neural network model
         model = load_model('model.h5')
 
@@ -217,7 +233,16 @@ if __name__ == "__main__":
         if(DEBUG):
             io.imsave("0_initial_image.ppm", input_image)
 
+        # pre process image in order to be used by the model
         test_image = preprocess_img(input_image)
+        # add one "id" axis at the beginning of the image. Not useful with only one image but required in the trained model
+        test_image = np.expand_dims(test_image, axis=0)
+        # use the trained model to classify a roadsign in the image
+        result = model.predict_classes(test_image)[0]
+        # print image of recognised road sign
+        print ("this is the result : {}".format(result))
+        show_resultOnWindow(result, result_window, canvas)
+
         """
         left = 48
         top = 48
@@ -235,5 +260,6 @@ if __name__ == "__main__":
             heigh = heigh + top
         """
     except Exception as e:
-        print("Error : an exception has been noticed.\nError message : '"+str(e)+"'")
+        print(traceback.format_exc())
+        #print("Error : an exception has been noticed.\nError message : '"+str(e)+"'")
     pass
