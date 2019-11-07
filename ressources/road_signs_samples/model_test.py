@@ -3,8 +3,8 @@
 """
 
     UNDER CONSTRUCTION :
-        VERSION : 1.0.1
-        DATE : 2019/11/06
+        VERSION : 1.0.2
+        DATE : 2019/11/07
 
 """
 
@@ -25,6 +25,10 @@
 # system imports
 import os
 import h5py     # h5py allows to save trained models in HDF5 file format : more information here : https://www.h5py.org/
+import sys, traceback
+
+# threads imports
+from multiprocessing import *
 
 # image processing imports
 import numpy as np
@@ -45,20 +49,24 @@ from keras import backend as K
 K.set_image_data_format('channels_first')
 
 # graphic interface
-from tkinter import *
+from Tkinter import *
 
 """
     PROGRAM PARAMETERS :
         - NUM_CLASSES : number of different road sign types in the dataset
         - IMG_SIZE_X : input image size (x axis : length)  -> works with raspberry raspicam
         - IMG_SIZE_Y : input image size (y axis : heigh)   -> works with raspberry raspicam
+        - SCREEN_SIZE_X : length of the screen (in pixels) where the result window is showed
+        - SCREEN_SIZE_Y : heigh of the screen (in pixels) where the result window is showed
         - IMG_SIZE_SQUARE : size of the croped image containing the detected road sign (from the "big" input image)
         - RASPICAM_ENABLE : do you want to use raspicam camera to capture an image and detect road sign in it ? if "false", example image file will be taken
         - DEBUG : Use "debug = true" if you want the program to save captured image at each process (big image, cropped, with histogram equalization...)
-        - IMAGE_PATH :
+        - IMAGE_PATH : path of an example image
 """
 
 NUM_CLASSES = 43
+SCREEN_SIZE_X = 1920
+SCREEN_SIZE_Y = 1080
 IMG_SIZE_X = 1920
 IMG_SIZE_Y = 1080
 IMG_SIZE_SQUARE = 48
@@ -70,10 +78,7 @@ IMAGE_PATH = "/home/vincent/Documents/images_samples/FullIJCNN2013/00086.ppm"
 """
     OBJECT INSTANCES AND CONSTANTS
         - roadsign_types : meaning of each 43 classes of road signs, and a path to an image of each road sign
-
-
 """
-
 roadsign_types = [  ["speed limit 20",                              "roadsigns_representation/00000/speed_limit_20.ppm"],
                     ["speed limit 30",                              "roadsigns_representation/00001/speed_limit_30.ppm"],
                     ["speed limit 50",                              "roadsigns_representation/00002/speed_limit_50.ppm"],
@@ -127,16 +132,67 @@ roadsign_types = [  ["speed limit 20",                              "roadsigns_r
 
     the window will then be used to print image of detected road signs in real time
 """
-
 def init_viewWindow():
     # create window
     window = Tk()
+    window.title("result : estimated road sign")
+
+    #window.geometry("((0.4)*SCREEN_SIZE_X)x((0.7)*SCREEN_SIZE_Y)+((0.6)*SCREEN_SIZE_X)+((0.2)*SCREEN_SIZE_Y)") #Width x Height
     window.geometry("700x900+1280+360") #Width x Height
+    window.resizable(0,0) # image has constant size
 
+    canvas = Canvas(window, width = 600, height = 600)
+    canvas.pack()
 
+    window.mainloop()
 
-    return window
+    return window, canvas
 
+"""
+    Function show_resultOnWindow :
+    Used to :
+        - show an image of road sign classified from the train model, and recognised in an input photo
+
+"""
+def show_resultOnWindow(result, window, canvas):
+    # show result image on window
+    #canvas.delete("all")
+    img = PhotoImage(file=roadsign_types[result][1])
+    canvas.create_image(0,0, image=img)
+
+"""
+    Function init_camera:
+        - init camera parameters
+"""
+def init_camera():
+    # init raspberry camera if the correct mode is chosen
+    if (RASPICAM_ENABLE):
+        # init raspicam camera
+        camera = picamera.PiCamera()
+        camera.resolution = (IMG_SIZE_X, IMG_SIZE_Y)
+
+        # print image captured on screen if activated
+        if(VISUALISATION):
+            camera.start_preview()
+
+        return camera
+
+"""
+    function capture_image:
+        - capture and return one image from the choosen mode (raspberry camera or example file)
+"""
+def capture_image():
+    # capture image
+    if(RASPICAM_ENABLE):
+        # capture a first image
+        camera.capture("raspicam_captured.ppm")
+        # name input image, process it and store it
+        img = io.imread("raspicam_captured.ppm")
+    else:
+        # capture input image from folder and process it
+        img = io.imread(IMAGE_PATH)
+
+    return img
 
 """
     Function used to :
@@ -172,17 +228,10 @@ def preprocess_img(img):
     if(DEBUG):
         io.imsave("3_image_after_resize.ppm", img)
 
-    # roll color axis to axis 0
+    # roll color axis (RGB) to axis 0 : NEW IMAGE : (RGB, X, Y) instead of (X, Y, RGB)
     img = np.rollaxis(img,-1)
 
-    if(DEBUG):
-        io.imsave("4_image_after_rollaxis.ppm", img)
-
     return img
-
-
-
-
 
 """
     MAIN FUNCTION
@@ -192,32 +241,26 @@ if __name__ == "__main__":
 
     try:
         # create window on screen
-        result_window = init_viewWindow()
+        result_window, canvas = init_viewWindow()
         # load trained neural network model
         model = load_model('model.h5')
-
-        if(RASPICAM_ENABLE):
-            # init raspicam camera
-            camera = picamera.PiCamera()
-            camera.resolution = (IMG_SIZE_X, IMG_SIZE_Y)
-
-            # print image captured on screen if activated
-            if(VISUALISATION):
-                camera.start_preview()
-
-            # capture a first image
-            camera.capture("raspicam_captured.ppm")
-            # name input image, process it and store it
-            input_image = io.imread("raspicam_captured.ppm")
-
-        else:
-            # capture input image from folder and process it
-            input_image = io.imread(IMAGE_PATH)
+        # init camera instance if RASPICAM_ENABLE = 1
+        camera = init_camera()
+        input_image = capture_image()
 
         if(DEBUG):
             io.imsave("0_initial_image.ppm", input_image)
 
+        # pre process image in order to be used by the model
         test_image = preprocess_img(input_image)
+        # add one "id" axis at the beginning of the image. Not useful with only one image but required in the trained model
+        test_image = np.expand_dims(test_image, axis=0)
+        # use the trained model to classify a roadsign in the image
+        result = model.predict_classes(test_image)[0]
+        # print image of recognised road sign
+        print ("this is the result : {}".format(result))
+        show_resultOnWindow(result, result_window, canvas)
+
         """
         left = 48
         top = 48
@@ -235,5 +278,6 @@ if __name__ == "__main__":
             heigh = heigh + top
         """
     except Exception as e:
-        print("Error : an exception has been noticed.\nError message : '"+str(e)+"'")
+        print(traceback.format_exc())
+        #print("Error : an exception has been noticed.\nError message : '"+str(e)+"'")
     pass
