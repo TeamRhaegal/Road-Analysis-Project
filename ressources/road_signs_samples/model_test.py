@@ -27,6 +27,9 @@ import os
 import h5py     # h5py allows to save trained models in HDF5 file format : more information here : https://www.h5py.org/
 import sys, traceback
 
+# threads imports
+from multiprocessing import *
+
 # image processing imports
 import numpy as np
 from skimage import io, color, exposure, transform
@@ -75,10 +78,7 @@ IMAGE_PATH = "/home/vincent/Documents/images_samples/FullIJCNN2013/00086.ppm"
 """
     OBJECT INSTANCES AND CONSTANTS
         - roadsign_types : meaning of each 43 classes of road signs, and a path to an image of each road sign
-
-
 """
-
 roadsign_types = [  ["speed limit 20",                              "roadsigns_representation/00000/speed_limit_20.ppm"],
                     ["speed limit 30",                              "roadsigns_representation/00001/speed_limit_30.ppm"],
                     ["speed limit 50",                              "roadsigns_representation/00002/speed_limit_50.ppm"],
@@ -132,7 +132,6 @@ roadsign_types = [  ["speed limit 20",                              "roadsigns_r
 
     the window will then be used to print image of detected road signs in real time
 """
-
 def init_viewWindow():
     # create window
     window = Tk()
@@ -160,6 +159,40 @@ def show_resultOnWindow(result, window, canvas):
     #canvas.delete("all")
     img = PhotoImage(file=roadsign_types[result][1])
     canvas.create_image(0,0, image=img)
+
+"""
+    Function init_camera:
+        - init camera parameters
+"""
+def init_camera():
+    # init raspberry camera if the correct mode is chosen
+    if (RASPICAM_ENABLE):
+        # init raspicam camera
+        camera = picamera.PiCamera()
+        camera.resolution = (IMG_SIZE_X, IMG_SIZE_Y)
+
+        # print image captured on screen if activated
+        if(VISUALISATION):
+            camera.start_preview()
+
+        return camera
+
+"""
+    function capture_image:
+        - capture and return one image from the choosen mode (raspberry camera or example file)
+"""
+def capture_image():
+    # capture image
+    if(RASPICAM_ENABLE):
+        # capture a first image
+        camera.capture("raspicam_captured.ppm")
+        # name input image, process it and store it
+        img = io.imread("raspicam_captured.ppm")
+    else:
+        # capture input image from folder and process it
+        img = io.imread(IMAGE_PATH)
+
+    return img
 
 """
     Function used to :
@@ -211,24 +244,9 @@ if __name__ == "__main__":
         result_window, canvas = init_viewWindow()
         # load trained neural network model
         model = load_model('model.h5')
-
-        if(RASPICAM_ENABLE):
-            # init raspicam camera
-            camera = picamera.PiCamera()
-            camera.resolution = (IMG_SIZE_X, IMG_SIZE_Y)
-
-            # print image captured on screen if activated
-            if(VISUALISATION):
-                camera.start_preview()
-
-            # capture a first image
-            camera.capture("raspicam_captured.ppm")
-            # name input image, process it and store it
-            input_image = io.imread("raspicam_captured.ppm")
-
-        else:
-            # capture input image from folder and process it
-            input_image = io.imread(IMAGE_PATH)
+        # init camera instance if RASPICAM_ENABLE = 1
+        camera = init_camera()
+        input_image = capture_image()
 
         if(DEBUG):
             io.imsave("0_initial_image.ppm", input_image)
