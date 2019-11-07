@@ -3,7 +3,7 @@
 """
 
     UNDER CONSTRUCTION :
-        VERSION : 1.0.2
+        VERSION : 1.0.3
         DATE : 2019/11/07
 
 """
@@ -25,10 +25,10 @@
 # system imports
 import os
 import h5py     # h5py allows to save trained models in HDF5 file format : more information here : https://www.h5py.org/
-import sys, traceback
+import sys, traceback, time
 
 # threads imports
-from threading import Thread
+from threading import Thread, Lock
 
 # image processing imports
 import numpy as np
@@ -74,7 +74,10 @@ IMG_SIZE_SQUARE = 48
 RASPICAM_ENABLE = False
 VISUALISATION = True
 DEBUG = True
-IMAGE_PATH = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/ressources/road_signs_samples/test4.ppm"
+IMAGE_PATH = "test4.ppm"
+
+# result from detected road sign global variable
+RESULT = None
 
 """
     OBJECT INSTANCES AND CONSTANTS
@@ -126,33 +129,27 @@ roadsign_types = [  ["speed limit 20",                              "roadsigns_r
                 ]
 
 """
-    Function init_viewWindow :
+    Function window_run :
+    threaded function (ensure you run it as a separated thread)
     Used to :
         - create a window on the screen
         - configure its size and position
 
-    the window will then be used to print image of detected road signs in real time
 """
-def init_window():
+def window_run(threadname, lock):
     # create window
     window = Tk()
     window.title("result : estimated road sign")
 
     #window.geometry("((0.4)*SCREEN_SIZE_X)x((0.7)*SCREEN_SIZE_Y)+((0.6)*SCREEN_SIZE_X)+((0.2)*SCREEN_SIZE_Y)") #Width x Height
     window.geometry("700x900+1280+360") #Width x Height
-    window.resizable(0,0) # image has constant size
+    #window.resizable(0,0) # image has constant size
     # create canvas for image display
     canvas = Canvas(window, width = 600, height = 600)
-    canvas.pack()
+    canvas.pack(side='top', fill='both', expand='yes')
 
-    return window, canvas
-
-"""
-    Function view_window :
-        - show the window in input.
-        Please use this function in a separated thread as it blocks the code from executing itself.
-"""
-def view_window(window):
+    update_window_content(window, canvas)
+    # program is stuck here
     window.mainloop()
 
 """
@@ -161,11 +158,20 @@ def view_window(window):
         - show an image of road sign classified from the train model, and recognised in an input photo
 
 """
-def show_resultOnWindow(result, window, canvas):
+def update_window_content(window, canvas):
+    global RESULT
+    # get RESULT value
+    lock.acquire()
+    result = RESULT
+    lock.release()
     # show result image on window
     canvas.delete("all")
-    img = PhotoImage(file=roadsign_types[result][1])
-    canvas.create_image(0,0, image=img)
+    if(result != None):
+        img = PhotoImage(file=roadsign_types[result][1])
+        canvas.create_image(20,20, image=img)
+    window.after(1000, update_window_content(window, canvas))
+
+
 
 """
     Function init_camera:
@@ -249,52 +255,42 @@ def preprocess_img(img):
 if __name__ == "__main__":
 
     try:
-        # create window on screen
-        result_window, canvas = init_window()
-        # window thread initialisation and run
-        #thread_window = Thread(target = view_window, args = (result_window, ))
-        #thread_window.start()
+        # create threads
+        lock = Lock()
+
+        window_thread = Thread( target=window_run, args=("window thread", lock) )
+        window_thread.start()
 
         # load trained neural network model
         model = load_model('model.h5')
+
         # init camera instance if RASPICAM_ENABLE = 1
         camera = init_camera()
-        # capture one image on raspberry or example image
-        input_image = capture_image()
 
-        if(DEBUG):
-            io.imsave("0_initial_image.ppm", input_image)
+        while(True):
+            # capture one image on raspberry or example image
+            input_image = capture_image()
 
-        # pre process image in order to be used by the model
-        test_image = preprocess_img(input_image)
-        # add one "id" axis at the beginning of the image. Not useful with only one image but required in the trained model
-        test_image = np.expand_dims(test_image, axis=0)
-        # use the trained model to classify a roadsign in the image
-        result = model.predict_classes(test_image)[0]
-        # print image of recognised road sign
-        print ("this is the result : {}".format(result))
-        show_resultOnWindow(result, result_window, canvas)
+            if(DEBUG):
+                io.imsave("0_initial_image.ppm", input_image)
 
-        view_window(result_window)
+            # pre process image in order to be used by the model
+            test_image = preprocess_img(input_image)
+            # add one "id" axis at the beginning of the image. Not useful with only one image but required in the trained model
+            test_image = np.expand_dims(test_image, axis=0)
+            # get RESULT value
+            lock.acquire()
+            # use the trained model to classify a roadsign in the image
+            RESULT = model.predict_classes(test_image)[0]
+            result = RESULT
+            lock.release()
+            # print image of recognised road sign
+            print ("----------------------\nthis is the result : {}\n------------------------\n".format(result))
+            time.sleep(2)
+            pass
+        window_thread.join()
 
-        """
-        left = 48
-        top = 48
-        width = 0
-        heigh = 0
 
-        while (heigh < 1032):
-            while(width < 1920):
-                test_image = preprocess_img(input_image[width:width+left, heigh:heigh+top])
-                test_image = np.expand_dims(test_image, axis=0)
-                result = model.predict_classes(test_image)
-                print("\nClass detected : {}, coordinates : {}, {}".format(result, width+left, heigh+top))
-                width = width + left
-            width = 0
-            heigh = heigh + top
-        """
-
-        thread_window.join()
     except Exception as e:
         print(traceback.format_exc())
         #print("Error : an exception has been noticed.\nError message : '"+str(e)+"'")
