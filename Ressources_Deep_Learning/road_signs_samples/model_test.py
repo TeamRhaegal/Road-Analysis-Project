@@ -3,7 +3,7 @@
 """
 
     UNDER CONSTRUCTION :
-        VERSION : 1.0.3
+        VERSION : 1.0.4
         DATE : 2019/11/07
 
 """
@@ -25,7 +25,7 @@
 # system imports
 import os
 import h5py     # h5py allows to save trained models in HDF5 file format : more information here : https://www.h5py.org/
-import sys, traceback, time
+import sys, traceback, time, psutil
 
 # threads imports
 from threading import Thread, Lock
@@ -35,6 +35,8 @@ import numpy as np
 from skimage import io, color, exposure, transform
 from sklearn.model_selection import train_test_split
 
+# image drawing imports
+from PIL import Image
 #import cv2, picamera
 #import picamera
 
@@ -48,9 +50,6 @@ from keras.utils import np_utils
 from keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from keras import backend as K
 K.set_image_data_format('channels_first')
-
-# graphic interface
-from Tkinter import *
 
 """
     PROGRAM PARAMETERS :
@@ -74,7 +73,7 @@ IMG_SIZE_SQUARE = 48
 RASPICAM_ENABLE = False
 VISUALISATION = True
 DEBUG = True
-IMAGE_PATH = "test4.ppm"
+IMAGE_PATH = "test5.ppm"
 
 # result from detected road sign global variable
 RESULT = None
@@ -129,51 +128,6 @@ roadsign_types = [  ["speed limit 20",                              "roadsigns_r
                 ]
 
 """
-    Function window_run :
-    threaded function (ensure you run it as a separated thread)
-    Used to :
-        - create a window on the screen
-        - configure its size and position
-
-"""
-def window_run(threadname, lock):
-    # create window
-    window = Tk()
-    window.title("result : estimated road sign")
-
-    #window.geometry("((0.4)*SCREEN_SIZE_X)x((0.7)*SCREEN_SIZE_Y)+((0.6)*SCREEN_SIZE_X)+((0.2)*SCREEN_SIZE_Y)") #Width x Height
-    window.geometry("700x900+1280+360") #Width x Height
-    #window.resizable(0,0) # image has constant size
-    # create canvas for image display
-    canvas = Canvas(window, width = 600, height = 600)
-    canvas.pack(side='top', fill='both', expand='yes')
-
-    update_window_content(window, canvas)
-    # program is stuck here
-    window.mainloop()
-
-"""
-    Function show_resultOnWindow :
-    Used to :
-        - show an image of road sign classified from the train model, and recognised in an input photo
-
-"""
-def update_window_content(window, canvas):
-    global RESULT
-    # get RESULT value
-    lock.acquire()
-    result = RESULT
-    lock.release()
-    # show result image on window
-    canvas.delete("all")
-    if(result != None):
-        img = PhotoImage(file=roadsign_types[result][1])
-        canvas.create_image(20,20, image=img)
-    window.after(1000, update_window_content(window, canvas))
-
-
-
-"""
     Function init_camera:
         - init camera parameters
 """
@@ -191,6 +145,7 @@ def init_camera():
         return camera
     else:
         return -1
+    pass
 
 """
     function capture_image:
@@ -208,6 +163,7 @@ def capture_image():
         img = io.imread(IMAGE_PATH)
 
     return img
+    pass
 
 """
     Function used to :
@@ -247,6 +203,23 @@ def preprocess_img(img):
     img = np.rollaxis(img,-1)
 
     return img
+    pass
+
+"""
+    Function show_result :
+    used to show a representation of detected road sign as a result
+"""
+def show_result(result, process):
+    if(process):
+        # hide image
+        for proc in psutil.process_iter():
+            if proc.name() == "display":
+                proc.kill()
+    img = Image.open(roadsign_types[result][1])
+    img.show()
+    return img
+    pass
+
 
 """
     MAIN FUNCTION
@@ -258,14 +231,13 @@ if __name__ == "__main__":
         # create threads
         lock = Lock()
 
-        window_thread = Thread( target=window_run, args=("window thread", lock) )
-        window_thread.start()
-
         # load trained neural network model
         model = load_model('model.h5')
 
         # init camera instance if RASPICAM_ENABLE = 1
         camera = init_camera()
+        # variable used to describe an instance of image window
+        image_viewer = None
 
         while(True):
             # capture one image on raspberry or example image
@@ -286,10 +258,10 @@ if __name__ == "__main__":
             lock.release()
             # print image of recognised road sign
             print ("----------------------\nthis is the result : {}\n------------------------\n".format(result))
+            # show image of recognized road sign
+            image_viewer = show_result(result, image_viewer)
             time.sleep(2)
             pass
-        window_thread.join()
-
 
     except Exception as e:
         print(traceback.format_exc())
