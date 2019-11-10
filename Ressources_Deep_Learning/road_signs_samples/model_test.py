@@ -26,6 +26,7 @@
 import os
 import h5py     # h5py allows to save trained models in HDF5 file format : more information here : https://www.h5py.org/
 import sys, traceback, time, psutil
+from io import BytesIO
 
 # threads imports
 from threading import Thread, Lock
@@ -137,12 +138,12 @@ def init_camera():
         # init raspicam camera
         camera = picamera.PiCamera()
         camera.resolution = (IMG_SIZE_X, IMG_SIZE_Y)
-
+        # stream : sum of images saved as bytes in memory
+        stream = BytesIO()
         # print image captured on screen if activated
         if(VISUALISATION):
             camera.start_preview()
-
-        return camera
+        return camera, stream
     else:
         return -1
     pass
@@ -151,18 +152,15 @@ def init_camera():
     function capture_image:
         - capture and return one image from the choosen mode (raspberry camera or example file)
 """
-def capture_image():
+def capture_image(stream):
     # capture image
     if(RASPICAM_ENABLE):
         # capture a first image
-        camera.capture("raspicam_captured.ppm")
-        # name input image, process it and store it
-        img = io.imread("raspicam_captured.ppm")
+        camera.capture(stream, format='ppm', resize=(1380, 800))
     else:
         # capture input image from folder and process it
-        img = io.imread(IMAGE_PATH)
-
-    return img
+        stream = io.imread(IMAGE_PATH)
+    return stream
     pass
 
 """
@@ -201,66 +199,75 @@ def preprocess_img(img):
 
     # roll color axis (RGB) to axis 0 : NEW IMAGE : (RGB, X, Y) instead of (X, Y, RGB)
     img = np.rollaxis(img,-1)
+    # add one "id" axis at the beginning of the image. Not useful with only one image but required in the trained model
+    img = np.expand_dims(img, axis=0)
 
     return img
+    pass
+
+
+"""
+    Function show_preview_image :
+    Shows what is the preprocessed image, put into the classification model
+"""
+def show_preview_image(image, process):
+    if(process):
+        # hide image
+        for proc in psutil.process_iter():
+            if proc.name() == "display":
+                proc.kill()
+    img = Image.open(image)
+    img.show()
     pass
 
 """
     Function show_result :
     used to show a representation of detected road sign as a result
 """
-def show_result(result, process):
-    if(process):
-        # hide image
-        for proc in psutil.process_iter():
-            if proc.name() == "display":
-                proc.kill()
+def show_result(result):
     img = Image.open(roadsign_types[result][1])
     img.show()
-    return img
     pass
-
 
 """
     MAIN FUNCTION
-
 """
 if __name__ == "__main__":
 
     try:
         # create threads
         lock = Lock()
-
-        # load trained neural network model
-        model = load_model('model.h5')
-
+        # load trained neural network modelto classify road signs
+        classify_model = load_model('model.h5')
         # init camera instance if RASPICAM_ENABLE = 1
-        camera = init_camera()
+        camera, stream = init_camera()
         # variable used to describe an instance of image window
         image_viewer = None
 
-        while(True):
+        i = 0
+        while(i<5):
             # capture one image on raspberry or example image
-            input_image = capture_image()
+            input_image = capture_image(stream)
 
             if(DEBUG):
                 io.imsave("0_initial_image.ppm", input_image)
 
             # pre process image in order to be used by the model
             test_image = preprocess_img(input_image)
-            # add one "id" axis at the beginning of the image. Not useful with only one image but required in the trained model
-            test_image = np.expand_dims(test_image, axis=0)
-            # get RESULT value
+            # view preprocess image in a window
+            image_viewer = show_preview_image(test_image, image_viewer)
+
             lock.acquire()
             # use the trained model to classify a roadsign in the image
-            RESULT = model.predict_classes(test_image)[0]
+            RESULT = classify_model.predict_classes(test_image)[0]
             result = RESULT
             lock.release()
             # print image of recognised road sign
             print ("----------------------\nthis is the result : {}\n------------------------\n".format(result))
             # show image of recognized road sign
-            image_viewer = show_result(result, image_viewer)
+            show_result(result, image_viewer)
             time.sleep(2)
+            i+=1
             pass
 
     except Exception as e:
