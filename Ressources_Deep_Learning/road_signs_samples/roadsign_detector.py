@@ -24,7 +24,6 @@ QTWINDOW = True
 RASPICAM_ENABLE = False
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
->>>>>>> 944901d1f243c17d7dbce760eb8e515cc71222e8
 
 """
     Define different paths for example images, location and classification model, etc.
@@ -269,57 +268,7 @@ def QT_window():
         MAIN FUNCTION
 """
 if __name__ == "__main__":
-<<<<<<< HEAD
 
-    if (DEMO_LOCATION):
-        # configure location deep learning model
-        K.set_image_data_format('channels_last')
-        C, class_mapping, class_to_color, location_model_rpn, location_model_classifier, location_model_classifier_only  = config_location_model(LOCATION_MODEL_PICKLE_PATH)
-
-    if (DEMO_CLASSIFICATION):
-        # configure classification deep learning model
-        K.set_image_data_format('channels_first')
-        classify_model = load_model('classification_model.h5')
-
-    # init camera specifications (or do nothing if RASPICAM_ENABLE is set to False)
-    camera = init_camera()
-
-    if(DEMO_LOCATION):
-        input_image = "demo_imgs/location_demo/img_0003.ppm"
-    elif(DEMO_CLASSIFICATION):
-<<<<<<< HEAD
-        input_image = "demo_imgs/classification_demo/img_0001.ppm"
-=======
-        input_image = "demo_imgs/classification_demo/img_0004.ppm"
->>>>>>> e603767f474adeaebcd7b9af9766d5eec29ee39d
-
-    # close opened windows
-    kill_window_process()
-
-    input_image = io.imread(input_image)
-    # capture an image from the camera (or use example image if RASPICAM_ENABLE is set to False)
-    #input_image = capture_image(camera)
-    if (DEBUG):
-        show_image(input_image, from_file=False)
-
-    if (DEMO_LOCATION):
-        K.set_image_data_format('channels_last')
-        result_localisation_image, pred_bboxs = find_roadsign_in_image(input_image, C, class_mapping, class_to_color, location_model_rpn, location_model_classifier, location_model_classifier_only)
-        if (DEBUG):
-            show_image(result_localisation_image)
-
-
-    if (DEMO_CLASSIFICATION):
-        input_image = preprocess_img(input_image)
-        K.set_image_data_format('channels_first')
-        result = classify_model.predict_classes(input_image)[0]
-        if (DEBUG):
-            show_result(result)
-
-    time.sleep(5)
-
-=======
-    
     try : 
         thread_roadsign_detector = Thread(target=roadsign_detector)
         if (QTWINDOW):
@@ -330,7 +279,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt : 
         print("\nCTRL+C PRESSED : CLOSING PROGRAM")
         sys.exit()
->>>>>>> 944901d1f243c17d7dbce760eb8e515cc71222e8
     pass
     
     
