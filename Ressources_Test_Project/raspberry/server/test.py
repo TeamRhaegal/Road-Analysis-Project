@@ -18,6 +18,7 @@ import RPi.GPIO as GPIO
 import can
 import time
 import os
+from threading import Thread
 
 
 led = 22
@@ -25,6 +26,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(led,GPIO.OUT)
 GPIO.output(led,True)
+US2=0x001
 
 count = 0
 
@@ -45,15 +47,36 @@ except OSError:
 
 # Main loop
 try:
-	while True:
+	i=0
+	while i<5:
 		GPIO.output(led,True)
-		msg = can.Message(arbitration_id=0x010,data=[0xBC,0xBC,0x00, 0x00, 0x00, 0x00,0x00, 0x00],extended_id=False)
+		msg = can.Message(arbitration_id=0x010,data=[0x00,0x00,0x00, 0x00, 0x00, 0x00,0x00, 0x00],extended_id=False)
 		bus.send(msg)
 		count +=1
 		time.sleep(0.1)
 		GPIO.output(led,False)
 		time.sleep(0.1)
 		print(count)
+		i+=1
+	msg = can.Message(arbitration_id=0x010,data=[0x00,0x00,0x00, 0x00, 0x00, 0x00,0x00, 0x00],extended_id=False)
+	bus.send(msg)
+	msg = bus.recv()
+
+	#print(msg.arbitration_id, msg.data)
+
+	if msg.arbitration_id == US2:
+		# ultrason arriere gauche
+		distance = int.from_bytes(msg.data[0:2], byteorder='big')
+		message = "URL:" + str(distance)+ ";"
+		print(message);
+		# ultrason arriere droit
+		distance = int.from_bytes(msg.data[2:4], byteorder='big')
+		message = "URR:" + str(distance)+ ";"
+		print(message)
+		# ultrason avant centre
+		distance = int.from_bytes(msg.data[4:6], byteorder='big')
+		message = "UFC:" + str(distance)+ ";"
+		print(message)
 
 
 
