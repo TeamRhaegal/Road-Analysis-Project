@@ -8,9 +8,9 @@ images are captured and saved as PPM files (if enabled)
 
 """
 
-import io
 from picamera import PiCamera
-from skimage import io
+from picamera.array import PiRGBArray
+from skimage import io as skio
 from PIL import Image
 import cv2
 import numpy as np
@@ -23,9 +23,9 @@ class Raspicam(object):
         self.resolution = resolution
         self.save = save
         # init camera resolution
-        self.init_resolution(self.resolution)
+        self.set_resolution(self.resolution)
         # init stream variable (contains the image at different times as BYTES (no image format specified))
-        self.stream = io.BytesIO()
+        self.stream = PiRGBArray(self.camera)
         # check if preview option is True and if it is the case, start camera preview (only useful for debugging purposes
         if(preview):
             self.enable_preview()
@@ -45,10 +45,8 @@ class Raspicam(object):
         
         input : save boolean value
     """
-    def capture_image(self, save=False):
-        self.camera.capture(self.stream, 'gif')
-        if (save):
-            io.imsave("raspicam_capture.ppm", self.stream)
+    def capture_image(self):
+        self.camera.capture(self.stream, format="rgb")
         pass
      
     """
@@ -56,11 +54,18 @@ class Raspicam(object):
         
         output : image as numpy array
     """
-    def read_image_as_numpy_array(self):
+
+    def read_image_as_numpy_array(self, save=False):
+        #self.stream.seek(0)
+        image = self.stream.array
+        #data = np.fromstring(self.stream.getvalue(), dtype=np.uint8)
+        #image = cv2.imdecode(data, 1)
+        #image = image[:, :, ::-1]   # return image as RGB format and not BGR 
+        if (save):
+            skio.imsave("raspicam_capture.ppm", image)
+            
+        self.stream.truncate()
         self.stream.seek(0)
-        data = np.fromstring(self.stream.getvalue(), dtype=np.uint8)
-        image = cv2.imdecode(data, 1)
-        image = image[:, :, ::-1]   # return image as RGB format and not BGR 
         return image
         pass
      

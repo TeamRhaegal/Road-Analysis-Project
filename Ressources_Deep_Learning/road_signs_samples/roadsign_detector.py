@@ -18,10 +18,13 @@ import cv2
 import numpy as np
 
 sys.path.append('roadsign_python_source/')
-from roadsign_python_source import location, classification, QT_app
+from roadsign_python_source import location, classification
 
-QTWINDOW = True
-RASPICAM_ENABLE = False
+QTWINDOW = False
+if (QTWINDOW):
+    from roadsign_python_source import QTapp
+
+RASPICAM_ENABLE = True
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
 
@@ -48,8 +51,8 @@ CLASSIFICATION_RESULT = []
 # next variables are for QT window, in order to update images on interface (if QTWINDOW is set to True)
 PATH_TO_CAMERA_IMAGE = None
 PATH_TO_LOCATION_IMAGE = None
-PATH_TO_CROPPED_IMAGE = np.array([])
-PATH_TO_CLASSIFICATION_RESULT_IMAGE = np.array([])
+PATH_TO_CROPPED_IMAGE = []
+PATH_TO_CLASSIFICATION_RESULT_IMAGE = []
 
 
 """
@@ -149,7 +152,7 @@ def roadsign_detector():
         try:
             if (RASPICAM_ENABLE):
                 camera.capture_image()
-                location_input_image = camera.read_image_as_numpy_array()
+                location_input_image = camera.read_image_as_numpy_array(save=True)
                 
                 if(QTWINDOW):
                     io.imsave(path_camera_image, location_input_image)
@@ -176,7 +179,7 @@ def roadsign_detector():
                 classification_result_array = []
             
             for i in range(location_boxes.shape[1]):
-                if (location_score[0][i] > 0.6):
+                if (location_score[0][i] > 0.1):
                     # crop interesting  part (box) from the global image
                     x1 = int(location_boxes[0][i][1]*location_input_image.shape[1])
                     x2 = int(location_boxes[0][i][3]*location_input_image.shape[1])
@@ -184,6 +187,7 @@ def roadsign_detector():
                     y2 = int(location_boxes[0][i][2]*location_input_image.shape[0])
                     img = location_input_image[y1:y2, x1:x2]
                     
+                    io.imsave("cropped_image_"+str(i)+".png", img) 
                     if (QTWINDOW):
                         cropped_image_array.append(cropped_image_names[counter])
                         io.imsave(cropped_image_array[counter], img)
@@ -193,7 +197,10 @@ def roadsign_detector():
                     
                     # pre process image in order to use it in the classification model
                     preprocessed_img =  classification_model.preprocess_img(img)
+                    
+                    #io.imsave("preprocessed_image_"+str(i)+".png", preprocessed_img)
                     classification_result.append(classification_model.predict_result(preprocessed_img))
+                    print("result = {}".format(classification_model.predict_result(preprocessed_img)))
                     
                     if (QTWINDOW):
                         # draw rectangle boxes around Region of Interest (ROI)
@@ -210,7 +217,7 @@ def roadsign_detector():
             LOCK_CLASSIFICATION_RESULT.acquire()
             CLASSIFICATION_RESULT = classification_result[:]
             LOCK_CLASSIFICATION_RESULT.release()
-            
+            print("result found and saved")
             # save every image path as global shared variables if QT_WINDOW is set to True
             if (QTWINDOW):
                 LOCK_PATH_TO_IMAGES.acquire()
