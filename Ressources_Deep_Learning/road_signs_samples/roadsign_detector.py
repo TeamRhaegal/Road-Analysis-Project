@@ -91,8 +91,13 @@ IMAGE_PATH = "00082.ppm"
 LOCATION_MODEL_PICKLE_PATH = "fcnet_config.pickle"
 CLASSIFICATION_MODEL_PATH = "classification_model.h5"
 
+<<<<<<< HEAD
 DEMO_LOCATION = False
 DEMO_CLASSIFICATION = True
+=======
+DEMO_LOCATION = True
+DEMO_CLASSIFICATION = False
+>>>>>>> e603767f474adeaebcd7b9af9766d5eec29ee39d
 
 """
     OBJECT INSTANCES AND CONSTANTS
@@ -491,7 +496,11 @@ if __name__ == "__main__":
     if(DEMO_LOCATION):
         input_image = "demo_imgs/location_demo/img_0003.ppm"
     elif(DEMO_CLASSIFICATION):
+<<<<<<< HEAD
         input_image = "demo_imgs/classification_demo/img_0001.ppm"
+=======
+        input_image = "demo_imgs/classification_demo/img_0004.ppm"
+>>>>>>> e603767f474adeaebcd7b9af9766d5eec29ee39d
 
     # close opened windows
     kill_window_process()
