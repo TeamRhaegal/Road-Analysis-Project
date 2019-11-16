@@ -118,7 +118,7 @@ def roadsign_detector():
     classification_model.load_model(model_path=PATH_TO_CLASSIFICATION_MODEL)
         
     # main loop : 
-    while(STOP_THREAD != 1):
+    while(1):
         try:
             if (RASPICAM_ENABLE):
                 camera.capture_image()
