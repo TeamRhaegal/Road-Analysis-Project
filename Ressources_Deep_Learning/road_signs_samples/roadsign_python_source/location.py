@@ -42,8 +42,9 @@ DEFAULT_OUTPUT_IMAGE_SIZE = (20, 20)
 
 class LocationModel (object):
     
-    def __init__(self):
+    def __init__(self, debug=False):
         
+        self.debug = debug
         self.model_path = None
         self.ckpt_path = None
         self.label_path = None
@@ -115,19 +116,20 @@ class LocationModel (object):
                                     [self.boxes, self.scores, self.classes, self.num_detections],
                                     self.feed_dict)
                 # Visualization of the results of a detection.
-                vis_util.visualize_boxes_and_labels_on_image_array(
-                                                                                                    image_np,
-                                                                                                    np.squeeze(self.boxes),
-                                                                                                    np.squeeze(self.classes).astype(np.int32),
-                                                                                                    np.squeeze(self.scores),
-                                                                                                    self.category_index,
-                                                                                                    use_normalized_coordinates=True,
-                                                                                                    line_thickness=6)
-                plt.figure(1, figsize=image_size)
-                plt.axis('off')
-                plt.imshow(image_np)
+                if(self.debug):
+                    vis_util.visualize_boxes_and_labels_on_image_array(
+                                                                                                        image_np,
+                                                                                                        np.squeeze(self.boxes),
+                                                                                                        np.squeeze(self.classes).astype(np.int32),
+                                                                                                        np.squeeze(self.scores),
+                                                                                                        self.category_index,
+                                                                                                        use_normalized_coordinates=True,
+                                                                                                        line_thickness=6)
+                    plt.figure(1, figsize=image_size)
+                    plt.axis('off')
+                    plt.imshow(image_np)
                 
-                return self.boxes, self.scores, self.classes, self.num_detections, self.feed_dict, image_np
+                return self.boxes, self.scores
                 pass
     
     """
@@ -159,19 +161,20 @@ class LocationModel (object):
                                 [self.boxes, self.scores, self.classes, self.num_detections],
                                 self.feed_dict)
         # Visualization of the results of a detection.
-        vis_util.visualize_boxes_and_labels_on_image_array(
-                                                                                            image_np,
-                                                                                            np.squeeze(self.boxes),
-                                                                                            np.squeeze(self.classes).astype(np.int32),
-                                                                                            np.squeeze(self.scores),
-                                                                                            self.category_index,
-                                                                                            use_normalized_coordinates=True,
-                                                                                            line_thickness=6)
-        plt.figure(2, figsize=image_size)
-        plt.axis('off')
-        plt.imshow(image_np)
+        if(self.debug):
+            vis_util.visualize_boxes_and_labels_on_image_array(
+                                                                                                image_np,
+                                                                                                np.squeeze(self.boxes),
+                                                                                                np.squeeze(self.classes).astype(np.int32),
+                                                                                                np.squeeze(self.scores),
+                                                                                                self.category_index,
+                                                                                                use_normalized_coordinates=True,
+                                                                                                line_thickness=6)
+            plt.figure(2, figsize=image_size)
+            plt.axis('off')
+            plt.imshow(image_np)
         
-        return self.boxes, self.scores, self.classes, self.num_detections, self.feed_dict, image_np
+        return self.boxes, self.scores
 
         pass
             
