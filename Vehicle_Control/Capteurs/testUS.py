@@ -32,7 +32,6 @@ count = 0
 
 
 
-
 class MyUS(Thread):
 
     def __init__(self, bus, queue,queue1,queue2, queue3, queue4,queue5):
