@@ -1,10 +1,12 @@
-from mutex import mutex
+from threading import Lock
 
 #Global values
 #Ressources 
-listMessagesToSend = []
+listMessagesToSend = ['batt$critic']
 listMessagesReceived = []
+connectedDevice= True
 	
-#Mutex
-mutexMessagesToSend = mutex()
-mutexMessagesReceived = mutex()
+#Locks
+lockMessagesToSend = Lock()
+lockMessagesReceived = Lock()
+lockConnectedDevice = Lock()
