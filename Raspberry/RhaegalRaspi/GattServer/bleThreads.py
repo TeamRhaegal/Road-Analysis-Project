@@ -35,7 +35,7 @@ class BLETransmitterThread(Thread):
 			global listMessagesToSend
 			
 			mutexMessagesToSend.lock()
-			if not listMessagesToSend:
+			if listMessagesToSend:
 				myMessagesToSend = listMessagesToSend
 				listMessagesToSend.clear()
 			mutexMessagesToSend.unlock()
