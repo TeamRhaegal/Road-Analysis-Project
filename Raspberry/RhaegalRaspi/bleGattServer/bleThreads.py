@@ -1,4 +1,4 @@
-from utils.GattServer import *
+from utils.serverSetting import *
 from utils.service import Application
 from threading import Thread
 from time import Time
