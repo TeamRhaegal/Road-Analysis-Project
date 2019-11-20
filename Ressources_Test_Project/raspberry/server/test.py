@@ -50,7 +50,7 @@ try:
 	i=0
 	while i<5:
 		GPIO.output(led,True)
-		msg = can.Message(arbitration_id=0x010,data=[0x00,0x00,0x00, 0x00, 0x00, 0x00,0x00, 0x00],extended_id=False)
+		msg = can.Message(arbitration_id=0x010,data=[0xB6,0xB6,0x00, 0x00, 0x00, 0x00,0x00, 0x00],extended_id=False)
 		bus.send(msg)
 		count +=1
 		time.sleep(0.1)
@@ -58,6 +58,7 @@ try:
 		time.sleep(0.1)
 		print(count)
 		i+=1
+	time.sleep(5)
 	msg = can.Message(arbitration_id=0x010,data=[0x00,0x00,0x00, 0x00, 0x00, 0x00,0x00, 0x00],extended_id=False)
 	bus.send(msg)
 	msg = bus.recv()

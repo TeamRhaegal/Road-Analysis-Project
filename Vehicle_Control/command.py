@@ -17,19 +17,19 @@ from threading import Thread, Lock
 MOT=0x010     #identifiant commande moteur CAN
 US2=0x001      #identifiant Ultrasons arrière CAN
 US1=0x000      ##identifiant Ultrasons arrière CAN
-
+MS=0x100
 
 led=22
 
 #variables globales
 Turbo ="off"
 Joystick = "none"
-Mode = "assisted"    #auto pour test unitaire
+Mode = "auto"    #auto pour test unitaire
 Deconnexion = "off"
 Panneau = "none"
-NbPixel = "0"
-vitesseRoue = 50
-DistanceMaxUS = 15
+NbPixel = 10
+vitesseRoue = 0
+DistanceMaxUS = 10
 ObstacleRear = 0
 ObstacleFront = 0
 
@@ -57,8 +57,12 @@ class MyCommand(Thread):
 		# mettre la condition de detection d'obstacle ultrasons
         Width_panneau = 0.20  #nb à déterminer
         Focal = 595
+        CMD_O = 50
+        CMD_V = 50
+        CMD_V_A=50
+        Temps_necessaire=0.01
         while True : 
-            
+            time.sleep(0.01)            
             ModeLock.acquire()
             TurboLock.acquire()
             JoystickLock.acquire()
@@ -80,29 +84,29 @@ class MyCommand(Thread):
             JoystickLock.release()   
             
             PanneauLock.acquire()
-            if Panneau == "num panneau": CMD_V_A = 0  #panneau lock
-            else : CMD_V_A = 0xB6
+            if Panneau == "num panneau": CMD_V_A = 50  #panneau lock
+            else : CMD_V_A = 100
             PanneauLock.release()
-            CMD_V = CMD_V + 0x10
-            CMD_O = CMD_O + 0x10
-                
+            CMD_V = CMD_V + 0x80
+            CMD_O = CMD_O + 0x80
+            CMD_V_A = CMD_V_A + 0x00
             if Mode == "auto":
                 
                 NbPixelLock.acquire()
                 VitesseLock.acquire()
-                if NbPixel != 0 or CMD_V_A== 0 :
+                if NbPixel != 0 or CMD_V_A == 0 :
                     Distance_panneau = (Width_panneau*Focal)/NbPixel
-                    Temps_necessaire = Distance_panneau / vitesseRoue   #calcul du temps à  attendre 
+                    Temps_necessaire = Distance_panneau / (vitesseRoue+0.00001)   #calcul du temps à  attendre 
                 else :  Temps_necessaire = 0.01
                 NbPixelLock.release()
                 VitesseLock.release()
                 
-                    
+
                 msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
                 time.sleep(Temps_necessaire)
                 self.bus.send(msg)
                 #mode autonome
-                
+               
             elif Mode == "assisted" :
                 msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
@@ -112,6 +116,7 @@ class MyCommand(Thread):
                 msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
+            
                 
                 
 class MySensor(Thread):
@@ -121,18 +126,22 @@ class MySensor(Thread):
         self.bus = bus
 
     def run(self):
-        Perimetre_roue = 0.62
+        Perimetre_roue = 0.19 *2*3.14  
         while True :
             msg = self.bus.recv()
-            
-            if msg.arbitration_id == US2:
+            time.sleep(0.01)
+            if msg.arbitration_id == MS:
+                Batmes = int.from_bytes(msg.data[2:4], byteorder='big')
+                U = (4095 / Batmes) * (3.3 / 0.2)
+                print(Batmes)
+            if msg.arbitration_id == MS:
                 # Vitesse voiture
                 VitesseLock.acquire()
                 vitesseRoue = int.from_bytes(msg.data[4:6], byteorder='big')
-                vitesseRoue = (100*vitesseRoue*Perimetre_roue / 60) #metre/s
+                vitesseRoue = (0.01*vitesseRoue*Perimetre_roue / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
                 VitesseLock.release()
                 message = "Vitesse :" + str(vitesseRoue)+ ";"
-                #print(message)
+                print(message)
             if msg.arbitration_id == US2:
                 # ultrason arriere gauche
                 distance = int.from_bytes(msg.data[0:2], byteorder='big')
@@ -167,7 +176,7 @@ class MySensor(Thread):
                 message = "UFC:" + str(distance)+ ";"
                 #print(message)
                 print("---------")
-            
+            '''
             ObstacleFrontLock.acquire()
             ObstacleRearLock.acquire()
             if  URL <DistanceMaxUS or URR<DistanceMaxUS or URC <DistanceMaxUS: ObstacleRear = 1
@@ -176,7 +185,7 @@ class MySensor(Thread):
             else: ObstacleFront = 0 
             ObstacleFrontLock.release()
             ObstacleRearLock.release()
-            
+            '''
             
            
                 
@@ -204,6 +213,7 @@ try:
 
     threadsense = MySensor(bus)
     threadcom = MyCommand(bus)
+    
     threadcom.start()
     threadsense.start()
     
@@ -214,5 +224,8 @@ try:
 
 except KeyboardInterrupt:
 	#Catch keyboard interrupt
-	os.system("sudo /sbin/ip link set can0 down")
-	print('\n\rKeyboard interrtupt')
+    msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
+    bus.send(msg)
+    time.sleep(5)
+    os.system("sudo /sbin/ip link set can0 down")
+    print('\n\rKeyboard interrtupt')
