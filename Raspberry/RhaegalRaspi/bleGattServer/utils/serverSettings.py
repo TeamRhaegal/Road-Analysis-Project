@@ -77,12 +77,12 @@ class RxCharacteristic(Characteristic):
                                 ['write'], service)
 
     def WriteValue(self, value, options):
-		global mutexMessagesReceived
-		global listMessagesReceived
+        global mutexMessagesReceived
+        global listMessagesReceived
 			
-		mutexMessagesReceived.lock()		
-		listMessagesReceived.append(bytearray(value).decode())
-		mutexMessagesToSend.unlock()
+        mutexMessagesReceived.lock()		
+        listMessagesReceived.append(bytearray(value).decode())
+        mutexMessagesToSend.unlock()
 		
         print('remote: {}'.format(bytearray(value).decode()))
 

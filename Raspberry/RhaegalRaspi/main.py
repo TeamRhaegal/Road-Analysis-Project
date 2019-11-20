@@ -1,14 +1,4 @@
-from bleGattServer.bleThread import BLEServer, BLETransmitterThread
-from mutex import Mutex
-
-#Global values
-#Ressources 
-listMessagesToSend = []
-listMessagesReceived = []
-	
-#Mutex
-mutexMessagesToSend = Mutex()
-mutexMessagesReceived = Mutex()
+from bleGattServer.bleThreads import BLEServer, BLETransmitterThread
 	
 def main():
 	#BLE part

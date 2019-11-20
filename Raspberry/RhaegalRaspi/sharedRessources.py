@@ -1,4 +1,4 @@
-from mutex import Mutex
+from mutex import mutex
 
 #Global values
 #Ressources 
@@ -6,5 +6,5 @@ listMessagesToSend = []
 listMessagesReceived = []
 	
 #Mutex
-mutexMessagesToSend = Mutex()
-mutexMessagesReceived = Mutex()
+mutexMessagesToSend = mutex()
+mutexMessagesReceived = mutex()
