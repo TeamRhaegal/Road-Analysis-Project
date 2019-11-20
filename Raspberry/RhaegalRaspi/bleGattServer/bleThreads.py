@@ -7,11 +7,13 @@ import sharedRessources as r
 
 class BLEServerThread(Thread):
     def __init__(self,runRaspiCodeEvent):
+		Thread.__init__(self)
 		self.app=Application()
 		self.initService()
 		self.initAdvertisement()
 		self.setDaemon(True)
 		self.runEvent= runRaspiCodeEvent
+		print('Init successful server')
 	
     def initService(self):
         self.app.add_service(RaspService(0))
@@ -21,9 +23,10 @@ class BLEServerThread(Thread):
         adv = RaspAdvertisement(0) #advertize
         adv.register()
 		
-	def run(self)
+	def run(self):
+		print('server begin to run')
 		self.app.run()
-		while runEvent.isSet() :
+		while self.runEvent.isSet() :
 		    time.sleep(0.5)
 		self.app.quit()
 		print('BLE server thread closed')
@@ -34,8 +37,8 @@ class BLETransmitterThread(Thread):
     def __init__(self, serverThread,runRaspiCodeEvent):
         Thread.__init__(self)
         self.TXChara = self.retrieveTXCharacteristic(serverThread.app)
-		self.setDaemon(True)
-		self.runEvent= runRaspiCodeEvent
+        self.setDaemon(True)
+        self.runEvent= runRaspiCodeEvent
         print('Open transmitter thread')
 
     def retrieveTXCharacteristic(self, server):               #get the transmitter characteristic
@@ -44,7 +47,7 @@ class BLETransmitterThread(Thread):
 		return serverCharacteristics[0]                          #the transmitter is the fist one in the list
 
     def run(self):
-        while runEvent.isSet() :	
+        while self.runEvent.isSet() :	
 			r.lockConnectedDevice.acquire()
 			deviceIsConnected= r.connectedDevice
 			r.lockConnectedDevice.release()

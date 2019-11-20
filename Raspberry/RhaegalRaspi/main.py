@@ -1,5 +1,5 @@
 from bleGattServer.bleThreads import BLEServerThread, BLETransmitterThread
-from Threading import Event
+from threading import Event
 
 """import bleGattServer.utils.service as serv
 import bleGattServer.utils.serverSettings as sett
@@ -12,9 +12,9 @@ def main():
 	runRaspiCodeEvent.set()
 	
 	#BLE part
-	bleServerThread = BLEServer(runRaspiCodeEvent) #server thread
+	bleServerThread = BLEServerThread(runRaspiCodeEvent) #server thread
 
-	bleTransmitterThread= BLETransmitterThread(bleServerThread,runRaspiCodeEvent) #for transmitting messages to the server
+	#bleTransmitterThread= BLETransmitterThread(bleServerThread,runRaspiCodeEvent) #for transmitting messages to the server
 	
 	#Test Transmitter
 	
@@ -27,15 +27,15 @@ def main():
 
 	try:
 		bleServerThread.start()
-		bleTransmitterThread.start()
+		#bleTransmitterThread.start()
 		
 		
 	except KeyboardInterrupt:
 		print ('Attempting to close all threads')
         runRaspiCodeEvent.clear()
         bleServerThread.join()
-        bleTransmitterThread.join()
-        print ('All threads successfully closed')
+        #bleTransmitterThread.join()
+        #print ('All threads successfully closed')
 		
 if __name__ == '__main__':
     main()
