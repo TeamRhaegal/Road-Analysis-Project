@@ -1,3 +1,0 @@
-/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/Romero_Based_App/build/CMakeFiles/rebuild_cache.dir
-/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/Romero_Based_App/build/CMakeFiles/acm-rpi-app.dir
-/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/Romero_Based_App/build/CMakeFiles/edit_cache.dir
