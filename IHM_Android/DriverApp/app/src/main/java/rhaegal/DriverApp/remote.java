@@ -146,6 +146,7 @@ public class remote extends AppCompatActivity {
                     if (btGatt != null) {
                         btGatt.disconnect();
                     }
+                    sendMessage(Constants.CONNECTION,Constants.OFF);
                     //Log.i(TAG, "disconnect\n");
                 } else {
                     if (btGatt == null) {
@@ -153,6 +154,7 @@ public class remote extends AppCompatActivity {
                         btGatt = btDevice.connectGatt(remote.this, false, gattCallback, TRANSPORT_LE);
                         refreshDeviceCache(btGatt);
                     }
+                    sendMessage(Constants.CONNECTION,Constants.ON);
                     //Log.i(TAG, "connect\n");
                 }
             }
