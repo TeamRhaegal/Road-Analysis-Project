@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 
 """Copyright (c) 2019, Douglas Otwell
 
