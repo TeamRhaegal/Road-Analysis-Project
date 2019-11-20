@@ -25,7 +25,7 @@ import dbus
 import sys 
 
 from advertisement import Advertisement
-from service import Application, Service, Characteristic, Descriptor
+from service import Service, Characteristic, Descriptor
 from gi.repository import GObject
 
 
@@ -53,15 +53,6 @@ class TxCharacteristic(Characteristic):
         Characteristic.__init__(self, RASP_TX_CHARACTERISTIC_UUID,
                                 ['notify'], service)
         self.notifying = False
-        GObject.io_add_watch(sys.stdin, GObject.IO_IN, self.on_console_input)
-        
-    def on_console_input(self, fd, condition):
-        s = fd.readline()
-        if s.isspace():
-            pass
-        else:
-            self.send_tx(s)
-        return True
  
     def send_tx(self, s):
         if not self.notifying:
@@ -89,16 +80,3 @@ class RxCharacteristic(Characteristic):
     def WriteValue(self, value, options):
         print('remote: {}'.format(bytearray(value).decode()))
 
-
-
-app = Application()
-app.add_service(RaspService(0))
-app.register()
-
-adv = RaspAdvertisement(0)
-adv.register()
-
-try:
-    app.run()
-except KeyboardInterrupt:
-    app.quit()
