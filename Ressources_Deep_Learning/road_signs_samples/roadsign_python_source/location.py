@@ -79,7 +79,6 @@ class LocationModel (object):
         self.label_map = label_map_util.load_labelmap(self.label_path)
         self.categories = label_map_util.convert_label_map_to_categories(self.label_map, max_num_classes=self.num_classes, use_display_name=True)
         self.category_index = label_map_util.create_category_index(self.categories)
-        print(self.category_index)
         pass
     
     """
@@ -129,7 +128,7 @@ class LocationModel (object):
                     plt.axis('off')
                     plt.imshow(image_np)
                 
-                return self.boxes, self.scores
+                return self.boxes, self.scores, 
                 pass
     
     """
