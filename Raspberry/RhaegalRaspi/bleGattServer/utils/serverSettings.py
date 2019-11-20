@@ -82,7 +82,7 @@ class RxCharacteristic(Characteristic):
 		global listMessagesReceived
 			
 		mutexMessagesReceived.lock()		
-		listMessagesReceived.append(value)
+		listMessagesReceived.append(bytearray(value).decode())
 		mutexMessagesToSend.unlock()
 		
         print('remote: {}'.format(bytearray(value).decode()))
