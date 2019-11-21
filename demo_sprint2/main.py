@@ -39,7 +39,7 @@ def main():
     try:
         threadsense.start()
         threadcom.start()
-        TransmitterThread.start()
+        bleTransmitterThread.start()
         thread_roadsign_detector.start()
         thread_distance_calcul.start()
         Server.run() ############################### a la fin
@@ -47,7 +47,12 @@ def main():
     except KeyboardInterrupt:
         print ('Attempting to close all threads')
         runRaspiCodeEvent.clear()
+        threadsense.join()
+        threadcom.join()
         bleTransmitterThread.join()
+        thread_roadsign_detector.join()
+        thread_distance_calcul.join()
+    
         print ('All threads successfully closed')
         bleServer.quit()
         msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
