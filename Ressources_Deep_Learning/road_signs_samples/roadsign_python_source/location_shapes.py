@@ -13,7 +13,7 @@ import cv2
 import time
 import numpy as np
 
-class locationShapes(object):
+class LocationShapes(object):
     
     def __init__(self, draw=False):
         self.draw = draw

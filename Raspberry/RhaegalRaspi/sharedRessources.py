@@ -2,12 +2,15 @@ from mutex import mutex
 from threading import Lock
 
 #Global values
-vitesseRoue = 50  
-Turbo ="off"
-Joystick = "none"
-Mode = "assisted"
-Panneau = "none"
-NbPixel = 0
+wheelSpeed = 0  
+turbo ="off"
+joystick = "none"
+mode = "assisted"
+sign = "none"
+signWidth = 0
+maxDistanceUS = 10   #distance max ultrasons obstacle
+obstacleRear = 0
+obstacleFront = 0
 
 listMessagesToSend = []
 listMessagesReceived = []
@@ -19,10 +22,11 @@ lockMessagesToSend = Lock()
 lockMessagesReceived = Lock()
 lockConnectedDevice = Lock()
 
-ModeLock =Lock()
-JoystickLock = Lock()
-TurboLock = Lock()
-PanneauLock = Lock()
-NbPixelLock = Lock()
-VitesseLock = Lock()
+modeLock =Lock()
+joystickLock = Lock()
+turboLock = Lock()
+signLock = Lock()
+signWidthLock = Lock()
+speedLock = Lock()
+
 
