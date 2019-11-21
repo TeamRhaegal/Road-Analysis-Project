@@ -12,7 +12,7 @@ import time
 print("Importing libraries")
 begin = time.time()
 # system imports 
-import sys, os, time, traceback
+import sys, os, time
 from threading import Thread, Lock
 
 import sharedRessources
@@ -134,66 +134,75 @@ def roadsign_detector(runEvent):
         MAIN LOOP
     """
     while(runEvent.isSet()):
-        # count time taken to process one image. Can vary depending on the number of contours detected.
-        print("capturing image, then process location and classification")
-        process_time = time.time()
         
-        if (RASPICAM_ENABLE):
-            camera.capture_image()
-            location_input_image = camera.read_image_as_numpy_array(save=True)
-            location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
-                            
-        # now, find the location of road signs on the image
-        location_model.process_image(location_input_image)
-        contours = location_model.process_contours()
-        print ("processed contours. Number of contours : {}".format(len(contours)))
-        # for each contour, verify that it is a "real" road sign or at least a known shape
-        for c in contours:
-            # find coordinates of "interesting" boxes : 
-                # x = upper left x coordinate
-                # y = upper left y coordinate
-                # w = width of the box
-                # h = heigh of the box
-            x, y, w, h = location_model.find_shape_box(c)
-            #print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
-            if (x != -1 or y != -1 or w != -1 or h != -1):
-                cropped_image = location_input_image[y:y+h, x:x+w].copy()
-                
-                if (DRAW):
-                    cv2.imshow("image", cropped_image)
-                    cv2.waitKey(0)
-                    cv2.destroyAllWindows()
+        sharedRessources.lockConnectedDevice.acquire()
+        check_connected = sharedRessources.connectedDevice
+        sharedRessources.lockConnectedDevice.release()
+        
+        if (check_connected == True):
+            
+            # count time taken to process one image. Can vary depending on the number of contours detected.
+            print("capturing image, then process location and classification")
+            process_time = time.time()
+            
+            if (RASPICAM_ENABLE):
+                camera.capture_image()
+                location_input_image = camera.read_image_as_numpy_array(save=True)
+                location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
+                                
+            # now, find the location of road signs on the image
+            location_model.process_image(location_input_image)
+            contours = location_model.process_contours()
+            print ("processed contours. Number of contours : {}".format(len(contours)))
+            # for each contour, verify that it is a "real" road sign or at least a known shape
+            for c in contours:
+                # find coordinates of "interesting" boxes : 
+                    # x = upper left x coordinate
+                    # y = upper left y coordinate
+                    # w = width of the box
+                    # h = heigh of the box
+                x, y, w, h = location_model.find_shape_box(c)
+                #print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
+                if (x != -1 or y != -1 or w != -1 or h != -1):
+                    cropped_image = location_input_image[y:y+h, x:x+w].copy()
                     
-                # change cropped image to RGB format (and no more BGR)
-                cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
-                # preprocess image for classification
-                preprocessed_image = classification_model.preprocess_img(cropped_image)
-                # find predictions about image
-                predictions = classification_model.show_result_probabilities(preprocessed_image)
-                
-                if(max(predictions[0])) >= 0.2:
-                    result = classification_model.predict_result(preprocessed_image)
-                    print("detected road sign : {}".format(roadsign_types[result][0]))
-                    
-                    if (result == 14 and send_message == 0):
-                        send_message = 1
-                        sharedRessources.lockMessagesToSend.acquire()
-                        sharedRessources.listMessagesToSend.append("sign$stop")
-                        sharedRessources.lockMessagesToSend.release()
+                    if (DRAW):
+                        cv2.imshow("image", cropped_image)
+                        cv2.waitKey(0)
+                        cv2.destroyAllWindows()
                         
-                    # save result in global variable
-                    sharedRessources.signLock.acquire()
-                    sharedRessources.sign = roadsign_types[result][0] 
-                    sharedRessources.signLock.release()
+                    # change cropped image to RGB format (and no more BGR)
+                    cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
+                    # preprocess image for classification
+                    preprocessed_image = classification_model.preprocess_img(cropped_image)
+                    # find predictions about image
+                    predictions = classification_model.show_result_probabilities(preprocessed_image)
                     
-                    sharedRessources.signWidthLock.acquire()
-                    sharedRessources.signWidth = w
-                    sharedRessources.signWidthLock.release()
-                    
-                    time.sleep(0.1)
-                    
-        print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
+                    if(max(predictions[0])) >= 0.2:
+                        result = classification_model.predict_result(preprocessed_image)
+                        print("detected road sign : {}".format(roadsign_types[result][0]))
+                        
+                        if (result == 14 and send_message == 0):
+                            send_message = 1
+                            sharedRessources.lockMessagesToSend.acquire()
+                            sharedRessources.listMessagesToSend.append("sign$stop")
+                            sharedRessources.lockMessagesToSend.release()
+                            
+                        # save result in global variable
+                        sharedRessources.signLock.acquire()
+                        sharedRessources.sign = roadsign_types[result][0] 
+                        sharedRessources.signLock.release()
+                        
+                        sharedRessources.signWidthLock.acquire()
+                        sharedRessources.signWidth = w
+                        sharedRessources.signWidthLock.release()
+                        
+                        time.sleep(0.1)
+                        
+            print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
+            
         time.sleep(1)
+        
             
 
 """
@@ -205,15 +214,21 @@ def distance_calcul(runEvent):
     old_distance = None
     
     while(runEvent.isSet()):
-        sharedRessources.signWidthLock.acquire()
-        width = sharedRessources.signWidth
-        sharedRessources.signWidthLock.release()
+        sharedRessources.lockConnectedDevice.acquire()
+        check_connected = sharedRessources.connectedDevice
+        sharedRessources.lockConnectedDevice.release()
         
-        if (width != None and width > 0):
-            distance = (0.195 * focal) / width
-            if (old_distance != distance):
-                old_distance = distance
-                print ('\033[93m' +  "distance = {}".format(distance) + "\033[95m")
-                print ("width = {} pixels".format(width))
+        if (check_connected == True):
+            sharedRessources.signWidthLock.acquire()
+            width = sharedRessources.signWidth
+            sharedRessources.signWidthLock.release()
+            
+            if (width != None and width > 0):
+                distance = (0.195 * focal) / width
+                if (old_distance != distance):
+                    old_distance = distance
+                    print ('\033[93m' +  "distance = {}".format(distance) + "\033[95m")
+                    print ("width = {} pixels".format(width))
+        time.sleep(1)
             
 

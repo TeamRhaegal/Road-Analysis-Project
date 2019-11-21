@@ -2,7 +2,7 @@ from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 from threading import Event, Thread, Lock
 import command as C
 import demo_detector_shapes as detection
-import seprateMessageThread
+from seprateMessageThread import SeprateMessageThread
 import os
 import time
 import can
@@ -13,7 +13,6 @@ def main():
 
     # Bring up can0 interface at 500kbps
     os.system("sudo /sbin/ip link set can0 up type can bitrate 400000")
-    time.sleep(0.1)
     print('Press CTL-C to exit')
     try:
         bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
@@ -47,8 +46,8 @@ def main():
         bleTransmitterThread.start()
         thread_roadsign_detector.start()
         thread_distance_calcul.start()
-	seprateMessageThread.start()
-        bleServer.run() ############################### a la fin
+        seprateMessageThread.start()
+        bleServer.run() ##################################################################################################### a la fin
 				
     except KeyboardInterrupt:
         print ('Attempting to close all threads')
