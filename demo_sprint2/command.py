@@ -130,14 +130,15 @@ class MySensor(Thread):
         while self.runEvent.isSet() :
             msg = self.bus.recv()
             time.sleep(0.01)
+            # GNEGNEGNE JE PRINT A L'INFINI MDR LOL XD PTDR
             if msg.arbitration_id == MS:
-                Batmes = int.from_bytes(msg.data[2:4], byteorder='big')
+                Batmes = int(str(msg.data[2:4]).encode('hex'), 16)
                 U = (4095 / Batmes) * (3.3 / 0.2)
-                print(U)
+                print(Batmes)
             if msg.arbitration_id == MS:
                 # Vitesse voiture
                 R.speedLock.acquire()
-                R.wheelSpeed = int.from_bytes(msg.data[4:6], byteorder='big')
+                R.wheelSpeed = int(str(msg.data[4:6]).encode('hex'), 16)
                 R.wheelSpeed = (0.01*R.wheelSpeed*wheelPerimeter / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
                 R.speedLock.release()
                 #message = "Vitesse :" + str(wheelSpeed)+ ";"

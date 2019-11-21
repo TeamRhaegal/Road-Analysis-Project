@@ -42,7 +42,7 @@ def main():
         bleTransmitterThread.start()
         thread_roadsign_detector.start()
         thread_distance_calcul.start()
-        Server.run() ############################### a la fin
+        bleServer.run() ############################### a la fin
 				
     except KeyboardInterrupt:
         print ('Attempting to close all threads')

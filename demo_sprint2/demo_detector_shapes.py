@@ -213,7 +213,7 @@ def distance_calcul(runEvent):
             distance = (0.195 * focal) / width
             if (old_distance != distance):
                 old_distance = distance
-                print ('\033[93m' +  "distance = {}" + "\033[95m".format(distance))
+                print ('\033[93m' +  "distance = {}".format(distance) + "\033[95m")
                 print ("width = {} pixels".format(width))
             
 
