@@ -37,16 +37,21 @@ class MyCommand(Thread):
         CMD_O = 50
         CMD_V = 50
         CMD_V_A=50
+        CMD_Turbo = 75
         Temps_necessaire=0.01
         while self.runEvent.isSet() :  #remplacer avec l'event du main
             
+            CMD_O = 50
+            CMD_V = 50
+            CMD_V_A= 50
+            CMD_Turbo = 75
             R.lockConnectedDevice.acquire()
             check_connected = R.connectedDevice
             R.lockConnectedDevice.release()
-            
+            #print(check_connected)
             if(check_connected == True):
                 time.sleep(0.01)            
-                R.modeLock.acquire()
+                
                 R.turboLock.acquire()
                 R.joystickLock.acquire()
                 if R.turbo == "on" : CMD_Turbo = 100
@@ -57,7 +62,9 @@ class MyCommand(Thread):
                 if R.joystick == "left" : 
                     CMD_O = 0
                     CMD_V = 50
-                if R.joystick == "front" : CMD_V = CMD_Turbo
+                if R.joystick == "front" : 
+                    CMD_V = CMD_Turbo
+                    CMD_O = 50
                 if R.joystick == "right&front" : 
                     CMD_O = 100
                     CMD_V = CMD_Turbo
@@ -67,8 +74,7 @@ class MyCommand(Thread):
                 if R.joystick == "none" : 
                     CMD_V = 50
                     CMD_O = 50
-        
-                R.modeLock.release()
+
                 R.turboLock.release()
                 R.joystickLock.release()   
                 
@@ -79,18 +85,29 @@ class MyCommand(Thread):
                 CMD_V = CMD_V + 0x80
                 CMD_O = CMD_O + 0x80
                 CMD_V_A = CMD_V_A + 0x80
-                if R.mode == "auto" and R.joystick == "none":
+                
+                R.modeLock.acquire()
+                modeC = R.mode
+                R.modeLock.release()
+                if modeC == "auto" and R.joystick == "none":
                     
+                    R.signLock.acquire()
+                    signC = R.sign
+                    R.signLock.release()
                     R.signWidthLock.acquire()
-                    R.speedLock.acquire()
-                    if R.signWidth and R.sign == "stop":
+                    
+                    
+                    if R.signWidth and signC == "stop":
                         toSignDistance = (realSignWidth*focal)/R.signWidth
-                        Temps_necessaire = toSignDistance / (R.wheelSpeed+0.00001)   #calcul du temps à  attendre 
+                        Temps_necessaire = toSignDistance / (1.2)   #calcul du temps à  attendre 
+                        print(Temps_necessaire)
                     else :  Temps_necessaire = 0.01
                     R.signWidthLock.release()
-                    R.speedLock.release()
+                   
+                    
                     # condition du stop pour marquer un arrêt
-                    if R.sign == "stop" : 
+                   
+                    if signC == "stop" : 
                         msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
                         time.sleep(Temps_necessaire)
                         self.bus.send(msg)
@@ -100,8 +117,8 @@ class MyCommand(Thread):
                         time.sleep(Temps_necessaire)
                         self.bus.send(msg)
                     #mode autonome
-                   
-                elif R.mode == "assisted" :
+                
+                elif modeC == "assist" :
                     # comande en fonction des messages de l'ihm
                     msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
                     time.sleep(0.01)
@@ -117,7 +134,7 @@ class MyCommand(Thread):
                 time.sleep(0.01)
                 self.bus.send(msg)
 
-            time.sleep(1)
+            time.sleep(0.1)
         msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
         time.sleep(0.01)
         self.bus.send(msg)
@@ -149,16 +166,15 @@ class MySensor(Thread):
                 
                 msg = self.bus.recv()
                 time.sleep(0.01)
-                # GNEGNEGNE JE PRINT A L'INFINI MDR LOL XD PTDR
-                if msg.arbitration_id == MS:
+                """if msg.arbitration_id == MS:
                     Batmes = int(str(msg.data[2:4]).encode('hex'), 16)
                     U = (4095 / Batmes) * (3.3 / 0.2)
-                    print(Batmes)
+                    print(Batmes)"""
                 if msg.arbitration_id == MS:
                     # Vitesse voiture
                     R.speedLock.acquire()
-                    R.wheelSpeed = int(str(msg.data[4:6]).encode('hex'), 16)
-                    R.wheelSpeed = (0.01*R.wheelSpeed*wheelPerimeter / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
+                    wheel_speed = int(str(msg.data[6:8]).encode('hex'), 16)
+                    R.wheelSpeed = (0.01*wheel_speed*wheelPerimeter / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
                     R.speedLock.release()
                     #message = "Vitesse :" + str(wheelSpeed)+ ";"
                     #print(message)
@@ -207,4 +223,4 @@ class MySensor(Thread):
                 obstacleFrontLock.release()
                 obstacleRearLock.release()
                 '''
-            time.sleep(1)
+            time.sleep(0.05)

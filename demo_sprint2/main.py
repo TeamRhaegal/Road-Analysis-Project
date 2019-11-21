@@ -2,7 +2,7 @@ from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 from threading import Event, Thread, Lock
 import command as C
 import demo_detector_shapes as detection
-from seprateMessageThread import SeprateMessageThread
+import seprateMessageThread as sm
 import os
 import time
 import can
@@ -37,7 +37,7 @@ def main():
     thread_distance_calcul = Thread(target=detection.distance_calcul, args=(runRaspiCodeEvent,))
     
     #seprate the Message
-    seprateMessageThread = SeprateMessageThread()
+    seprateMessageThread = sm.SeprateMessageThread(runRaspiCodeEvent)
     
     
     try:
@@ -57,6 +57,7 @@ def main():
         bleTransmitterThread.join()
         thread_roadsign_detector.join()
         thread_distance_calcul.join()
+        seprateMessageThread.join()
     
         print ('All threads successfully closed')
         bleServer.quit()

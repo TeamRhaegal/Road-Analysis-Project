@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 """
     Optimised code that allows to detect road signs from an image and classify them, using one machine learning model (CNN for classification) and shape detection using openCV to 
@@ -178,11 +177,12 @@ def roadsign_detector(runEvent):
                     # find predictions about image
                     predictions = classification_model.show_result_probabilities(preprocessed_image)
                     
-                    if(max(predictions[0])) >= 0.2:
+                    if(max(predictions[0]) >= 0.2):
                         result = classification_model.predict_result(preprocessed_image)
                         print("detected road sign : {}".format(roadsign_types[result][0]))
                         
                         if (result == 14 and send_message == 0):
+                            print ("coucou j'ai reconn un stop !")
                             send_message = 1
                             sharedRessources.lockMessagesToSend.acquire()
                             sharedRessources.listMessagesToSend.append("sign$stop")
@@ -201,7 +201,7 @@ def roadsign_detector(runEvent):
                         
             print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
             
-        time.sleep(1)
+        time.sleep(0.1)
         
             
 
@@ -229,6 +229,6 @@ def distance_calcul(runEvent):
                     old_distance = distance
                     print ('\033[93m' +  "distance = {}".format(distance) + "\033[95m")
                     print ("width = {} pixels".format(width))
-        time.sleep(1)
+        time.sleep(0.1)
             
 
