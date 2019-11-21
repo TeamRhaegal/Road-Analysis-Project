@@ -13,7 +13,7 @@ def main():
 
 	try:
 		bleTransmitterThread.start()
-		bleServer.run() ############################### !! À METTRE APRÈS AVOIR DÉMARRÉ TOUS LES THREADS
+		bleServer.run() ############################### a la fin
 				
 	except KeyboardInterrupt:
 		print ('Attempting to close all threads')
