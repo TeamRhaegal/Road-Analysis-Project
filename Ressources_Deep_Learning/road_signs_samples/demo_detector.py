@@ -9,6 +9,7 @@
 
 from tqdm import tqdm
 
+
 print("Importing libraries")
 for i in tqdm(range(1000)):
     # system imports 
@@ -25,7 +26,7 @@ for i in tqdm(range(1000)):
     sys.path.append('roadsign_python_source/')
     from roadsign_python_source import location, classification
 
-    RASPICAM_ENABLE = True
+    RASPICAM_ENABLE = False
     if (RASPICAM_ENABLE):
         from roadsign_python_source import raspicam
         
@@ -35,7 +36,7 @@ for i in tqdm(range(1000)):
 """
     Define different paths for example images, location and classification model, etc.
 """
-PATH_FOR_EXAMPLE_IMAGE = "images/roadsigns_representation/00014/stop.ppm"
+PATH_FOR_EXAMPLE_IMAGE = "images/00074.ppm"
 PATH_TO_LOCATION_MODEL = "F_RCNN_location/mobilenet_v1/rfcn_resnet101_gtsdb3.config"
 PATH_TO_CKPT = "F_RCNN_location/mobilenet_v1/frozen_inference_graph.pb"
 PATH_TO_LABELS = "F_RCNN_location/scripts/gtsdb_label_map.pbtxt"
@@ -140,7 +141,7 @@ def roadsign_detector():
                 location_input_image = camera.read_image_as_numpy_array(save=True)
             
             # now, find the location of road signs on the image
-            img = location_input_image
+            img = location_input_image.copy()
             location_boxes, location_score = location_model.detect_roadsigns_from_numpy_array(img)
             
             """
@@ -176,7 +177,7 @@ def roadsign_detector():
                     if (DRAW):
                         # draw rectangle boxes around Region of Interest (ROI)
                         cv2.rectangle(location_input_image, (x1,y1), (x2,y2), (255,0,0), 1)
-                        io.imsave("image_with_ROIs.png", img)
+                        io.imsave("image_with_ROIs.png", location_input_image)
                        
             # save result in the global variable (acquire lock then release it after modifying variable
             LOCK_CLASSIFICATION_RESULT.acquire()
