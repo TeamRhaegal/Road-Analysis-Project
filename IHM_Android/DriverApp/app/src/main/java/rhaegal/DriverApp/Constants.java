@@ -22,6 +22,7 @@ public class Constants {
     public static final String RADAR = "radar";
     public static final String ROUTE = "route";
     public static final String SPEED = "speed";
+    public static final String SIGN = "sign";
 
 
     public static final String JOYSTIC = "joy";
@@ -41,5 +42,6 @@ public class Constants {
     public static final String LOW ="low";
     public static final String MIDDLE = "mid";
     public static final String NOTHING = "none";
+    public static final String STOP = "stop";
 
 }
