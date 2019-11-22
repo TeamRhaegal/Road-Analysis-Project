@@ -98,18 +98,18 @@ class MyCommand(Thread):
                 VitesseLock.release()
                 
                     
-                msg = can.Message(arbitration_id=0x010,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
+                msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
                 time.sleep(Temps_necessaire)
                 self.bus.send(msg)
                 #mode autonome
                 
             elif Mode == "assisted" :
-                msg = can.Message(arbitration_id=0x010,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
+                msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
             # gestion des obstacles : Emergency STOP    
             elif ObstacleRear or ObstacleFront :
-                msg = can.Message(arbitration_id=0x010,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
+                msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
                 
@@ -170,9 +170,9 @@ class MySensor(Thread):
             
             ObstacleFrontLock.acquire()
             ObstacleRearLock.acquire()
-            if  URL <15 or URR<15 or URC <15: ObstacleRear = 1
+            if  URL <DistanceMaxUS or URR<DistanceMaxUS or URC <DistanceMaxUS: ObstacleRear = 1
             else : ObstacleRear = 0 
-            if UFL<15 or UFR<15 or UFC<15: ObstacleFront = 1
+            if UFL<DistanceMaxUS or UFR<DistanceMaxUS or UFC<DistanceMaxUS: ObstacleFront = 1
             else: ObstacleFront = 0 
             ObstacleFrontLock.release()
             ObstacleRearLock.release()
