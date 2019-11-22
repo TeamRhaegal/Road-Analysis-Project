@@ -11,31 +11,38 @@ import time
 import os
 import struct
 from threading import Thread, Lock
-from queue import Queue
 
 
 
-MOT =0x010     #identifiant commande moteur CAN
+MOT=0x010     #identifiant commande moteur CAN
 US2=0x001      #identifiant Ultrasons arrière CAN
 US1=0x000      ##identifiant Ultrasons arrière CAN
 
-Width_panneau = 0.20  #nb à déterminer
-Focal = 595
-Perimetre_roue = 62.8
 
+led=22
+
+#variables globales
 Turbo ="off"
 Joystick = "none"
-Mode = "assisted"
+Mode = "assisted"    #auto pour test unitaire
 Deconnexion = "off"
 Panneau = "none"
-Nb_pixel = "0"
+NbPixel = "0"
+vitesseRoue = 50
+DistanceMaxUS = 15
+ObstacleRear = 0
+ObstacleFront = 0
 
-Mode_Lock =Lock()
-Joystick_Lock = Lock()
-Turbo_Lock = Lock()
-Panneau_Lock = Lock()
-Nb_pixel_Lock = Lock()
-Vitesse_Lock = Lock()
+
+ModeLock =Lock()
+JoystickLock = Lock()
+TurboLock = Lock()
+PanneauLock = Lock()
+NbPixelLock = Lock()
+VitesseLock = Lock()
+ObstacleFrontLock= Lock()
+ObstacleRearLock = Lock()
+
 
 
 			
@@ -48,10 +55,13 @@ class MyCommand(Thread):
     def run(self):
        
 		# mettre la condition de detection d'obstacle ultrasons
-        Mode_Lock.acquire()
-        Turbo_Lock.acquire()
-        Joystick_Lock.acquire()
+        Width_panneau = 0.20  #nb à déterminer
+        Focal = 595
         while True : 
+            
+            ModeLock.acquire()
+            TurboLock.acquire()
+            JoystickLock.acquire()
             if Turbo == "on" : CMD_Turbo = 100
             if Turbo == "off" : CMD_Turbo = 75
             if Joystick == "right" :  CMD_O = 100
@@ -65,30 +75,31 @@ class MyCommand(Thread):
                 CMD_O = 0
                 CMD_V = CMD_Turbo
     
-            Mode_Lock.release()
-            Turbo_Lock.release()
-            Joystick_Lock.release()   
+            ModeLock.release()
+            TurboLock.release()
+            JoystickLock.release()   
             
+            PanneauLock.acquire()
             if Panneau == "num panneau": CMD_V_A = 0  #panneau lock
             else : CMD_V_A = 0xB6
-            
+            PanneauLock.release()
             CMD_V = CMD_V + 0x10
             CMD_O = CMD_O + 0x10
                 
             if Mode == "auto":
                 
-                Nb_pixel_Lock.acquire()
-                Vitesse_Lock.acquire()
-                if Nb_pixel != 0:
-                    Distance_panneau = (Width_panneau*Focal)/Nb_pixel
-                    Temps_necessaire = Distance_panneau / vitesse
-                    #calcul du temps à  attendre  
-                    
-                Nb_pixel_Lock.release()
-                Vitesse_Lock.release()
+                NbPixelLock.acquire()
+                VitesseLock.acquire()
+                if NbPixel != 0 or CMD_V_A== 0 :
+                    Distance_panneau = (Width_panneau*Focal)/NbPixel
+                    Temps_necessaire = Distance_panneau / vitesseRoue   #calcul du temps à  attendre 
+                else :  Temps_necessaire = 0.01
+                NbPixelLock.release()
+                VitesseLock.release()
+                
                     
                 msg = can.Message(arbitration_id=0x010,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
-                time.sleep(0.01)
+                time.sleep(Temps_necessaire)
                 self.bus.send(msg)
                 #mode autonome
                 
@@ -96,30 +107,76 @@ class MyCommand(Thread):
                 msg = can.Message(arbitration_id=0x010,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
-                
-            elif Deconnexion == "on" :
+            # gestion des obstacles : Emergency STOP    
+            elif ObstacleRear or ObstacleFront :
                 msg = can.Message(arbitration_id=0x010,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
- class MySensor(Thread):
+                
+                
+class MySensor(Thread):
 
     def __init__(self, bus):
         Thread.__init__(self)
         self.bus = bus
 
     def run(self):
-       
-		 while True :
+        Perimetre_roue = 0.62
+        while True :
             msg = self.bus.recv()
             
             if msg.arbitration_id == US2:
-                # ultrason arriere gauche
-                Vitesse_Lock.acquire()
-                vitesse = int.from_bytes(msg.data[4:6], byteorder='big')
-                vitesse = (100*vitesse*0.62 / 60) #metre/s
-                Vitesse_Lock.release()
-                message = "Vitesse :" + str(distance)+ ";"
+                # Vitesse voiture
+                VitesseLock.acquire()
+                vitesseRoue = int.from_bytes(msg.data[4:6], byteorder='big')
+                vitesseRoue = (100*vitesseRoue*Perimetre_roue / 60) #metre/s
+                VitesseLock.release()
+                message = "Vitesse :" + str(vitesseRoue)+ ";"
                 #print(message)
+            if msg.arbitration_id == US2:
+                # ultrason arriere gauche
+                distance = int.from_bytes(msg.data[0:2], byteorder='big')
+                URL = distance
+                message = "URL:" + str(distance)+ ";"
+                #print(message)
+                # ultrason arriere droit
+                distance = int.from_bytes(msg.data[2:4], byteorder='big')
+                URR = distance
+                message = "URR:" + str(distance)+ ";"
+                #print(message)
+                # ultrason arriere centre
+                distance = int.from_bytes(msg.data[4:6], byteorder='big')
+                URC = distance
+                message = "UFC:" + str(distance)+ ";"
+                #print(message)
+                print("---------")
+            if msg.arbitration_id == US1:
+                # ultrason avant gauche
+                distance = int.from_bytes(msg.data[0:2], byteorder='big')
+                UFL = distance
+                message = "UFL:" + str(distance)+ ";"
+                #print(message)
+                # ultrason avant droit
+                distance = int.from_bytes(msg.data[2:4], byteorder='big')
+                UFR = distance
+                message = "UFR:" + str(distance)+ ";"
+                #print(message)
+                # ultrason avant centre
+                distance = int.from_bytes(msg.data[4:6], byteorder='big')
+                UFC = distance
+                message = "UFC:" + str(distance)+ ";"
+                #print(message)
+                print("---------")
+            
+            ObstacleFrontLock.acquire()
+            ObstacleRearLock.acquire()
+            if  URL <15 or URR<15 or URC <15: ObstacleRear = 1
+            else : ObstacleRear = 0 
+            if UFL<15 or UFR<15 or UFC<15: ObstacleFront = 1
+            else: ObstacleFront = 0 
+            ObstacleFrontLock.release()
+            ObstacleRearLock.release()
+            
             
            
                 
@@ -144,14 +201,14 @@ except OSError:
 	
 # Main loop
 try:
-    queue_mode = Queue()
-    queue_joystick = Queue()
-    queue_turbo = Queue()
 
+    threadsense = MySensor(bus)
     threadcom = MyCommand(bus)
     threadcom.start()
+    threadsense.start()
     
     threadcom.join()
+    threadsense.join()
     
 
 
