@@ -2,6 +2,7 @@ from utils.serverSetting import *
 from utils.service import Application
 from threading import Thread
 from time import Time
+import RhaegalRaspi.sharedRessources
 
 class BLEServer(Application):
     def __init__(self):
