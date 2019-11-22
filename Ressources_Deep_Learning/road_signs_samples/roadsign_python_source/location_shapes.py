@@ -37,6 +37,9 @@ class locationShapes(object):
         
         pass
     
+    """
+        pre process image before finding contours
+    """
     def process_image(self, image):
         self.image = image.copy()
         # resize and process image 
@@ -68,15 +71,15 @@ class locationShapes(object):
         # loop over the contours
         # first, detect areas larger than minimal size and thiner than maximal size
         area = cv2.contourArea(c)
-        if (area >= 500  and area <= 7000):
-            print ("areas : {}".format(area))
+        print ("area : {}".format(area))
+        if (area >= 500  and area <= 1000000):
             # compute the center of the contour, then detect the name of the
             # shape using only the contour
             M = cv2.moments(c)
             
             if(M["m00"] != 0):
-                cX = int((M["m10"] / M["m00"]) * ratio)
-                cY = int((M["m01"] / M["m00"]) * ratio)
+                cX = int((M["m10"] / M["m00"]) * self.ratio)
+                cY = int((M["m01"] / M["m00"]) * self.ratio)
                 shape = self.detect_shape(c)
 
                 if (shape != "unidentified"):
@@ -97,8 +100,8 @@ class locationShapes(object):
                         """
                         # show the output image
                         cv2.imshow("image", self.image)
-                        cv2.waitKey(1)
-                        #  cv2.destroyAllWindows()
+                        cv2.waitKey(0)
+                        cv2.destroyAllWindows()
                     return x, y, w, h
                 else:
                     return -1, -1, -1, -1
