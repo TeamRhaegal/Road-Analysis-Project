@@ -9,6 +9,8 @@
 
 import imutils
 import numpy as np
+import cv2
+import time
 
 #
 # Computes mean square error between two n-d matrices. Lower = more similar.
@@ -49,38 +51,35 @@ def sliding_window(image, stepSize, windowSize):
             yield (x, y, image[y:y+windowSize[1], x:x+windowSize[1]])
 
 
-import argparse
-import cv2
-import time
+PATH_TO_EXAMPLE_IMAGE = "images/00074.png"
+PATH_TO_TEMPLATE_IMAGE = "images/roadsigns_representation/00014/stop.png"
 
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", required=True, help="Path to the target image")
-ap.add_argument("-p", "--prototype", required=True, help="Path to the prototype object")
-args = vars(ap.parse_args())
-
-targetImage = cv2.imread(args["image"])
+targetImage = cv2.imread(PATH_TO_EXAMPLE_IMAGE)
 #targetImage = cv2.GaussianBlur(targetImage, (15, 15), 0)
 
-targetImage = imutils.resize(targetImage, width=500)
-prototypeImg = cv2.imread(args["prototype"])
+#targetImage = imutils.resize(targetImage, width=500)
+prototypeImg = cv2.imread(PATH_TO_TEMPLATE_IMAGE)
 
 maxSim = -1
 maxBox = (0,0,0,0)
 
 t0 = time.time()
-
-for p in pyramid(prototypeImg, minSize = 50, maxSize = targetImage.shape[0]):
-    for (x, y, window) in sliding_window(targetImage, stepSize = 2, windowSize = p.shape):
+print("beginning")
+for p in pyramid(prototypeImg, scale = 2, minSize = 10, maxSize = 600):
+    for (x, y, window) in sliding_window(targetImage, stepSize = 12, windowSize = p.shape):
         if window.shape[0] != p.shape[0] or window.shape[1] != p.shape[1]:
-			continue
+            print ("windows shape condition") 
+            continue
 
         tempSim = compareImages(p, window)
         if(tempSim > maxSim):
+            print ("tempsim > maxsim") 
             maxSim = tempSim
             maxBox = (x, y, p.shape[0], p.shape[1])
 
 t1 = time.time()
+print ("finished") 
 
 print("Execution time: " + str(t1 - t0))
 print(maxSim)
