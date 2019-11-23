@@ -19,11 +19,12 @@ from skimage import io
 import cv2, imutils
 # arrays processing imports
 import numpy as np
+import can
 
 sys.path.append('roadsign_python_source/')
 from roadsign_python_source import location_shapes, classification
 
-RASPICAM_ENABLE = False
+RASPICAM_ENABLE = True
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
     
@@ -102,8 +103,6 @@ roadsign_types = [  ["speed limit 20",                                  "images/
                 ]
 
 def roadsign_detector():
-
-
     try : 
         global sign, signWidth, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
         
@@ -204,6 +203,17 @@ def roadsign_detector():
         sys.exit()
     pass
 
+def distance_calcul():
+    try:
+        
+        
+        
+    
+    except KeyboardInterrupt:
+        print("\nnCTRL+C PRESSED : CLOSING PROGRAM")
+        sys.exit()
+    pass
+
 
 """
         MAIN FUNCTION
@@ -212,7 +222,10 @@ if __name__ == "__main__":
 
     try : 
         thread_roadsign_detector = Thread(target=roadsign_detector)
+        thread_distance_calcul = Thread(target=distance_calcul)
+        
         thread_roadsign_detector.start()
+        thread_distance_calcul.start()
     except KeyboardInterrupt : 
         print("\nCTRL+C PRESSED : CLOSING PROGRAM")
         sys.exit()
