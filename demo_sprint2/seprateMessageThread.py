@@ -11,9 +11,9 @@ class SeprateMessageThread(Thread):
     def run(self):
         #Lock!!!
         listMessagesReceived.acquire()
-        ModeLock.acquire()
-        JoystickLock.acquire()
-        TurboLock.acquire()
+        modeLock.acquire()
+        joystickLock.acquire()
+        turboLock.acquire()
 
         #the message we get is "listMessagesReceived" = "xxxx$xxxxxxx"
         #separate it in two part
@@ -24,18 +24,18 @@ class SeprateMessageThread(Thread):
         #there is a table of keys and values
         #Mode, Joystick, Turbo are GLOBAL!!!
         if key == 'mode':
-            Mode = value[:] #slice
+            mode = value[:] #slice
         elif key == 'joystick':
-            Joystick = value[:] #slice
+            joystick = value[:] #slice
         elif key == 'turbo':
-            Turbo = value[:] #slice
+            turbo = value[:] #slice
         else:
             None
 
         #Unlock!!!
-        TurboLock.release()
-        JoystickLock.release()
-        ModeLock.release()
+        turboLock.release()
+        joystickLock.release()
+        modeLock.release()
         listMessagesReceived.release()
 
         time.sleep(0.5)

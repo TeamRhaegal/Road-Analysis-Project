@@ -105,14 +105,20 @@ class MyCommand(Thread):
                 else :  Temps_necessaire = 0.01
                 signWidthLock.release()
                 speedLock.release()
-                
-
-                msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
-                time.sleep(Temps_necessaire)
-                self.bus.send(msg)
+                # condition du stop pour marquer un arrêt
+                if sign == "stop" : 
+                    msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
+                    time.sleep(Temps_necessaire)
+                    self.bus.send(msg)
+                    time.sleep(10)
+                else : 
+                    msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
+                    time.sleep(Temps_necessaire)
+                    self.bus.send(msg)
                 #mode autonome
                
             elif mode == "assisted" :
+                # comande en fonction des messages de l'ihm
                 msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
@@ -122,7 +128,9 @@ class MyCommand(Thread):
                 time.sleep(0.01)
                 self.bus.send(msg)
             '''
-                
+        msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
+        time.sleep(0.01)
+        self.bus.send(msg)
                 
 class MySensor(Thread):
 
