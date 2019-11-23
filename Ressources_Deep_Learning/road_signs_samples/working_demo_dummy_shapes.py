@@ -178,6 +178,9 @@ if __name__ == "__main__":
                     if(max(predictions[0])) >= 0.2:
                         result = classification_model.predict_result(preprocessed_image)
                         print("detected road sign : {}".format(roadsign_types[result][0]))
+                        
+                        if (result == 12):
+                            print("la voiture doit s'arrêter ! ")
                     
             print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
             time.sleep(1)

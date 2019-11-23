@@ -23,7 +23,7 @@ import numpy as np
 sys.path.append('roadsign_python_source/')
 from roadsign_python_source import location_shapes, classification
 
-RASPICAM_ENABLE = False
+RASPICAM_ENABLE = True
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
     
@@ -104,47 +104,58 @@ roadsign_types = [  ["speed limit 20",                                  "images/
                 ]
 
 def roadsign_detector():
-    global CLASSIFICATION_RESULT, PIXEL_SIZE
-    
-    print("initializing roadsign detector")
-    begin = time.time()
-    #Remove Python cache files if they exist
-    os.system("rm -rf  roadsign_python_source/*.pyc && rm -rf roadsign_python_source/keras_frcnn/*.pyc")
-    
-    # init camera or example image depending on the mode chosen
-    if (RASPICAM_ENABLE):
-        #init camera from raspberry (raspicam)
-        print("initializing camera")
-        camera = raspicam.Raspicam()
-    else:
-        # load example image 
-        print("loading example image (not camera)")
-        location_input_image = cv2.imread(PATH_FOR_EXAMPLE_IMAGE)    
-        cv2.imshow("image", location_input_image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    
-    # define location object instance
-    location_model = location_shapes.locationShapes(draw=DRAW)
-    
-    # load classification model
-    print("loading classification model")
-    classification_model = classification.ClassificationModel(debug=False)
-    classification_model.load_model(model_path=PATH_TO_CLASSIFICATION_MODEL)
 
-    print ("initialized roadsign detector. Ellapsed time : {} s".format(time.time()-begin))
-    """
-        MAIN LOOP
-    """
-    while(1):
-        try:
+    try : 
+        global CLASSIFICATION_RESULT, PIXEL_SIZE, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
+        
+        print("initializing roadsign detector")
+        init_time = time.time()
+        #Remove Python cache files if they exist
+        os.system("rm -rf  roadsign_python_source/*.pyc && rm -rf roadsign_python_source/keras_frcnn/*.pyc")
+    
+        print("hello !")
+        # init camera or example image depending on the mode chosen
+        if (RASPICAM_ENABLE):
+            #init camera from raspberry (raspicam)
+            print("initializing camera")
+            camera = raspicam.Raspicam()
+        else:
+            # load example image 
+            print("loading example image (not camera)")
+            location_input_image = cv2.imread(PATH_FOR_EXAMPLE_IMAGE)    
+            
+            if(DRAW):
+                cv2.imshow("image", location_input_image)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+        
+        # define location object instance
+        location_model = location_shapes.locationShapes(draw=DRAW)
+        
+        # load classification model
+        print("loading classification model")
+        classification_model = classification.ClassificationModel(debug=DRAW)
+        classification_model.load_model(model_path=PATH_TO_CLASSIFICATION_MODEL)
+
+        print ("initialized roadsign detector. Ellapsed time : {} s".format(time.time()-init_time))
+        """
+            MAIN LOOP
+        """
+        while(1):
+            # count time taken to process one image. Can vary depending on the number of contours detected.
+            print("capturing image, then process location and classification")
+            process_time = time.time()
+            
             if (RASPICAM_ENABLE):
                 camera.capture_image()
                 location_input_image = camera.read_image_as_numpy_array(save=True)
             
+            io.imsave("test.ppm", location_input_image)
+            
             # now, find the location of road signs on the image
             location_model.process_image(location_input_image)
             contours = location_model.process_contours()
+            print ("processed contours. Number of contours : {}".format(len(contours)))
             # for each contour, verify that it is a "real" road sign or at least a known shape
             for c in contours:
                 # find coordinates of "interesting" boxes : 
@@ -153,6 +164,7 @@ def roadsign_detector():
                     # w = width of the box
                     # h = heigh of the box
                 x, y, w, h = location_model.find_shape_box(c)
+                #print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
                 if (x != -1 or y != -1 or w != -1 or h != -1):
                     cropped_image = location_input_image[y:y+h, x:x+w].copy()
                     # preprocess image for classification
@@ -160,22 +172,16 @@ def roadsign_detector():
                     # find predictions about image
                     predictions = classification_model.show_result_probabilities(preprocessed_image)
                     
-                    print ("predictions : {}".format(predictions))
+                    if(max(predictions[0])) >= 0.2:
+                        result = classification_model.predict_result(preprocessed_image)
+                        print("detected road sign : {}".format(roadsign_types[result][0]))
+                        
+                        if (result == 12):
+                            print("LA VOITURE DOIT S'ARRETER ! ")
                     
-                    
+            print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
+            time.sleep(1)
 
-                    
-                    
-                
-            
-            
-            
-            
-            
-            
-            
-            
-            
         except KeyboardInterrupt :
             print("\nCTRL+C PRESSED : CLOSING PROGRAM")
             sys.exit()
