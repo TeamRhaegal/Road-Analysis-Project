@@ -10,6 +10,7 @@ import can
 import time
 import os
 from threading import Thread, Lock
+import sharedRessources as R
 
 
 
