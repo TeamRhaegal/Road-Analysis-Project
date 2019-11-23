@@ -30,7 +30,7 @@ if (RASPICAM_ENABLE):
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
 # define if we want to draw rectangles around ROIs and save corresonding images (for DEBUG purposes)
-DRAW = False
+DRAW = True
 
 """
     Define different paths for example images, location and classification model, etc.
@@ -116,7 +116,6 @@ if __name__ == "__main__":
         #Remove Python cache files if they exist
         os.system("rm -rf  roadsign_python_source/*.pyc && rm -rf roadsign_python_source/keras_frcnn/*.pyc")
     
-        print("hello !")
         # init camera or example image depending on the mode chosen
         if (RASPICAM_ENABLE):
             #init camera from raspberry (raspicam)
@@ -169,6 +168,8 @@ if __name__ == "__main__":
                 #print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
                 if (x != -1 or y != -1 or w != -1 or h != -1):
                     cropped_image = location_input_image[y:y+h, x:x+w].copy()
+                    # change cropped image to RGB format (and no more BGR)
+                    cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
                     # preprocess image for classification
                     preprocessed_image = classification_model.preprocess_img(cropped_image)
                     # find predictions about image
@@ -178,7 +179,7 @@ if __name__ == "__main__":
                         result = classification_model.predict_result(preprocessed_image)
                         print("detected road sign : {}".format(roadsign_types[result][0]))
                         
-                        if (result == 12):
+                        if (result == 14):
                             print("LA VOITURE DOIT S'ARRETER ! ")
                         
                         # save result in global variable
@@ -189,6 +190,8 @@ if __name__ == "__main__":
                         LOCK_PIXEL_SIZE.acquire()
                         PIXEL_SIZE = w
                         LOCK_PIXEL_SIZE.release()
+                        
+                        time.sleep(0.1)
                         
                     
             print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))

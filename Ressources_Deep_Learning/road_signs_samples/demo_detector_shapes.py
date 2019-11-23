@@ -113,7 +113,6 @@ def roadsign_detector():
         #Remove Python cache files if they exist
         os.system("rm -rf  roadsign_python_source/*.pyc && rm -rf roadsign_python_source/keras_frcnn/*.pyc")
     
-        print("hello !")
         # init camera or example image depending on the mode chosen
         if (RASPICAM_ENABLE):
             #init camera from raspberry (raspicam)
@@ -150,7 +149,7 @@ def roadsign_detector():
                 camera.capture_image()
                 location_input_image = camera.read_image_as_numpy_array(save=True)
                 location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
-                        
+                                
             # now, find the location of road signs on the image
             location_model.process_image(location_input_image)
             contours = location_model.process_contours()
@@ -166,6 +165,8 @@ def roadsign_detector():
                 #print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
                 if (x != -1 or y != -1 or w != -1 or h != -1):
                     cropped_image = location_input_image[y:y+h, x:x+w].copy()
+                    # change cropped image to RGB format (and no more BGR)
+                    cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
                     # preprocess image for classification
                     preprocessed_image = classification_model.preprocess_img(cropped_image)
                     # find predictions about image
@@ -175,9 +176,9 @@ def roadsign_detector():
                         result = classification_model.predict_result(preprocessed_image)
                         print("detected road sign : {}".format(roadsign_types[result][0]))
                         
-                        if (result == 12):
+                        if (result == 14):
                             print("LA VOITURE DOIT S'ARRETER ! ")
-                            
+                        
                         # save result in global variable
                         LOCK_CLASSIFICATION_RESULT.acquire()
                         CLASSIFICATION_RESULT = roadsign_types[result][0] 
@@ -186,6 +187,9 @@ def roadsign_detector():
                         LOCK_PIXEL_SIZE.acquire()
                         PIXEL_SIZE = w
                         LOCK_PIXEL_SIZE.release()
+                        
+                        time.sleep(0.1)
+                        
                     
             print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
             time.sleep(1)
