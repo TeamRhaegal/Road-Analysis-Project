@@ -38,7 +38,7 @@ def main():
     thread_distance_calcul = Thread(target=detection.distance_calcul, args=(runRaspiCodeEvent,))
     
     #seprate the Message
-    seprateMessageThread = SeprateMessageThread()
+    seprateMessageThread = Thread(target=seprateMessageThread.SeprateMessageThread(), args=(runRaspiCodeEvent,))
     
     
     try:
@@ -58,6 +58,7 @@ def main():
         bleTransmitterThread.join()
         thread_roadsign_detector.join()
         thread_distance_calcul.join()
+	seprateMessageThread.join()
     
         print ('All threads successfully closed')
         bleServer.quit()
