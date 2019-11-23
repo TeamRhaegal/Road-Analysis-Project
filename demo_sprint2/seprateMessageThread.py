@@ -10,7 +10,8 @@ from time import time
 class SeprateMessageThread(Thread):
     def run(self):
         #Lock!!!
-        listMessagesReceived.acquire()
+        lockMessagesReceived.acquire()
+        
         modeLock.acquire()
         joystickLock.acquire()
         turboLock.acquire()
@@ -36,7 +37,7 @@ class SeprateMessageThread(Thread):
         turboLock.release()
         joystickLock.release()
         modeLock.release()
-        listMessagesReceived.release()
+        lockMessagesReceived.release()
 
         time.sleep(0.5)
 
@@ -46,7 +47,7 @@ def main():
     seprateMessageThread.start()
 
     
-    q = Queue()
+    #q = Queue()
 
     #Need to use "queue" to send the message????????
     
