@@ -10,7 +10,7 @@ class BLEServerThread(Thread):
 		Thread.__init__(self)
 		self.app=Application()
 		self.initService()
-		self.initAdvertisement()
+		#self.initAdvertisement()
 		self.setDaemon(True)
 		self.runEvent= runRaspiCodeEvent
 		print('Init successful server')

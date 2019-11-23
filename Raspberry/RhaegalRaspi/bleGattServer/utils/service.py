@@ -92,6 +92,7 @@ class Application(dbus.service.Object):
         service_manager.RegisterApplication(self.get_path(), {},
                 reply_handler=self.register_app_callback,
                 error_handler=self.register_app_error_callback)
+        print('launch register app')
 
     def run(self):
         self.mainloop.run()
