@@ -1,6 +1,7 @@
 from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 from threading import Event
 import command as C
+import demo_detector_shapes as detection
 import os
 import time
 import can
@@ -31,12 +32,16 @@ def main():
     bleServer = BLEServer()
     bleTransmitterThread= BLETransmitterThread(bleServer,runRaspiCodeEvent) #for transmitting messages to the server
     
-	
+    # roadsign detection part
+    thread_roadsign_detector = Thread(target=detection.roadsign_detector, args=(runRaspiCodeEvent,))
+    thread_distance_calcul = Thread(target=detection.distance_calcul, args=(runRaspiCodeEvent,))
 
     try:
         threadsense.start()
         threadcom.start()
         TransmitterThread.start()
+        thread_roadsign_detector.start()
+        thread_distance_calcul.start()
         Server.run() ############################### a la fin
 				
     except KeyboardInterrupt:
