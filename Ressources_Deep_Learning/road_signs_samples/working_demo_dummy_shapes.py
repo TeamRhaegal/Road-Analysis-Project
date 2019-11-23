@@ -30,12 +30,12 @@ if (RASPICAM_ENABLE):
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
 # define if we want to draw rectangles around ROIs and save corresonding images (for DEBUG purposes)
-DRAW = True
+DRAW = False
 
 """
     Define different paths for example images, location and classification model, etc.
 """
-PATH_FOR_EXAMPLE_IMAGE = "images/stop.ppm"
+PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
 PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
 
 
@@ -43,9 +43,9 @@ PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
     GLOBAL SHARED VARIABLES WITH FUTURE PROGRAMS
 """
 # all different road signs detected, as array of int (one int represent one category for one roadsign)
-CLASSIFICATION_RESULT = []
+CLASSIFICATION_RESULT = "None"
 # size of cropped image, containing only roadsign
-PIXEL_SIZE = []
+PIXEL_SIZE = None
 
 
 """
@@ -109,13 +109,14 @@ roadsign_types = [  ["speed limit 20",                                  "images/
 if __name__ == "__main__":
 
     try : 
-        global CLASSIFICATION_RESULT, PIXEL_SIZE
+        global CLASSIFICATION_RESULT, PIXEL_SIZE, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
         
         print("initializing roadsign detector")
-        begin = time.time()
+        init_time = time.time()
         #Remove Python cache files if they exist
         os.system("rm -rf  roadsign_python_source/*.pyc && rm -rf roadsign_python_source/keras_frcnn/*.pyc")
-        
+    
+        print("hello !")
         # init camera or example image depending on the mode chosen
         if (RASPICAM_ENABLE):
             #init camera from raspberry (raspicam)
@@ -125,23 +126,29 @@ if __name__ == "__main__":
             # load example image 
             print("loading example image (not camera)")
             location_input_image = cv2.imread(PATH_FOR_EXAMPLE_IMAGE)    
-            cv2.imshow("image", location_input_image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            
+            if(DRAW):
+                cv2.imshow("image", location_input_image)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
         
         # define location object instance
         location_model = location_shapes.locationShapes(draw=DRAW)
         
         # load classification model
         print("loading classification model")
-        classification_model = classification.ClassificationModel(debug=True)
+        classification_model = classification.ClassificationModel(debug=DRAW)
         classification_model.load_model(model_path=PATH_TO_CLASSIFICATION_MODEL)
 
-        print ("initialized roadsign detector. Ellapsed time : {} s".format(time.time()-begin))
+        print ("initialized roadsign detector. Ellapsed time : {} s".format(time.time()-init_time))
         """
             MAIN LOOP
         """
         while(1):
+            # count time taken to process one image. Can vary depending on the number of contours detected.
+            print("capturing image, then process location and classification")
+            process_time = time.time()
+            
             if (RASPICAM_ENABLE):
                 camera.capture_image()
                 location_input_image = camera.read_image_as_numpy_array(save=True)
@@ -159,9 +166,8 @@ if __name__ == "__main__":
                     # y = upper left y coordinate
                     # w = width of the box
                     # h = heigh of the box
-                print ("hey im here")
                 x, y, w, h = location_model.find_shape_box(c)
-                print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
+                #print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
                 if (x != -1 or y != -1 or w != -1 or h != -1):
                     cropped_image = location_input_image[y:y+h, x:x+w].copy()
                     # preprocess image for classification
@@ -169,11 +175,24 @@ if __name__ == "__main__":
                     # find predictions about image
                     predictions = classification_model.show_result_probabilities(preprocessed_image)
                     
-                    print ("predictions : {}".format(predictions))
+                    if(max(predictions[0])) >= 0.2:
+                        result = classification_model.predict_result(preprocessed_image)
+                        print("detected road sign : {}".format(roadsign_types[result][0]))
+                        
+                        if (result == 12):
+                            print("LA VOITURE DOIT S'ARRETER ! ")
+                        
+                        # save result in global variable
+                        LOCK_CLASSIFICATION_RESULT.acquire()
+                        CLASSIFICATION_RESULT = roadsign_types[result][0] 
+                        LOCK_CLASSIFICATION_RESULT.release()
+                        
+                        LOCK_PIXEL_SIZE.acquire()
+                        PIXEL_SIZE = w
+                        LOCK_PIXEL_SIZE.release()
+                        
                     
-                    result = classification_model.predict_result(preprocessed_image)
-                    print("detected road sign : {}".format(result))
-                    
+            print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
             time.sleep(1)
                 
     except KeyboardInterrupt : 
