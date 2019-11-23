@@ -134,10 +134,11 @@ public class scan extends AppCompatActivity {
         //scan button
         scanningButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (scanning)
+                if (scanning) {
                     stopScanning();
-                else
+                }else {
                     startScanning();
+                }
             }
         });
 

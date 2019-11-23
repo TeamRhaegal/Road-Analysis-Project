@@ -16,7 +16,10 @@ import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -60,6 +63,9 @@ public class remote extends AppCompatActivity {
     private ImageView car;
     private TextView speed;
 
+    //STOP sign
+    private Toast toastStop;
+
 
     /**
      * Finds all the objects in the view, link them to lacal variables
@@ -84,6 +90,17 @@ public class remote extends AppCompatActivity {
         battery = findViewById(R.id.battery);
         speed = findViewById(R.id.speed);
         car = findViewById(R.id.car);
+
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.custom_toast,
+                (ViewGroup) findViewById(R.id.custom_toast_container));
+
+        toastStop = new Toast(getApplicationContext());
+        toastStop.setGravity(Gravity.TOP, 0, 0);
+        toastStop.setDuration(Toast.LENGTH_LONG);
+        toastStop.setView(layout);
+
+
 
         setBt();
 
@@ -150,12 +167,8 @@ public class remote extends AppCompatActivity {
                     //Log.i(TAG, "disconnect\n");
                 } else {
                     if (btGatt == null) {
-                        Toast.makeText(remote.this, "Trying to connect", Toast.LENGTH_LONG).show();
                         connect.setText(R.string.connecting);
                         btGatt = btDevice.connectGatt(remote.this, false, gattCallback, TRANSPORT_LE);
-                        if(!refreshDeviceCache(btGatt)){
-                            Toast.makeText(remote.this, "Can't refresh", Toast.LENGTH_SHORT).show();
-                        }
                     }
                     //Log.i(TAG, "connect\n");
                 }
@@ -426,6 +439,9 @@ public class remote extends AppCompatActivity {
                 case Constants.SPEED:
                     changeSpeed(value);
                     break;
+                case Constants.SIGN:
+                    advertizeSign(value);
+                    break;
 
             }
         }
@@ -434,23 +450,6 @@ public class remote extends AppCompatActivity {
     ////////////////////////////////////////////////////////////////////////////////
     //Bluetooth functions
 
-    /**
-     * Function refreshing the bluetooth device cache
-     * @param gatt GATT client the device is associated with
-     * @return boolean indicating the success or failure of the refresh procedure
-     */
-    private boolean refreshDeviceCache(BluetoothGatt gatt){
-        try {
-            Method refresh = gatt.getClass().getMethod("refresh");
-            if (refresh != null) {
-                return (Boolean) refresh.invoke(gatt);
-            }
-        }
-        catch (Exception localException) {
-            Log.e(TAG, "An exception occured while refreshing device");
-        }
-        return false;
-    }
 
     /**
      * Function changing the UI and changing state variables according to the connection state
@@ -725,6 +724,12 @@ public class remote extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void advertizeSign(final String signValue){
+        if (signValue.equals(Constants.STOP)){
+            toastStop.show();
+        }
     }
 
 
