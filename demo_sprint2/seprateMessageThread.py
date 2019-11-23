@@ -18,20 +18,23 @@ class SeprateMessageThread(Thread):
 
         #the message we get is "listMessagesReceived" = "xxxx$xxxxxxx"
         #separate it in two part
-        separatedMessage = listMessageReceived.split('$',1)
-        key = separatedMessage[0]
-        value = separatedMessage[1]
+        
+        for i in range(0,len(listMessageReceived)):
+            
+            separatedMessage = listMessageReceived[i].split('$',1)
+            key = separatedMessage[0]
+            value = separatedMessage[1]
 
-        #there is a table of keys and values
-        #Mode, Joystick, Turbo are GLOBAL!!!
-        if key == 'mode':
-            mode = value[:] #slice
-        elif key == 'joystick':
-            joystick = value[:] #slice
-        elif key == 'turbo':
-            turbo = value[:] #slice
-        else:
-            None
+            #there is a table of keys and values
+            #Mode, Joystick, Turbo are GLOBAL!!!
+            if key == 'mode':
+                mode = value[:] #slice
+            elif key == 'joystick':
+                joystick = value[:] #slice
+            elif key == 'turbo':
+                turbo = value[:] #slice
+            else:
+                None
 
         #Unlock!!!
         turboLock.release()
