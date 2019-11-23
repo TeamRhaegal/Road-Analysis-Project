@@ -36,7 +36,7 @@ class SeprateMessageThread(Thread):
         TurboLock.release()
         JoystickLock.release()
         ModeLock.release()
-        mutexMessagesReceived.release()
+        listMessagesReceived.release()
 
         time.sleep(0.5)
 
