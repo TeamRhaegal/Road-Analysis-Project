@@ -30,12 +30,12 @@ if (RASPICAM_ENABLE):
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
 # define if we want to draw rectangles around ROIs and save corresonding images (for DEBUG purposes)
-DRAW = True
+DRAW = False
 
 """
     Define different paths for example images, location and classification model, etc.
 """
-PATH_FOR_EXAMPLE_IMAGE = "images/00074.ppm"
+PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
 PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
 
 
@@ -105,6 +105,7 @@ roadsign_types = [  ["speed limit 20",                                  "images/
 
 def roadsign_detector():
 
+
     try : 
         global CLASSIFICATION_RESULT, PIXEL_SIZE, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
         
@@ -165,6 +166,12 @@ def roadsign_detector():
                 #print("x : {}, y : {}, w : {}, h : {}".format(x,y,w,h))
                 if (x != -1 or y != -1 or w != -1 or h != -1):
                     cropped_image = location_input_image[y:y+h, x:x+w].copy()
+                    
+                    if (DRAW):
+                        cv2.imshow("image", cropped_image)
+                        cv2.waitKey(0)
+                        cv2.destroyAllWindows()
+                        
                     # change cropped image to RGB format (and no more BGR)
                     cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
                     # preprocess image for classification
@@ -193,10 +200,10 @@ def roadsign_detector():
                     
             print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
             time.sleep(1)
-
-        except KeyboardInterrupt :
-            print("\nCTRL+C PRESSED : CLOSING PROGRAM")
-            sys.exit()
+            
+    except KeyboardInterrupt:
+        print("\nCTRL+C PRESSED : CLOSING PROGRAM")
+        sys.exit()
     pass
 
 
