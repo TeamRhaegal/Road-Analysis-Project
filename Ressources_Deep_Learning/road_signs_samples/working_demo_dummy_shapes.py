@@ -152,9 +152,8 @@ if __name__ == "__main__":
             if (RASPICAM_ENABLE):
                 camera.capture_image()
                 location_input_image = camera.read_image_as_numpy_array(save=True)
-            
-            io.imsave("test.ppm", location_input_image)
-            
+                location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
+                                
             # now, find the location of road signs on the image
             location_model.process_image(location_input_image)
             contours = location_model.process_contours()
