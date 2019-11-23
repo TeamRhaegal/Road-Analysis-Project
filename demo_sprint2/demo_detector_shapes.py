@@ -21,12 +21,11 @@ from skimage import io
 import cv2, imutils
 # arrays processing imports
 import numpy as np
-import can
 
 sys.path.append('roadsign_python_source/')
 from roadsign_python_source import location_shapes, classification
 
-RASPICAM_ENABLE = True
+RASPICAM_ENABLE = False
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
     
