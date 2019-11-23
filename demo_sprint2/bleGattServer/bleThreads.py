@@ -41,7 +41,6 @@ class BLETransmitterThread(Thread):
 			r.lockConnectedDevice.acquire()
 			deviceIsConnected= r.connectedDevice
 			r.lockConnectedDevice.release()
-			print('test device connection')
 			
 			if (deviceIsConnected):					
 			    r.lockMessagesToSend.acquire()
