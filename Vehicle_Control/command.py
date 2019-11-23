@@ -26,7 +26,7 @@ joystick = "none"
 mode = "auto"    #auto pour test unitaire
 deconnexion = "off"
 sign = "none"
-signWidth = 10
+signWidth = 0
 wheelSpeed = 0
 maxDistanceUS = 10
 obstacleRear = 0
@@ -55,12 +55,12 @@ class MyCommand(Thread):
        
 		# mettre la condition de detection d'obstacle ultrasons
         realSignWidth = 0.20  #nb à déterminer en cm
-        focal = 595
+        focal = 1026
         CMD_O = 50
         CMD_V = 50
         CMD_V_A=50
         Temps_necessaire=0.01
-        while True : 
+        while runRaspiCodeEvent.isSet() :  #remplacer avec l'event du main
             time.sleep(0.01)            
             modeLock.acquire()
             turboLock.acquire()
@@ -80,19 +80,22 @@ class MyCommand(Thread):
             if joystick == "left&front" :
                 CMD_O = 0
                 CMD_V = CMD_Turbo
+            if joystick == "none" : 
+                CMD_V = 50
+                CMD_O = 50
     
             modeLock.release()
             turboLock.release()
             joystickLock.release()   
             
             signLock.acquire()
-            if sign == "num panneau": CMD_V_A = 50  #panneau lock
+            if sign == "stop": CMD_V_A = 50  #panneau lock
             else : CMD_V_A = 100
             signLock.release()
             CMD_V = CMD_V + 0x80
             CMD_O = CMD_O + 0x80
             CMD_V_A = CMD_V_A + 0x80
-            if mode == "auto":
+            if mode == "auto" and joystick == "none":
                 
                 signWidthLock.acquire()
                 speedLock.acquire()
@@ -113,12 +116,12 @@ class MyCommand(Thread):
                 msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
-            # gestion des obstacles : Emergency STOP    
+            '''# gestion des obstacles : Emergency STOP    
             elif obstacleRear or obstacleFront :
                 msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
                 time.sleep(0.01)
                 self.bus.send(msg)
-            
+            '''
                 
                 
 class MySensor(Thread):
@@ -137,7 +140,7 @@ class MySensor(Thread):
         obstacleFront = 0
         obstacleRear = 0
         wheelPerimeter = 0.19 *2*3.14  
-        while True :
+        while runRaspiCodeEvent.isSet() :
             msg = self.bus.recv()
             time.sleep(0.01)
             if msg.arbitration_id == MS:
@@ -152,7 +155,7 @@ class MySensor(Thread):
                 speedLock.release()
                 message = "Vitesse :" + str(wheelSpeed)+ ";"
                 print(message)
-            if msg.arbitration_id == US2:
+           ''' if msg.arbitration_id == US2:
                 # ultrason arriere gauche
                 distance = int.from_bytes(msg.data[0:2], byteorder='big')
                 URL = distance
@@ -195,7 +198,7 @@ class MySensor(Thread):
             else: obstacleFront = 0 
             obstacleFrontLock.release()
             obstacleRearLock.release()
-            
+            '''
             
            
                 
@@ -236,6 +239,5 @@ except KeyboardInterrupt:
 	#Catch keyboard interrupt
     msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
     bus.send(msg)
-    time.sleep(5)
     os.system("sudo /sbin/ip link set can0 down")
     print('\n\rKeyboard interrtupt')
