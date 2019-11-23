@@ -54,7 +54,6 @@ class Raspicam(object):
         
         output : image as numpy array
     """
-
     def read_image_as_numpy_array(self, save=False):
         #self.stream.seek(0)
         image = self.stream.array

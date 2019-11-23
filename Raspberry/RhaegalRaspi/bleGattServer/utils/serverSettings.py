@@ -26,6 +26,7 @@ import sys
 from advertisement import Advertisement
 from service import Service, Characteristic, Descriptor
 from gi.repository import GObject
+import sharedRessources as r
 
 
 GATT_CHRC_IFACE = "org.bluez.GattCharacteristic1"
@@ -60,6 +61,7 @@ class TxCharacteristic(Characteristic):
         for c in s:
             value.append(dbus.Byte(c.encode()))
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        print('send message to IHM')
  
     def StartNotify(self):
         if self.notifying:
@@ -77,12 +79,11 @@ class RxCharacteristic(Characteristic):
                                 ['write'], service)
 
     def WriteValue(self, value, options):
-        global mutexMessagesReceived
-        global listMessagesReceived
-			
-        mutexMessagesReceived.lock()		
-        listMessagesReceived.append(bytearray(value).decode())
-        mutexMessagesToSend.unlock()
+        print('remote BLE: {}'.format(bytearray(value).decode()))
+        
+        r.lockMessagesReceived.acquire()	
+        r.listMessagesReceived.append(bytearray(value).decode())
+        r.lockMessagesReceived.release()
 		
-        print('remote: {}'.format(bytearray(value).decode()))
+        
 

@@ -1,8 +1,8 @@
 from utils.serverSettings import *
 from utils.service import Application
 from threading import Thread
-from time import time
-import sharedRessources
+import time
+import sharedRessources as r
 
 class BLEServer(Application):
     def __init__(self):
@@ -24,6 +24,7 @@ class BLETransmitterThread(Thread):
     def __init__(self, server):
         Thread.__init__(self)
         self.TXChara = self.retrieveTXCharacteristic(server)
+        print('Open transmitter thread')
 
     def retrieveTXCharacteristic(self, server):               #get the transmitter characteristic
 		serverService=server.services[0]                            #only one service in the app 
@@ -31,17 +32,22 @@ class BLETransmitterThread(Thread):
 		return serverCharacteristics[0]                          #the transmitter is the fist one in the list
 
     def run(self):
-        while True :
-			global mutexMessagesToSend
-			global listMessagesToSend
+        while True :	
+			r.lockConnectedDevice.acquire()
+			deviceIsConnected= r.connectedDevice
+			r.lockConnectedDevice.release()
+			print('test device connection')
 			
-			mutexMessagesToSend.lock()
-			if listMessagesToSend:
-				myMessagesToSend = listMessagesToSend
-				listMessagesToSend.clear()
-			mutexMessagesToSend.unlock()
+			if (deviceIsConnected):					
+			    r.lockMessagesToSend.acquire()
+			    if r.listMessagesToSend:
+					print('messages found')
+					myMessagesToSend = r.listMessagesToSend
+					r.listMessagesToSend = []
 			
-			for i in range(0,len(listMessagesToSend)):
-				TXChara.send_tx(listMessagesToSend.popleft())
+			    r.lockMessagesToSend.release()
+			
+			    for i in range(0,len(myMessagesToSend)):
+				    self.TXChara.send_tx(myMessagesToSend.pop())
 			
 			time.sleep(0.5)
