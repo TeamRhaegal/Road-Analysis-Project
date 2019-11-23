@@ -14,17 +14,18 @@ begin = time.time()
 # system imports 
 import sys, os, time, traceback
 from threading import Thread, Lock
+
+import sharedRessources
 # image processing imports
 from skimage import io
 import cv2, imutils
 # arrays processing imports
 import numpy as np
-import can
 
 sys.path.append('roadsign_python_source/')
 from roadsign_python_source import location_shapes, classification
 
-RASPICAM_ENABLE = True
+RASPICAM_ENABLE = False
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
     
@@ -38,20 +39,6 @@ DRAW = False
 """
 PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
 PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
-
-"""
-    GLOBAL SHARED VARIABLES WITH FUTURE PROGRAMS
-"""
-# all different road signs detected, as array of int (one int represent one category for one roadsign)
-sign = "None"
-# size of cropped image, containing only roadsign
-signWidth = None
-
-"""
-    GLOBAL LOCK VARIABLES, LINKED TO SHARED VARIABLES
-"""
-signLock = Lock()
-signWidthLock = Lock()
 
 """
     OBJECT INSTANCES AND CONSTANTS
@@ -102,9 +89,9 @@ roadsign_types = [  ["speed limit 20",                                  "images/
                     ["end of forbidden overtake for trucks",            "images/roadsigns_representation/00042/end_forbidden_overtake_truck.ppm"]
                 ]
 
-def roadsign_detector():
+def roadsign_detector(runEvent):
     try : 
-        global sign, signWidth, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
+        global PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
         
         print("initializing roadsign detector")
         init_time = time.time()
@@ -133,12 +120,16 @@ def roadsign_detector():
         print("loading classification model")
         classification_model = classification.ClassificationModel(debug=DRAW)
         classification_model.load_model(model_path=PATH_TO_CLASSIFICATION_MODEL)
+        
+        # local variable to send "stop message" only 1 time"
+        send_message = 0
 
         print ("initialized roadsign detector. Ellapsed time : {} s".format(time.time()-init_time))
+        
         """
             MAIN LOOP
         """
-        while(1):
+        while(runEvent.isSet()):
             # count time taken to process one image. Can vary depending on the number of contours detected.
             print("capturing image, then process location and classification")
             process_time = time.time()
@@ -180,17 +171,20 @@ def roadsign_detector():
                         result = classification_model.predict_result(preprocessed_image)
                         print("detected road sign : {}".format(roadsign_types[result][0]))
                         
-                        if (result == 14):
-                            print("LA VOITURE DOIT S'ARRETER ! ")
-                        
+                        if (result == 14 and send_message == 0):
+                            send_message = 1
+                            sharedRessources.lockMessagesToSend.acquire()
+                            sharedRessources.listMessagesToSend.append["sign$stop"]
+                            sharedRessources.lockMessagesToSend.release()
+                            
                         # save result in global variable
-                        signLock.acquire()
-                        sign = roadsign_types[result][0] 
-                        signLock.release()
+                        sharedRessources.signLock.acquire()
+                        sharedRessources.sign = roadsign_types[result][0] 
+                        sharedRessources.signLock.release()
                         
-                        signWidthLock.acquire()
-                        signWidth = w
-                        signWidthLock.release()
+                        sharedRessources.signWidthLock.acquire()
+                        sharedRessources.signWidth = w
+                        sharedRessources.signWidthLock.release()
                         
                         time.sleep(0.1)
                         
@@ -209,20 +203,17 @@ def distance_calcul():
         old_distance = None
         
         while(1):
-            signWidthLock.acquire()
-            width = signWidth
-            signWidthLock.release()
+            sharedRessources.signWidthLock.acquire()
+            width = sharedRessources.signWidth
+            sharedRessources.signWidthLock.release()
             
             if (width != None and width > 0):
                 distance = (0.195 * focal) / width
                 if (old_distance != distance):
                     old_distance = distance
-                    print ('\033[93m' +  "distance = {}".format(distance))
+                    print ('\033[93m' +  "distance = {}" + "\033[95m".format(distance))
                     print ("width = {} pixels".format(width))
                 
-        
-        
-    
     except KeyboardInterrupt:
         print("\nnCTRL+C PRESSED : CLOSING PROGRAM")
         sys.exit()
