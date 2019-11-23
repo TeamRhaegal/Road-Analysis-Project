@@ -43,10 +43,9 @@ PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
     GLOBAL SHARED VARIABLES WITH FUTURE PROGRAMS
 """
 # all different road signs detected, as array of int (one int represent one category for one roadsign)
-CLASSIFICATION_RESULT = []
+CLASSIFICATION_RESULT = "None"
 # size of cropped image, containing only roadsign
-PIXEL_SIZE = []
-
+PIXEL_SIZE = None
 
 """
     GLOBAL LOCK VARIABLES, LINKED TO SHARED VARIABLES
