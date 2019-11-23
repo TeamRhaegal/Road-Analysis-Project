@@ -38,20 +38,19 @@ DRAW = False
 PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
 PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
 
-
 """
     GLOBAL SHARED VARIABLES WITH FUTURE PROGRAMS
 """
 # all different road signs detected, as array of int (one int represent one category for one roadsign)
-CLASSIFICATION_RESULT = "None"
+sign = "None"
 # size of cropped image, containing only roadsign
-PIXEL_SIZE = None
+signWidth = None
 
 """
     GLOBAL LOCK VARIABLES, LINKED TO SHARED VARIABLES
 """
-LOCK_CLASSIFICATION_RESULT = Lock()
-LOCK_PIXEL_SIZE = Lock()
+signLock = Lock()
+signWidthLock = Lock()
 
 """
     OBJECT INSTANCES AND CONSTANTS
@@ -106,7 +105,7 @@ def roadsign_detector():
 
 
     try : 
-        global CLASSIFICATION_RESULT, PIXEL_SIZE, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
+        global sign, signWidth, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
         
         print("initializing roadsign detector")
         init_time = time.time()
@@ -129,7 +128,7 @@ def roadsign_detector():
                 cv2.destroyAllWindows()
         
         # define location object instance
-        location_model = location_shapes.locationShapes(draw=DRAW)
+        location_model = location_shapes.LocationShapes(draw=DRAW)
         
         # load classification model
         print("loading classification model")
@@ -186,13 +185,13 @@ def roadsign_detector():
                             print("LA VOITURE DOIT S'ARRETER ! ")
                         
                         # save result in global variable
-                        LOCK_CLASSIFICATION_RESULT.acquire()
-                        CLASSIFICATION_RESULT = roadsign_types[result][0] 
-                        LOCK_CLASSIFICATION_RESULT.release()
+                        signLock.acquire()
+                        sign = roadsign_types[result][0] 
+                        signLock.release()
                         
-                        LOCK_PIXEL_SIZE.acquire()
-                        PIXEL_SIZE = w
-                        LOCK_PIXEL_SIZE.release()
+                        signWidthLock.acquire()
+                        signWidth = w
+                        signWidthLock.release()
                         
                         time.sleep(0.1)
                         

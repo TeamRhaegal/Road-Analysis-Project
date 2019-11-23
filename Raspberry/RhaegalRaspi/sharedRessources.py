@@ -6,8 +6,8 @@ vitesseRoue = 50
 Turbo ="off"
 Joystick = "none"
 Mode = "assisted"
-Panneau = "none"
-NbPixel = 0
+sign = "none"
+signWidth = 0
 
 listMessagesToSend = []
 listMessagesReceived = []
@@ -22,7 +22,8 @@ lockConnectedDevice = Lock()
 ModeLock =Lock()
 JoystickLock = Lock()
 TurboLock = Lock()
-PanneauLock = Lock()
-NbPixelLock = Lock()
+signLock = Lock()
+signWidthLock = Lock()
 VitesseLock = Lock()
+
 
