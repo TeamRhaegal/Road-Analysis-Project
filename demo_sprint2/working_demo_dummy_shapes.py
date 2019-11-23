@@ -23,19 +23,19 @@ import numpy as np
 sys.path.append('roadsign_python_source/')
 from roadsign_python_source import location_shapes, classification
 
-RASPICAM_ENABLE = True
+RASPICAM_ENABLE = False
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
     
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
 # define if we want to draw rectangles around ROIs and save corresonding images (for DEBUG purposes)
-DRAW = True
+DRAW = False
 
 """
     Define different paths for example images, location and classification model, etc.
 """
-PATH_FOR_EXAMPLE_IMAGE = "images/00074.ppm"
+PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
 PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
 
 
@@ -43,9 +43,9 @@ PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
     GLOBAL SHARED VARIABLES WITH FUTURE PROGRAMS
 """
 # all different road signs detected, as array of int (one int represent one category for one roadsign)
-CLASSIFICATION_RESULT = []
+CLASSIFICATION_RESULT = "None"
 # size of cropped image, containing only roadsign
-PIXEL_SIZE = []
+PIXEL_SIZE = "None"
 
 
 """
@@ -103,7 +103,10 @@ roadsign_types = [  ["speed limit 20",                                  "images/
                     ["end of forbidden overtake for trucks",            "images/roadsigns_representation/00042/end_forbidden_overtake_truck.ppm"]
                 ]
 
-def roadsign_detector():
+"""
+        MAIN FUNCTION
+"""
+if __name__ == "__main__":
 
     try : 
         global CLASSIFICATION_RESULT, PIXEL_SIZE, PATH_FOR_EXAMPLE_IMAGE, PATH_TO_CLASSIFICATION_MODEL
@@ -178,7 +181,7 @@ def roadsign_detector():
                         
                         if (result == 12):
                             print("LA VOITURE DOIT S'ARRETER ! ")
-                            
+                        
                         # save result in global variable
                         LOCK_CLASSIFICATION_RESULT.acquire()
                         CLASSIFICATION_RESULT = roadsign_types[result][0] 
@@ -190,26 +193,12 @@ def roadsign_detector():
                     
             print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
             time.sleep(1)
-
-        except KeyboardInterrupt :
-            print("\nCTRL+C PRESSED : CLOSING PROGRAM")
-            sys.exit()
-    pass
-
-
-"""
-        MAIN FUNCTION
-"""
-if __name__ == "__main__":
-
-    try : 
-        thread_roadsign_detector = Thread(target=roadsign_detector)
-        thread_roadsign_detector.start()
+                
     except KeyboardInterrupt : 
         print("\nCTRL+C PRESSED : CLOSING PROGRAM")
         sys.exit()
     pass
-    
+        
     
     
      

@@ -45,7 +45,7 @@ PATH_TO_CLASSIFICATION_MODEL = "classification_model.h5"
 # all different road signs detected, as array of int (one int represent one category for one roadsign)
 CLASSIFICATION_RESULT = "None"
 # size of cropped image, containing only roadsign
-PIXEL_SIZE = "None"
+PIXEL_SIZE = None
 
 
 """
@@ -180,7 +180,17 @@ if __name__ == "__main__":
                         print("detected road sign : {}".format(roadsign_types[result][0]))
                         
                         if (result == 12):
-                            print("la voiture doit s'arrêter ! ")
+                            print("LA VOITURE DOIT S'ARRETER ! ")
+                        
+                        # save result in global variable
+                        LOCK_CLASSIFICATION_RESULT.acquire()
+                        CLASSIFICATION_RESULT = roadsign_types[result][0] 
+                        LOCK_CLASSIFICATION_RESULT.release()
+                        
+                        LOCK_PIXEL_SIZE.acquire()
+                        PIXEL_SIZE = w
+                        LOCK_PIXEL_SIZE.release()
+                        
                     
             print("processed road sign location and classification. Ellapsed time : {}".format(time.time()-process_time))
             time.sleep(1)

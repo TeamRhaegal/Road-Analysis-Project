@@ -178,7 +178,7 @@ def roadsign_detector():
                         
                         if (result == 12):
                             print("LA VOITURE DOIT S'ARRETER ! ")
-                            
+                        
                         # save result in global variable
                         LOCK_CLASSIFICATION_RESULT.acquire()
                         CLASSIFICATION_RESULT = roadsign_types[result][0] 
