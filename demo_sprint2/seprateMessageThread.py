@@ -15,6 +15,7 @@ class SeprateMessageThread(Thread):
         modeLock.acquire()
         joystickLock.acquire()
         turboLock.acquire()
+        lockConnectedDevice.acquire()
 
         #the message we get is "listMessagesReceived" = "xxxx$xxxxxxx"
         #separate it in two part
@@ -33,10 +34,17 @@ class SeprateMessageThread(Thread):
                 joystick = value[:] #slice
             elif key == 'turbo':
                 turbo = value[:] #slice
+            elif key == 'connectedDevice':
+                connectedDevice_c = value[:]
+                if connectedDevice_c = 'on':
+                    connectedDevice = True
+                else:
+                    connectedDevice = Flase
             else:
                 None
 
         #Unlock!!!
+        lockConnectedDevice.release()
         turboLock.release()
         joystickLock.release()
         modeLock.release()
