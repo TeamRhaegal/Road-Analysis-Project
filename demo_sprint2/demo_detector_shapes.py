@@ -174,7 +174,7 @@ def roadsign_detector(runEvent):
                         if (result == 14 and send_message == 0):
                             send_message = 1
                             sharedRessources.lockMessagesToSend.acquire()
-                            sharedRessources.listMessagesToSend.append["sign$stop"]
+                            sharedRessources.listMessagesToSend.append("sign$stop")
                             sharedRessources.lockMessagesToSend.release()
                             
                         # save result in global variable
@@ -197,12 +197,12 @@ def roadsign_detector(runEvent):
         sys.exit()
     pass
 
-def distance_calcul():
+def distance_calcul(runEvent):
     try:
         focal = 1026
         old_distance = None
         
-        while(1):
+        while(runEvent.isSet()):
             sharedRessources.signWidthLock.acquire()
             width = sharedRessources.signWidth
             sharedRessources.signWidthLock.release()
@@ -226,8 +226,8 @@ def distance_calcul():
 if __name__ == "__main__":
 
     try : 
-        thread_roadsign_detector = Thread(target=roadsign_detector)
-        thread_distance_calcul = Thread(target=distance_calcul)
+        thread_roadsign_detector = Thread(target=roadsign_detector, args=(True,))
+        thread_distance_calcul = Thread(target=distance_calcul, args=(True,))
         
         thread_roadsign_detector.start()
         thread_distance_calcul.start()
