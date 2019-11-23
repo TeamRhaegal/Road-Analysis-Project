@@ -205,7 +205,17 @@ def roadsign_detector():
 
 def distance_calcul():
     try:
+        focal = 595
         
+        while(1):
+            signWidthLock.acquire()
+            width = signWidth
+            signWidthLock.release()
+            
+            if (width != None and width > 0):
+                distance = (0.195 * focal) / width
+                print ('\033[93m' +  "distance = {}".format(distance))
+                
         
         
     
