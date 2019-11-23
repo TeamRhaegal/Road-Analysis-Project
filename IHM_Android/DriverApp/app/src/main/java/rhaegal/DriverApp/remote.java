@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -38,7 +39,6 @@ public class remote extends AppCompatActivity {
     private BluetoothDevice btDevice;
     private BluetoothGattCharacteristic transmitterCharacteristic = null;
     private BluetoothGattCharacteristic receiverCharacteristic = null;
-
 
     //state variables
     private boolean started;
@@ -143,18 +143,20 @@ public class remote extends AppCompatActivity {
         connect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (connected) {
+                    sendMessage(Constants.CONNECTION,Constants.OFF);
                     if (btGatt != null) {
                         btGatt.disconnect();
                     }
-                    sendMessage(Constants.CONNECTION,Constants.OFF);
                     //Log.i(TAG, "disconnect\n");
                 } else {
                     if (btGatt == null) {
+                        Toast.makeText(remote.this, "Trying to connect", Toast.LENGTH_LONG).show();
                         connect.setText(R.string.connecting);
                         btGatt = btDevice.connectGatt(remote.this, false, gattCallback, TRANSPORT_LE);
-                        refreshDeviceCache(btGatt);
+                        if(!refreshDeviceCache(btGatt)){
+                            Toast.makeText(remote.this, "Can't refresh", Toast.LENGTH_SHORT).show();
+                        }
                     }
-                    sendMessage(Constants.CONNECTION,Constants.ON);
                     //Log.i(TAG, "connect\n");
                 }
             }
@@ -367,12 +369,16 @@ public class remote extends AppCompatActivity {
                 if (uuid.equals(Constants.uuidRemoteService)) {
                     //Log.i(TAG, "found uuid\n");
                     List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
+                    Toast.makeText(remote.this, "Found the targeted service", Toast.LENGTH_SHORT).show();
                     // Loop through available Characteristics.
                     for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                         uuid = gattCharacteristic.getUuid().toString();
                         //Log.i(TAG, uuid + "\n");
                         if (uuid.equals(Constants.uuidTransmitterCharacteristic)) {
                             transmitterCharacteristic = gattCharacteristic;
+                            Toast.makeText(remote.this, "Found the targeted characteristics", Toast.LENGTH_SHORT).show();
+                            sendMessage(Constants.CONNECTION,Constants.ON);
+
                             //Log.i(TAG, "found state\n");
                         } else if (uuid.equals(Constants.uuidReceiverCharacteristic)) {
                             receiverCharacteristic = gattCharacteristic;
@@ -435,10 +441,9 @@ public class remote extends AppCompatActivity {
      */
     private boolean refreshDeviceCache(BluetoothGatt gatt){
         try {
-            BluetoothGatt localBluetoothGatt = gatt;
-            Method localMethod = localBluetoothGatt.getClass().getMethod("refresh", new Class[0]);
-            if (localMethod != null) {
-                return ((Boolean) localMethod.invoke(localBluetoothGatt, new Object[0])).booleanValue();
+            Method refresh = gatt.getClass().getMethod("refresh");
+            if (refresh != null) {
+                return (Boolean) refresh.invoke(gatt);
             }
         }
         catch (Exception localException) {
@@ -485,7 +490,6 @@ public class remote extends AppCompatActivity {
             });
             transmitterCharacteristic = null;
             receiverCharacteristic = null;
-
         }
     }
 
