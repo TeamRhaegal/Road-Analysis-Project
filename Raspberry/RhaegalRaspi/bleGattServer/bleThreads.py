@@ -30,6 +30,35 @@ class BLEServerThread(Thread):
 		    time.sleep(0.5)
 		self.app.quit()
 		print('BLE server thread closed')
+		
+class BLEServer(Application):
+    def __init__(self):
+		Application.__init__(self)
+		self.initService()
+		self.initAdvertisement()
+	
+    def initService(self):
+        self.app.add_service(RaspService(0))
+        self.app.register()
+		
+    def initAdvertisement(self):
+        adv = RaspAdvertisement(0) #advertize
+        adv.register()
+	
+	def run(self):
+        self.mainloop.run()
+		#Test launching threads here
+		runRaspiCodeEvent = Event()
+		runRaspiCodeEvent.set()
+		bleTransmitterThread= BLETransmitterThread(bleServerThread,runRaspiCodeEvent)
+	def quit(self):
+	    print("\nGATT application terminated")
+        self.mainloop.quit()
+		runRaspiCodeEvent.clear()
+		bleTransmitterThread.join()
+		
+	
+		
 
 
 class BLETransmitterThread(Thread):
