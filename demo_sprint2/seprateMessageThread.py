@@ -1,5 +1,5 @@
 from queue import Queue
-#from mutex import Mutex #not fonction in Pyhton3
+import sharedRessources as sr
 from threading import Thread
 from threading import Lock
 from time import time
@@ -8,69 +8,55 @@ from time import time
 
 #creat a threading
 class SeprateMessageThread(Thread):
+    def __init__(self, runEvent):
+        self.runEvent = runEvent
     def run(self):
+        while runEvent.isSet():
         #Lock!!!
-        lockMessagesReceived.acquire()
-        
-        modeLock.acquire()
-        joystickLock.acquire()
-        turboLock.acquire()
-        lockConnectedDevice.acquire()
+            sr.lockMessagesReceived.acquire()
 
-        #the message we get is "listMessagesReceived" = "xxxx$xxxxxxx"
-        #separate it in two part
-        
-        for i in range(0,len(listMessageReceived)):
-            
-            separatedMessage = listMessageReceived[i].split('$',1)
-            key = separatedMessage[0]
-            value = separatedMessage[1]
+            sr.modeLock.acquire()
+            sr.joystickLock.acquire()
+            sr.turboLock.acquire()
+            sr.lockConnectedDevice.acquire()
 
-            #there is a table of keys and values
-            #Mode, Joystick, Turbo are GLOBAL!!!
-            if key == 'mode':
-                mode = value[:] #slice
-            elif key == 'joystick':
-                joystick = value[:] #slice
-            elif key == 'turbo':
-                turbo = value[:] #slice
-            elif key == 'connectedDevice':
-                connectedDevice_c = value[:]
-                if connectedDevice_c = 'on':
-                    connectedDevice = True
+            #the message we get is "listMessagesReceived" = "xxxx$xxxxxxx"
+            #separate it in two part
+
+            for i in range(0,len(sr.listMessageReceived)):
+
+                separatedMessage = sr.listMessageReceived[i].split('$',1)
+                key = separatedMessage[0]
+                value = separatedMessage[1]
+
+                #there is a table of keys and values
+                #Mode, Joystick, Turbo are GLOBAL!!!
+                if key == 'mode':
+                    sr.mode = value[:] #slice
+                elif key == 'joystick':
+                    sr.joystick = value[:] #slice
+                elif key == 'turbo':
+                    sr.turbo = value[:] #slice
+                elif key == 'connectedDevice':
+                    connectedDevice_c = value[:]
+                    if connectedDevice_c = 'on':
+                        sr.connectedDevice = True
+                    else:
+                        sr.connectedDevice = Flase
                 else:
-                    connectedDevice = Flase
-            else:
-                None
+                    None
 
-        #Unlock!!!
-        lockConnectedDevice.release()
-        turboLock.release()
-        joystickLock.release()
-        modeLock.release()
-        lockMessagesReceived.release()
+            #Unlock!!!
+            sr.lockConnectedDevice.release()
+            sr.turboLock.release()
+            sr.joystickLock.release()
+            sr.modeLock.release()
+            sr.lockMessagesReceived.release()
 
-        time.sleep(0.5)
+            time.sleep(0.5)
 
 
-def main():
-    seprateMessageThread = SeprateMessageThread()
-    seprateMessageThread.start()
 
-    
-    #q = Queue()
-
-    #Need to use "queue" to send the message????????
-    
-    #newMessageForQ = [Mode, Joystick, Turbo]
-    #for i in range(3):
-    #    q.put(newMessageForQ[i])
-    
-    
-
-
-if __name__ == '__main__':
-    main()
     
 
 
