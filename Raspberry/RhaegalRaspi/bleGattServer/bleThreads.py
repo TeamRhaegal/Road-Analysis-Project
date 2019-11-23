@@ -4,26 +4,38 @@ from threading import Thread
 import time
 import sharedRessources as r
 
-class BLEServer(Application):
-    def __init__(self):
-		Application.__init__(self)
+
+class BLEServerThread(Thread):
+    def __init__(self,runRaspiCodeEvent):
+		self.app=Application()
 		self.initService()
 		self.initAdvertisement()
+		self.setDaemon(True)
+		self.runEvent= runRaspiCodeEvent
 	
     def initService(self):
-        self.add_service(RaspService(0))
-        self.register()
+        self.app.add_service(RaspService(0))
+        self.app.register()
 		
     def initAdvertisement(self):
         adv = RaspAdvertisement(0) #advertize
         adv.register()
+		
+	def run(self)
+		self.app.run()
+		while runEvent.isSet() :
+		    time.sleep(0.5)
+		self.app.quit()
+		print('BLE server thread closed')
 
 
 class BLETransmitterThread(Thread):
 
-    def __init__(self, server):
+    def __init__(self, serverThread,runRaspiCodeEvent):
         Thread.__init__(self)
-        self.TXChara = self.retrieveTXCharacteristic(server)
+        self.TXChara = self.retrieveTXCharacteristic(serverThread.app)
+		self.setDaemon(True)
+		self.runEvent= runRaspiCodeEvent
         print('Open transmitter thread')
 
     def retrieveTXCharacteristic(self, server):               #get the transmitter characteristic
@@ -32,7 +44,7 @@ class BLETransmitterThread(Thread):
 		return serverCharacteristics[0]                          #the transmitter is the fist one in the list
 
     def run(self):
-        while True :	
+        while runEvent.isSet() :	
 			r.lockConnectedDevice.acquire()
 			deviceIsConnected= r.connectedDevice
 			r.lockConnectedDevice.release()
@@ -51,3 +63,4 @@ class BLETransmitterThread(Thread):
 				    self.TXChara.send_tx(myMessagesToSend.pop())
 			
 			time.sleep(0.5)
+        print('Transmitter to server thread closed')
