@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,7 @@ import android.widget.Toast;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.UUID;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
@@ -65,6 +67,9 @@ public class remote extends AppCompatActivity {
 
     //STOP sign
     private Toast toastStop;
+
+    private CountDownTimer timerNotif;
+    private CountDownTimer timerDisconnect;
 
 
     /**
@@ -119,6 +124,31 @@ public class remote extends AppCompatActivity {
         driving = false;
         joystickValue = Constants.NOTHING;
 
+        timerNotif = new CountDownTimer(1000, 100) {
+
+            public void onTick(long millisUntilFinished) {
+                //Nothing
+            }
+
+            public void onFinish() {
+                enableNotification(btGatt);
+            }
+
+        };
+        timerDisconnect = new CountDownTimer(1000, 100) {
+
+            public void onTick(long millisUntilFinished) {
+                //Nothing
+            }
+
+            public void onFinish() {
+                if (btGatt != null) {
+                    btGatt.disconnect();
+                }
+            }
+
+        };
+
     }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -161,9 +191,7 @@ public class remote extends AppCompatActivity {
             public void onClick(View v) {
                 if (connected) {
                     sendMessage(Constants.CONNECTION,Constants.OFF);
-                    if (btGatt != null) {
-                        btGatt.disconnect();
-                    }
+                    timerDisconnect.start();
                     //Log.i(TAG, "disconnect\n");
                 } else {
                     if (btGatt == null) {
@@ -280,12 +308,12 @@ public class remote extends AppCompatActivity {
                                 turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
                                 turboed = false;
                                 //Log.i(TAG, "turbo off\n");
-                                sendMessage(Constants.TURBO,Constants.OFF);
+                                //sendMessage(Constants.TURBO,Constants.OFF);
                             } else {
                                 turbo.getBackground().setColorFilter(Color.parseColor(Constants.purple), PorterDuff.Mode.MULTIPLY);
                                 turboed = true;
                                 //Log.i(TAG, "turbo on\n");
-                                sendMessage(Constants.TURBO,Constants.ON);
+                                //sendMessage(Constants.TURBO,Constants.ON);
                             }
                         }
                     }
@@ -382,23 +410,21 @@ public class remote extends AppCompatActivity {
                 if (uuid.equals(Constants.uuidRemoteService)) {
                     //Log.i(TAG, "found uuid\n");
                     List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
-                    Toast.makeText(remote.this, "Found the targeted service", Toast.LENGTH_SHORT).show();
                     // Loop through available Characteristics.
                     for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                         uuid = gattCharacteristic.getUuid().toString();
                         //Log.i(TAG, uuid + "\n");
                         if (uuid.equals(Constants.uuidTransmitterCharacteristic)) {
                             transmitterCharacteristic = gattCharacteristic;
-                            Toast.makeText(remote.this, "Found the targeted characteristics", Toast.LENGTH_SHORT).show();
                             sendMessage(Constants.CONNECTION,Constants.ON);
 
                             //Log.i(TAG, "found state\n");
                         } else if (uuid.equals(Constants.uuidReceiverCharacteristic)) {
                             receiverCharacteristic = gattCharacteristic;
                             //Log.i(TAG, "found feedback\n");
+                            timerNotif.start();
                         }
                     }
-                    enableNotification(btGatt);
                 }
             }
         }
@@ -416,9 +442,9 @@ public class remote extends AppCompatActivity {
             final String data = characteristic.getStringValue(0);
             //Log.i(TAG, "data: " + data + "\n");
 
-            String[] dataSplitted = data.split("$");
-            String key = dataSplitted[0];
-            String value = dataSplitted[1];
+            StringTokenizer tokens = new StringTokenizer(data, "$");
+            String key = tokens.nextToken();// this will contain "Fruit"
+            String value = tokens.nextToken();// this will contain " they taste good"
 
             switch (key) {
                 case Constants.MODE :
@@ -505,12 +531,12 @@ public class remote extends AppCompatActivity {
             // 0x2902 org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
             UUID uuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(uuid);
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            result = gatt.writeDescriptor(descriptor);
-            if (result) {
-                //Log.i(TAG, "feedback notification enabled\n");
-            } else {
-                //Log.i(TAG, "feedback notification not enabled\n");
+
+            if(descriptor!=null) {
+                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                if (!gatt.writeDescriptor(descriptor)) {
+                    Toast.makeText(remote.this, "succeed write descriptor", Toast.LENGTH_LONG).show();
+                }
             }
         }
 
