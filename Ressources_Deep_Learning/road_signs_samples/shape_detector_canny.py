@@ -94,7 +94,7 @@ if __name__=="__main__" :
         for c in contours:
             # first, detect areas larger than minimal size and thiner than maximal size
             area = cv2.contourArea(c)
-            if (area >= 500  and area <= 7000):
+            if (area >= 500  and area <= 70000):
                 #print ("areas : {}".format(area))
                 # compute the center of the contour, then detect the name of the
                 # shape using only the contour

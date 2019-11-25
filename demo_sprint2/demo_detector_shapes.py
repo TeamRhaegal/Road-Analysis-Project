@@ -146,7 +146,7 @@ def roadsign_detector(runEvent):
             
             if (RASPICAM_ENABLE):
                 camera.capture_image()
-                location_input_image = camera.read_image_as_numpy_array(save=True)
+                location_input_image = camera.read_image_as_numpy_array(save=False)
                 location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
                                 
             # now, find the location of road signs on the image
