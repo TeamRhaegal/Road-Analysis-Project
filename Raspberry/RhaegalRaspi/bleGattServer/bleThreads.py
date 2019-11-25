@@ -44,15 +44,16 @@ class BLETransmitterThread(Thread):
 			
 			if (deviceIsConnected):					
 			    r.lockMessagesToSend.acquire()
+			    myMessagesToSend=[]
 			    if r.listMessagesToSend:
 					print('messages found')
 					myMessagesToSend = r.listMessagesToSend
 					r.listMessagesToSend = []
 			
 			    r.lockMessagesToSend.release()
-			
-			    for i in range(0,len(myMessagesToSend)):
-				    self.TXChara.send_tx(myMessagesToSend.pop())
+			    if myMessagesToSend :
+					for i in range(0,len(myMessagesToSend)):
+						self.TXChara.send_tx(myMessagesToSend.pop())
 			
 			time.sleep(0.5)
         print('Transmitter to server thread closed')

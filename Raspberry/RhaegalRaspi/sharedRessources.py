@@ -5,7 +5,7 @@ from threading import Lock
 wheelSpeed = 0  
 turbo ="off"
 joystick = "none"
-mode = "assisted"
+mode = "assist"
 sign = "none"
 signWidth = 0
 maxDistanceUS = 10   #distance max ultrasons obstacle

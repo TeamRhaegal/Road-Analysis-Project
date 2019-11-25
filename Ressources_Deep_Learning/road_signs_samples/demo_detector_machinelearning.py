@@ -26,7 +26,7 @@ for i in tqdm(range(1000)):
     sys.path.append('roadsign_python_source/')
     from roadsign_python_source import location, classification
 
-    RASPICAM_ENABLE = False
+    RASPICAM_ENABLE = True
     if (RASPICAM_ENABLE):
         from roadsign_python_source import raspicam
         

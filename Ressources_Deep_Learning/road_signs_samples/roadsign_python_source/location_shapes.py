@@ -54,7 +54,7 @@ class LocationShapes(object):
         # loop over the contours
         # first, detect areas larger than minimal size and thiner than maximal size
         area = cv2.contourArea(c)
-        if (area >= 500  and area <= 1000000):
+        if (area >= 200  and area <= 1000000):
             print ("area : {}".format(area))
             # compute the center of the contour, then detect the name of the
             # shape using only the contour

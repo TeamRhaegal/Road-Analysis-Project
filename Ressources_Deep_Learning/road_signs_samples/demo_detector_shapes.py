@@ -23,14 +23,14 @@ import numpy as np
 sys.path.append('roadsign_python_source/')
 from roadsign_python_source import location_shapes, classification
 
-RASPICAM_ENABLE = False
+RASPICAM_ENABLE = True
 if (RASPICAM_ENABLE):
     from roadsign_python_source import raspicam
     
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
 # define if we want to draw rectangles around ROIs and save corresonding images (for DEBUG purposes)
-DRAW = False
+DRAW = True
 
 """
     Define different paths for example images, location and classification model, etc.
