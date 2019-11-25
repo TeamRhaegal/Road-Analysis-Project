@@ -31,12 +31,12 @@ class LocationShapes(object):
         self.resizedImage = imutils.resize(self.image, width=500)
         self.ratio = image.shape[0] / float(self.resizedImage.shape[0])
         self.grayImage = cv2.cvtColor(self.resizedImage, cv2.COLOR_BGR2GRAY)
-        self.blurredImage = cv2.GaussianBlur(self.grayImage, (5, 5), 0)
+        #self.blurredImage = cv2.GaussianBlur(self.grayImage, (5, 5), 0)
         #thresh1 = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
-        self.thresh1 = cv2.threshold(self.blurredImage, 240, 255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+        #self.thresh1 = cv2.threshold(self.grayImage, 240, 255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
         
         # process canny edge detection on it
-        self.cannyImage = cv2.Canny(self.thresh1, 100, 200)
+        self.cannyImage = cv2.Canny(self.grayImage, 100, 200)
     
     """
         process countours from one image and return them
@@ -54,7 +54,7 @@ class LocationShapes(object):
         # loop over the contours
         # first, detect areas larger than minimal size and thiner than maximal size
         area = cv2.contourArea(c)
-        if (area >= 500  and area <= 1000000):
+        if (area >= 500  and area <= 1000000000):
             print ("area : {}".format(area))
             # compute the center of the contour, then detect the name of the
             # shape using only the contour

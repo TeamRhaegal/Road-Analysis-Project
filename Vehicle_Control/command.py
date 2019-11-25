@@ -5,11 +5,9 @@ Created on Wed Nov 20 15:07:13 2019
 @author: Nicolas
 """
 
-import RPi.GPIO as GPIO
 import can
 import time
-import os
-from threading import Thread, Lock
+from threading import Thread
 import sharedRessources as R
 
 
@@ -19,38 +17,17 @@ US2=0x001      #identifiant Ultrasons arrière CAN
 US1=0x000      ##identifiant Ultrasons arrière CAN
 MS=0x100
 
-led=22
 
-#variables globales
-turbo ="off"
-joystick = "none"
-mode = "auto"    #auto pour test unitaire
-deconnexion = "off"
-sign = "none"
-signWidth = 0
-wheelSpeed = 0
-maxDistanceUS = 10
-obstacleRear = 0
-obstacleFront = 0
-
-
-modeLock =Lock()
-joystickLock = Lock()
-turboLock = Lock()
-signLock = Lock()
-signWidthLock = Lock()
-speedLock = Lock()
-obstacleFrontLock= Lock()
-obstacleRearLock = Lock()
 
 
 
 			
 class MyCommand(Thread):
 
-    def __init__(self, bus):
+    def __init__(self, bus,runEvent):
         Thread.__init__(self)
         self.bus = bus
+        self.runEvent= runEvent
 
     def run(self):
        
@@ -60,84 +37,114 @@ class MyCommand(Thread):
         CMD_O = 50
         CMD_V = 50
         CMD_V_A=50
+        CMD_Turbo = 75
         Temps_necessaire=0.01
-        while runRaspiCodeEvent.isSet() :  #remplacer avec l'event du main
-            time.sleep(0.01)            
-            modeLock.acquire()
-            turboLock.acquire()
-            joystickLock.acquire()
-            if turbo == "on" : CMD_Turbo = 100
-            if turbo == "off" : CMD_Turbo = 75
-            if joystick == "right" :  
-                CMD_O = 100
-                CMD_V= 50
-            if joystick == "left" : 
-                CMD_O = 0
-                CMD_V = 50
-            if joystick == "front" : CMD_V = CMD_Turbo
-            if joystick == "right&front" : 
-                CMD_O = 100
-                CMD_V = CMD_Turbo
-            if joystick == "left&front" :
-                CMD_O = 0
-                CMD_V = CMD_Turbo
-            if joystick == "none" : 
-                CMD_V = 50
-                CMD_O = 50
-    
-            modeLock.release()
-            turboLock.release()
-            joystickLock.release()   
+        while self.runEvent.isSet() :  #remplacer avec l'event du main
             
-            signLock.acquire()
-            if sign == "stop": CMD_V_A = 50  #panneau lock
-            else : CMD_V_A = 100
-            signLock.release()
-            CMD_V = CMD_V + 0x80
-            CMD_O = CMD_O + 0x80
-            CMD_V_A = CMD_V_A + 0x80
-            if mode == "auto" and joystick == "none":
+            CMD_O = 50
+            CMD_V = 50
+            CMD_V_A= 50
+            CMD_Turbo = 75
+            R.lockConnectedDevice.acquire()
+            check_connected = R.connectedDevice
+            R.lockConnectedDevice.release()
+            #print(check_connected)
+            if(check_connected == True):
+                time.sleep(0.01)            
                 
-                signWidthLock.acquire()
-                speedLock.acquire()
-                if signWidth and sign == "stop":
-                    toSignDistance = (realSignWidth*focal)/signWidth
-                    Temps_necessaire = toSignDistance / (wheelSpeed+0.00001)   #calcul du temps à  attendre 
-                else :  Temps_necessaire = 0.01
-                signWidthLock.release()
-                speedLock.release()
-                # condition du stop pour marquer un arrêt
-                if sign == "stop" : 
-                    msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
-                    time.sleep(Temps_necessaire)
+                R.turboLock.acquire()
+                R.joystickLock.acquire()
+                if R.turbo == "on" : CMD_Turbo = 100
+                if R.turbo == "off" : CMD_Turbo = 75
+                if R.joystick == "right" :  
+                    CMD_O = 100
+                    CMD_V= 50
+                if R.joystick == "left" : 
+                    CMD_O = 0
+                    CMD_V = 50
+                if R.joystick == "front" : 
+                    CMD_V = CMD_Turbo
+                    CMD_O = 50
+                if R.joystick == "right&front" : 
+                    CMD_O = 100
+                    CMD_V = CMD_Turbo
+                if R.joystick == "left&front" :
+                    CMD_O = 0
+                    CMD_V = CMD_Turbo
+                if R.joystick == "none" : 
+                    CMD_V = 50
+                    CMD_O = 50
+
+                R.turboLock.release()
+                R.joystickLock.release()   
+                
+                R.signLock.acquire()
+                if R.sign == "stop": CMD_V_A = 50  #panneau lock
+                else : CMD_V_A = 100
+                R.signLock.release()
+                CMD_V = CMD_V + 0x80
+                CMD_O = CMD_O + 0x80
+                CMD_V_A = CMD_V_A + 0x80
+                
+                R.modeLock.acquire()
+                modeC = R.mode
+                R.modeLock.release()
+                if modeC == "auto" and R.joystick == "none":
+                    
+                    R.signLock.acquire()
+                    signC = R.sign
+                    R.signLock.release()
+                    R.signWidthLock.acquire()
+                    
+                    
+                    if R.signWidth and signC == "stop":
+                        toSignDistance = (realSignWidth*focal)/R.signWidth
+                        Temps_necessaire = toSignDistance / (1.2)   #calcul du temps à  attendre 
+                        print(Temps_necessaire)
+                    else :  Temps_necessaire = 0.01
+                    R.signWidthLock.release()
+                   
+                    
+                    # condition du stop pour marquer un arrêt
+                   
+                    if signC == "stop" : 
+                        msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
+                        time.sleep(Temps_necessaire)
+                        self.bus.send(msg)
+                        time.sleep(5)
+                    else : 
+                        msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
+                        time.sleep(Temps_necessaire)
+                        self.bus.send(msg)
+                    #mode autonome
+                
+                elif modeC == "assist" :
+                    # comande en fonction des messages de l'ihm
+                    msg = can.Message(arbitration_id=MOT,data=[0, 0, CMD_O,0,0,0,0,0],extended_id=False)
                     self.bus.send(msg)
-                    time.sleep(10)
-                else : 
-                    msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
-                    time.sleep(Temps_necessaire)
+                    time.sleep(0.5)
+                    msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, 0,0,0,0,0,0],extended_id=False)
                     self.bus.send(msg)
-                #mode autonome
-               
-            elif mode == "assisted" :
-                # comande en fonction des messages de l'ihm
-                msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
-                time.sleep(0.01)
-                self.bus.send(msg)
-            '''# gestion des obstacles : Emergency STOP    
-            elif obstacleRear or obstacleFront :
+                '''# gestion des obstacles : Emergency STOP    
+                elif obstacleRear or obstacleFront :
+                    msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
+                    time.sleep(0.01)
+                    self.bus.send(msg)
+                '''
+            else:
                 msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
-                time.sleep(0.01)
                 self.bus.send(msg)
-            '''
+
+            time.sleep(0.1)
         msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
-        time.sleep(0.01)
         self.bus.send(msg)
                 
 class MySensor(Thread):
 
-    def __init__(self, bus):
+    def __init__(self, bus, runEvent):
         Thread.__init__(self)
         self.bus = bus
+        self.runEvent = runEvent
 
     def run(self):
         URL = 180
@@ -149,104 +156,71 @@ class MySensor(Thread):
         obstacleFront = 0
         obstacleRear = 0
         wheelPerimeter = 0.19 *2*3.14  
-        while runRaspiCodeEvent.isSet() :
-            msg = self.bus.recv()
-            time.sleep(0.01)
-            if msg.arbitration_id == MS:
-                Batmes = int.from_bytes(msg.data[2:4], byteorder='big')
-                U = (4095 / Batmes) * (3.3 / 0.2)
-                print(U)
-            if msg.arbitration_id == MS:
-                # Vitesse voiture
-                speedLock.acquire()
-                wheelSpeed = int.from_bytes(msg.data[4:6], byteorder='big')
-                wheelSpeed = (0.01*wheelSpeed*wheelPerimeter / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
-                speedLock.release()
-                message = "Vitesse :" + str(wheelSpeed)+ ";"
-                print(message)
-           ''' if msg.arbitration_id == US2:
-                # ultrason arriere gauche
-                distance = int.from_bytes(msg.data[0:2], byteorder='big')
-                URL = distance
-                message = "URL:" + str(distance)+ ";"
-                #print(message)
-                # ultrason arriere droit
-                distance = int.from_bytes(msg.data[2:4], byteorder='big')
-                URR = distance
-                message = "URR:" + str(distance)+ ";"
-                #print(message)
-                # ultrason arriere centre
-                distance = int.from_bytes(msg.data[4:6], byteorder='big')
-                URC = distance
-                message = "UFC:" + str(distance)+ ";"
-                #print(message)
-                print("---------")
-            if msg.arbitration_id == US1:
-                # ultrason avant gauche
-                distance = int.from_bytes(msg.data[0:2], byteorder='big')
-                UFL = distance
-                message = "UFL:" + str(distance)+ ";"
-                #print(message)
-                # ultrason avant droit
-                distance = int.from_bytes(msg.data[2:4], byteorder='big')
-                UFR = distance
-                message = "UFR:" + str(distance)+ ";"
-                #print(message)
-                # ultrason avant centre
-                distance = int.from_bytes(msg.data[4:6], byteorder='big')
-                UFC = distance
-                message = "UFC:" + str(distance)+ ";"
-                #print(message)
-                print("---------")
+        while self.runEvent.isSet() :
             
-            obstacleFrontLock.acquire()
-            obstacleRearLock.acquire()
-            if  URL <maxDistanceUS or URR<maxDistanceUS or URC <maxDistanceUS: obstacleRear = 1
-            else : obstacleRear = 0 
-            if UFL<maxDistanceUS or UFR<maxDistanceUS or UFC<maxDistanceUS: obstacleFront = 1
-            else: obstacleFront = 0 
-            obstacleFrontLock.release()
-            obstacleRearLock.release()
-            '''
-            
-           
+            R.lockConnectedDevice.acquire()
+            check_connected = R.connectedDevice
+            R.lockConnectedDevice.release()
+        
+            if (check_connected == True):
                 
-
+                msg = self.bus.recv()
+                time.sleep(0.01)
+                """if msg.arbitration_id == MS:
+                    Batmes = int(str(msg.data[2:4]).encode('hex'), 16)
+                    U = (4095 / Batmes) * (3.3 / 0.2)
+                    print(Batmes)"""
+                if msg.arbitration_id == MS:
+                    # Vitesse voiture
+                    R.speedLock.acquire()
+                    wheel_speed = int(str(msg.data[6:8]).encode('hex'), 16)
+                    R.wheelSpeed = (0.01*wheel_speed*wheelPerimeter / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
+                    R.speedLock.release()
+                    #message = "Vitesse :" + str(wheelSpeed)+ ";"
+                    #print(message)
+                    '''
+                if msg.arbitration_id == US2:
+                    # ultrason arriere gauche
+                    distance = int.from_bytes(msg.data[0:2], byteorder='big')
+                    URL = distance
+                    message = "URL:" + str(distance)+ ";"
+                    #print(message)
+                    # ultrason arriere droit
+                    distance = int.from_bytes(msg.data[2:4], byteorder='big')
+                    URR = distance
+                    message = "URR:" + str(distance)+ ";"
+                    #print(message)
+                    # ultrason arriere centre
+                    distance = int.from_bytes(msg.data[4:6], byteorder='big')
+                    URC = distance
+                    message = "UFC:" + str(distance)+ ";"
+                    #print(message)
+                    print("---------")
+                if msg.arbitration_id == US1:
+                    # ultrason avant gauche
+                    distance = int.from_bytes(msg.data[0:2], byteorder='big')
+                    UFL = distance
+                    message = "UFL:" + str(distance)+ ";"
+                    #print(message)
+                    # ultrason avant droit
+                    distance = int.from_bytes(msg.data[2:4], byteorder='big')
+                    UFR = distance
+                    message = "UFR:" + str(distance)+ ";"
+                    #print(message)
+                    # ultrason avant centre
+                    distance = int.from_bytes(msg.data[4:6], byteorder='big')
+                    UFC = distance
+                    message = "UFC:" + str(distance)+ ";"
+                    #print(message)
+                    print("---------")
                 
-   
-	#inserer ici un mutex pour chaque variable d'ultrasons
-
-print('\n\rCAN Rx test')
-print('Bring up CAN0....')
-
-# Bring up can0 interface at 500kbps
-os.system("sudo /sbin/ip link set can0 up type can bitrate 400000")
-time.sleep(0.1)
-print('Press CTL-C to exit')
-try:
-	bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
-except OSError:
-	print('Cannot find PiCAN board.')
-	GPIO.output(led,False)
-	exit()
-	
-# Main loop
-try:
-
-    threadsense = MySensor(bus)
-    threadcom = MyCommand(bus)
-    
-    threadcom.start()
-    threadsense.start()
-    
-    threadcom.join()
-    threadsense.join()
-    
-
-
-except KeyboardInterrupt:
-	#Catch keyboard interrupt
-    msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
-    bus.send(msg)
-    os.system("sudo /sbin/ip link set can0 down")
-    print('\n\rKeyboard interrtupt')
+                obstacleFrontLock.acquire()
+                obstacleRearLock.acquire()
+                if  URL <maxDistanceUS or URR<maxDistanceUS or URC <maxDistanceUS: obstacleRear = 1
+                else : obstacleRear = 0 
+                if UFL<maxDistanceUS or UFR<maxDistanceUS or UFC<maxDistanceUS: obstacleFront = 1
+                else: obstacleFront = 0 
+                obstacleFrontLock.release()
+                obstacleRearLock.release()
+                '''
+            time.sleep(0.05)

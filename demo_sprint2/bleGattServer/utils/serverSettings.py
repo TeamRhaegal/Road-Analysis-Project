@@ -52,7 +52,7 @@ class TxCharacteristic(Characteristic):
     def __init__(self, service):
         Characteristic.__init__(self, RASP_TX_CHARACTERISTIC_UUID,
                                 ['notify'], service)
-        self.notifying = False
+        self.notifying = True
  
     def send_tx(self, s):
         if not self.notifying:
