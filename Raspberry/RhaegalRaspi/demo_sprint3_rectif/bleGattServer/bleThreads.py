@@ -48,8 +48,8 @@ class BLETransmitterThread(Thread):
 		    r.listMessagesToSend = []
 		    r.lockMessagesToSend.release()
 		    if myMessagesToSend :
-			print ("message found")
-		        for i in range(0,len(myMessagesToSend)):
+		        for i in range(0,len(myMessagesToSend)):				
+			    print ("To IHM : ",myMessagesToSend[-1])
 			    self.TXChara.send_tx(myMessagesToSend.pop())
 		
 		time.sleep(0.2)

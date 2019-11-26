@@ -24,7 +24,7 @@ MS=0x100       #id for battery+speed
 class CanControllerThread(Thread):
     def __init__(self, runEvent):
         Thread.__init__(self)
-        self.bus = self.getBus() #initialization od CAN bus
+        self.bus = self.getBus() #initialization of CAN bus
         self.runEvent= runEvent
         self.connectEvent = Event()  
         self.modeControlThread = ModeControlThread(self.bus,self.connectEvent) 

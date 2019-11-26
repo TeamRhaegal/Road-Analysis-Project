@@ -61,9 +61,9 @@ class ModeAutoThread (ModeThread):
             R.lockEmergencyOn.release()
             
             if(stateEmergency):
-                R.lockModeLaunched.acquire()
-                R.modeLaunched=1
-                R.lockModeLaunched.release()
+                R.modeLock.acquire()
+                mode = "assist"
+                R.modeLock.release()
                 
             # Stop sign block
             
@@ -108,6 +108,15 @@ class ModeAssistThread (ModeThread):
         currentModeL=self.intModeL
         cmdV = CMD_STOP
         cmdO = CMD_STOP
+        R.turboLock.acquire()
+        R.turbo ="off"
+        R.turboLock.release()
+        R.joystickLock.acquire()
+        R.joystick = "none"
+        R.joystickLock.release()
+        R.stateLock.acquire()
+        R.state = "off"
+        R.stateLock.release()
         
         while (currentModeL==self.intModeL):
             R.stateLock.acquire()                 
