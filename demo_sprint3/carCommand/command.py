@@ -44,7 +44,6 @@ class MyCommand(Thread):
         stopDetected = 0   #variable qui empeche d'envoyé un message infini à l'ihm quand un stop ets détecté
         searchDetected = 0 # de même pour le pnneau search
         while self.runEvent.isSet() :  #remplacer avec l'event du main
-            
             while not(self.stopEvent.isSet()):
                 CMD_O = 50
                 CMD_V = 50
@@ -54,7 +53,7 @@ class MyCommand(Thread):
                 check_connected = R.connectedDevice
                 R.lockConnectedDevice.release()
                 #print(check_connected)
-                if(check_connected == True):           
+                if(check_connected == True):  
                     #affectation des valeurs pour le mode assissté en fonction des commandes reçues
                     R.turboLock.acquire()
                     R.joystickLock.acquire()
@@ -78,7 +77,9 @@ class MyCommand(Thread):
                     if R.joystick == "none" : 
                         CMD_V = 50
                         CMD_O = 50
-    
+                    R.turboLock.release()
+                    R.joystickLock.release()
+                    
                     R.lockWidthStop.acquire()
                     R.lockWidthSearch.acquire()
                     
@@ -93,13 +94,13 @@ class MyCommand(Thread):
                         CMD_V_A = 50  
                         searchDetected = 0
                         if  not(stopDetected) :
-                            constructMsgToIHM("sign","stop")
+                            R.constructMsgToIHM("sign","stop")
                             stopDetected = 1
                     elif widthSearchSign :
                         CMD_V_A = 60
                         stopDetected = 0
                         if  not(searchDetected) :
-                            constructMsgToIHM("sign","search")
+                            R.constructMsgToIHM("sign","search")
                             searchDetected = 1
                     else : 
                         CMD_V_A = 60
@@ -113,7 +114,6 @@ class MyCommand(Thread):
                     R.modeLock.acquire()
                     modeC = R.mode
                     R.modeLock.release()
-                    
                     if modeC == "auto" and R.joystick == "none":
                         
                         if widthStopSign :  #changer sign width avec index 2 du panneau 
@@ -130,7 +130,7 @@ class MyCommand(Thread):
                         #si c'est un panneau stop attendre 5 secondes à l'arrêt
                         if widthStopSign :
                             time.sleep(5)
-                      '''  # condition du search mode détecté
+                        '''  # condition du search mode détecté
                         if signC == "search" : 
                             msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
                             time.sleep(Temps_necessaire)
@@ -139,7 +139,7 @@ class MyCommand(Thread):
                             msg = can.Message(arbitration_id=MOT,data=[0, 0, 0x00,0,0,0,0,0],extended_id=False)
                             time.sleep(10)
                             self.bus.send(msg)
-                         '''   
+                        '''   
     
                     elif modeC == "assist" :
                         # comande en fonction des messages de l'ihm
@@ -174,7 +174,7 @@ class MySensor(Thread):
         UFC = 180
         wheelPerimeter = 0.19 *2*3.14  
         emergencyOn = 0
-        emergencyOff = 0
+        emergencyOff = 1
         while self.runEvent.isSet() :
             
             R.lockConnectedDevice.acquire()
@@ -184,7 +184,6 @@ class MySensor(Thread):
             if (check_connected == True):
                 
                 msg = self.bus.recv()
-                time.sleep(0.01)
                 """if msg.arbitration_id == MS:
                     Batmes = int(str(msg.data[2:4]).encode('hex'), 16)
                     U = (4095 / Batmes) * (3.3 / 0.2)
@@ -216,21 +215,20 @@ class MySensor(Thread):
                     '''
                 if msg.arbitration_id == US1:
                     # ultrason avant gauche
-                    distance = int.from_bytes(msg.data[0:2], byteorder='big')
+                    distance = int(str(msg.data[0:2]).encode('hex'), 16) 
                     UFL = distance
                     message = "UFL:" + str(distance)+ ";"
                     #print(message)
                     # ultrason avant droit
-                    distance = int.from_bytes(msg.data[2:4], byteorder='big')
+                    distance = int(str(msg.data[2:4]).encode('hex'), 16)
                     UFR = distance
                     message = "UFR:" + str(distance)+ ";"
                     #print(message)
                     # ultrason avant centre
-                    distance = int.from_bytes(msg.data[4:6], byteorder='big')
+                    distance = int(str(msg.data[4:6]).encode('hex'), 16)
                     UFC = distance
                     message = "UFC:" + str(distance)+ ";"
                     #print(message)
-                    print("---------")
                 
 
                 if UFL<MAX_DISTANCE_US or UFR<MAX_DISTANCE_US or UFC<MAX_DISTANCE_US:
@@ -238,12 +236,15 @@ class MySensor(Thread):
                     emergencyOff = 0
                     #envoi de message aussi
                     if  not(emergencyOn)  :
-                        constructMsgToIHM("urgent","on")
+                        R.constructMsgToIHM("urgent","on")
                         emergencyOn = 1
                 else : 
                     emergencyOn = 0
                     self.stopEvent.clear()
                     if not(emergencyOff) :
-                        constructMsgToIHM("urgent","off")
+                        R.constructMsgToIHM("urgent","off")
                         emergencyOff = 1
+            else : 
+                emergencyOff = 1
+                emergencyOn = 0
             time.sleep(0.01)

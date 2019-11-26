@@ -20,12 +20,9 @@ import cv2, imutils
 import numpy as np
 import tensorflow as tf
 
-sys.path.append('roadsign_python_source/')
+sys.path.append('roadSignDetection/roadsign_python_source/')
 from roadsign_python_source import location_machinelearning
-
-RASPICAM_ENABLE = True
-if (RASPICAM_ENABLE):
-    from roadsign_python_source import raspicam
+from roadsign_python_source import raspicam
     
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
@@ -33,18 +30,15 @@ print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
 DRAW = False
 
 """
-    Define different paths for example images, location model...
+    Define different paths for location model...
 """
-# images paths
-PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
-
 # path to configuration model file
-PATH_TO_MODEL = "machinelearning_model/300_300_pipeline.config"
+PATH_TO_MODEL = "roadSignDetection/machinelearning_model/300_300_pipeline.config"
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_CKPT = "machinelearning_model/300_300_frozen_inference_graph.pb"
+PATH_TO_CKPT = "roadSignDetection/machinelearning_model/300_300_frozen_inference_graph.pb"
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = "machinelearning_model/300_300_labelmap.pbtxt"
+PATH_TO_LABELS = "roadSignDetection/machinelearning_model/300_300_labelmap.pbtxt"
 
 # Number of classes to detect
 NUM_CLASSES = 3
@@ -71,21 +65,10 @@ def roadsign_detector(runEvent):
     #Remove Python cache files if they exist
     os.system("rm -rf  roadSignDetection/machinelearning_model/*.pyc && rm -rf roadSignDetection/machinelearning_model/*.pyc")
 
-    # init camera or example image depending on the mode chosen
-    if (RASPICAM_ENABLE):
-        #init camera from raspberry (raspicam)
-        print("initializing camera")
-        camera = raspicam.Raspicam(resolution = (1640,922))
-    else:
-        # load example image 
-        print("loading example image (not camera)")
-        location_input_image = cv2.imread(PATH_FOR_EXAMPLE_IMAGE)    
-        
-        if(DRAW):
-            cv2.imshow("image", location_input_image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-    
+    #init camera from raspberry (raspicam)
+    print("initializing camera")
+    camera = raspicam.Raspicam(resolution = (1640,922))
+
     # define location object instance
     location_model = location_machinelearning.LocationModel()
     # load model from specified files
@@ -122,14 +105,14 @@ def roadsign_detector(runEvent):
             
             if (check_connected == True):
                 
+                t = time.time()
                 # capture image
-                if (RASPICAM_ENABLE):
-                    camera.capture_image()
-                    location_input_image = camera.read_image_as_numpy_array(save=False)
-                    location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_BGR2RGB)
+                camera.capture_image()
+                location_input_image = camera.read_image_as_numpy_array(save=False)
+                #location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
                     
                 # process prediction from model and get scores + corresponding boxes
-                location_boxes, location_score, location_classes = location_model.detect_roadsigns_from_numpy_array(location_input_image.copy())
+                location_boxes, location_score, location_classes = location_model.detect_roadsigns_from_numpy_array(sess, location_input_image.copy())
 
                 """
                     Next part of code :
@@ -147,15 +130,14 @@ def roadsign_detector(runEvent):
                 # search for road sign in all the found boxes
                 for i in range(location_boxes.shape[1]):
                     # if the code go through the next condition, a road sign is detected. 
-                    if (location_score[0][i] > 0.5):
+                    if (location_boxes[0][i][0] != 0 and location_score[0][i] > 0.1):
                         
                         # assign "no_detection_count" to 0  because a road sign has been detected
                         no_detection_count = 0
                         
                         # find prediction result from collected data (boxes, score for each box and class for each box)
                         result = int(location_classes[0][i])
-                        print ("found roadsign : {}".format(roadsign_types[result-1][0]))
-                             
+                                                     
                         # capture interesting part (box) from the global image
                         x1 = int(location_boxes[0][i][1]*location_input_image.shape[1])
                         x2 = int(location_boxes[0][i][3]*location_input_image.shape[1])
@@ -192,30 +174,31 @@ def roadsign_detector(runEvent):
                             cv2.waitKey(0)
                         """
                         
-                    # save sign width (minimum bounding box around the sign
-                    if (detected_stop):
-                        w = min(width_stop)
+                # save sign width (minimum bounding box around the sign
+                if (detected_stop):
+                    print("i have found a STOP !")
+                    w = min(width_stop)
+                    sharedRessources.lockWidthStop.acquire()
+                    sharedRessources.widthStop = w
+                    sharedRessources.lockWidthStop.release()
+                    
+                if (detected_search):
+                    print("i have found a SEARCH")
+                    w = min(width_search)
+                    sharedRessources.lockWidthSearch.acquire()
+                    sharedRessources.widthSearch = w
+                    sharedRessources.lockWidthSearch.release()
+                
+                else:
+                    # increase no detection counter
+                    no_detection_count += 1
+                    # if "no_detection_count" 
+                    if (no_detection_count >= 2):
+                        w = 0
                         sharedRessources.lockWidthStop.acquire()
                         sharedRessources.widthStop = w
                         sharedRessources.lockWidthStop.release()
                         
-                    elif (detected_search):
-                        w = min(width_search)
                         sharedRessources.lockWidthSearch.acquire()
                         sharedRessources.widthSearch = w
                         sharedRessources.lockWidthSearch.release()
-                    
-                    else :
-                        # increase no detection counter
-                        no_detection_count += 1
-                        # if "no_detection_count" 
-                        if (no_detection_count >= 2):
-                            w = 0
-                            sharedRessources.lockWidthStop.acquire()
-                            sharedRessources.widthStop = w
-                            sharedRessources.lockWidthStop.release()
-                            
-                            sharedRessources.lockWidthSearch.acquire()
-                            sharedRessources.widthSearch = w
-                            sharedRessources.lockWidthSearch.release()
-
