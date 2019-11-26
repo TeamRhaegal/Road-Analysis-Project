@@ -1,7 +1,7 @@
 from threading import Event, Thread, Lock
 from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 import carCommand.command as C
-import roadSignDetection.roadsign_detector as detection
+#import roadSignDetection.roadsign_detector as detection
 import threadManagement.messageFromIHMManager as msgManager
 import os
 import can
@@ -29,7 +29,7 @@ def main():
     bleTransmitterThread= BLETransmitterThread(bleServer,runRaspiCodeEvent) #for transmitting messages to the server
     
     # roadsign detection part
-    thread_roadsign_detector = Thread(target=detection.roadsign_detector, args=(runRaspiCodeEvent,))
+    #thread_roadsign_detector = Thread(target=detection.roadsign_detector, args=(runRaspiCodeEvent,))
     
     #seprate the Message
     messageFromIHMThread = msgManager.MessageFromIHMThread(runRaspiCodeEvent)
@@ -39,7 +39,7 @@ def main():
         threadsense.start()
         threadcom.start()
         bleTransmitterThread.start()
-        thread_roadsign_detector.start()
+        #thread_roadsign_detector.start()
         messageFromIHMThread.start()
         bleServer.run() ##################################################################################################### a la fin
 				
@@ -49,7 +49,7 @@ def main():
         threadsense.join()
         threadcom.join()
         bleTransmitterThread.join()
-        thread_roadsign_detector.join()
+        #thread_roadsign_detector.join()
         messageFromIHMThread.join()
     
         print ('All threads successfully closed')
