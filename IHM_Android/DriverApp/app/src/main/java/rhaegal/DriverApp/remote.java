@@ -16,7 +16,6 @@ import android.graphics.PorterDuff;
 import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,7 +25,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -64,9 +62,11 @@ public class remote extends AppCompatActivity {
     private ImageView battery;
     private ImageView car;
     private TextView speed;
+    private ImageView imageSign;
+    private TextView advSign;
 
     //STOP sign
-    private Toast toastStop;
+    private Toast signToast;
 
     private CountDownTimer timerNotif;
     private CountDownTimer timerDisconnect;
@@ -97,15 +97,16 @@ public class remote extends AppCompatActivity {
         car = findViewById(R.id.car);
 
         LayoutInflater inflater = getLayoutInflater();
-        View layout = inflater.inflate(R.layout.custom_toast,
+        View layoutSign = inflater.inflate(R.layout.sign_toast,
                 (ViewGroup) findViewById(R.id.custom_toast_container));
 
-        toastStop = new Toast(getApplicationContext());
-        toastStop.setGravity(Gravity.TOP, 0, 0);
-        toastStop.setDuration(Toast.LENGTH_LONG);
-        toastStop.setView(layout);
+        imageSign = layoutSign.findViewById(R.id.imageSign);
+        advSign = layoutSign.findViewById(R.id.textSign);
 
-
+        signToast = new Toast(getApplicationContext());
+        signToast.setGravity(Gravity.TOP, 0, 0);
+        signToast.setDuration(Toast.LENGTH_LONG);
+        signToast.setView(layoutSign);
 
         setBt();
 
@@ -754,7 +755,14 @@ public class remote extends AppCompatActivity {
 
     private void advertizeSign(final String signValue){
         if (signValue.equals(Constants.STOP)){
-            toastStop.show();
+            advSign.setText(R.string.advStop);
+            imageSign.setImageResource(R.drawable.stop_sign);
+            signToast.show();
+        }
+        if (signValue.equals(Constants.SEARCH)){
+            advSign.setText(R.string.advSearch);
+            imageSign.setImageResource(R.drawable.search_sign);
+            signToast.show();
         }
     }
 

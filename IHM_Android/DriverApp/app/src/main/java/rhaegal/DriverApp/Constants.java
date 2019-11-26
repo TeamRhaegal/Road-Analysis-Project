@@ -43,5 +43,7 @@ public class Constants {
     public static final String MIDDLE = "mid";
     public static final String NOTHING = "none";
     public static final String STOP = "stop";
+    public static final String SEARCH = "search";
+
 
 }

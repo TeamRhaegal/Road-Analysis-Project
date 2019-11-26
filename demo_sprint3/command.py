@@ -16,6 +16,7 @@ MOT=0x010     #identifiant commande moteur CAN
 US2=0x001      #identifiant Ultrasons arrière CAN
 US1=0x000      ##identifiant Ultrasons arrière CAN
 MS=0x100
+MAX_DISTANCE_US = 15
 
 
 
@@ -216,7 +217,7 @@ class MySensor(Thread):
                     print("---------")
                 
 
-                if UFL<R.maxDistanceUS or UFR<R.maxDistanceUS or UFC<R.maxDistanceUS: self.stopEvent.set()
+                if UFL<MAX_DISTANCE_US or UFR<MAX_DISTANCE_US or UFC<MAX_DISTANCE_US: self.stopEvent.set()
 
                 
             time.sleep(0.05)

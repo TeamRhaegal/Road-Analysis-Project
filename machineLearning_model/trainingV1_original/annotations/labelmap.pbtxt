@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 item {
   id: 1
   name: 'stop'
@@ -13,3 +14,20 @@ item {
   name: 'prohibited'
 }
 
+=======
+item {
+  id: 1
+  name: 'stop'
+}
+
+item {
+  id: 2
+  name: 'search'
+}
+
+item {
+  id: 3
+  name: 'prohibited'
+}
+
+>>>>>>> f289d6bf46ff39eb6d76f37f46127629f2a0642a
