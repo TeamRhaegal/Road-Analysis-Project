@@ -15,7 +15,7 @@ import numpy as np
 #sys.path.append('roadsign_python_source/')
 #from roadsign_python_source import raspicam
     
-folderpath = "dataset/"
+folderpath = "dataset_original/"
 MOT = 0x010    
 
 class MyCapture(Thread):
@@ -27,7 +27,7 @@ class MyCapture(Thread):
 
 
     def run(self):
-        counter = 186
+        counter = 189
         y1 = 0
         y2 = 1080
         x1 = 800
