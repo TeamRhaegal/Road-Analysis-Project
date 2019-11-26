@@ -20,12 +20,12 @@ import cv2, imutils
 import numpy as np
 import tensorflow as tf
 
-sys.path.append('roadsign_python_source/')
-from roadsign_python_source import location_machinelearning
+sys.path.append('roadSignDetection/')
+from roadSignDetection.roadsign_python_source import location_machinelearning
 
 RASPICAM_ENABLE = True
 if (RASPICAM_ENABLE):
-    from roadsign_python_source import raspicam
+    from roadSignDetection.roadsign_python_source import raspicam
     
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
@@ -39,12 +39,12 @@ DRAW = False
 PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
 
 # path to configuration model file
-PATH_TO_MODEL = "machinelearning_model/300_300_pipeline.config"
+PATH_TO_MODEL = "roadSignDetection/machinelearning_model/300_300_pipeline.config"
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_CKPT = "machinelearning_model/300_300_frozen_inference_graph.pb"
+PATH_TO_CKPT = "roadSignDetection/machinelearning_model/300_300_frozen_inference_graph.pb"
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = "machinelearning_model/300_300_labelmap.pbtxt"
+PATH_TO_LABELS = "roadSignDetection/machinelearning_model/300_300_labelmap.pbtxt"
 
 # Number of classes to detect
 NUM_CLASSES = 3
@@ -69,7 +69,7 @@ def roadsign_detector(runEvent):
     print("initializing roadsign detector")
     init_time = time.time()
     #Remove Python cache files if they exist
-    os.system("rm -rf  roadsign_python_source/*.pyc && rm -rf roadsign_python_source/keras_frcnn/*.pyc")
+    os.system("rm -rf  roadSignDetection/machinelearning_model/*.pyc && rm -rf roadSignDetection/machinelearning_model/*.pyc")
 
     # init camera or example image depending on the mode chosen
     if (RASPICAM_ENABLE):

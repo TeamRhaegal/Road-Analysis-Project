@@ -14,7 +14,7 @@
 """
 
 import numpy as np
-import sys
+import sys, time
 import tensorflow as tf
 import cv2
 
@@ -59,19 +59,20 @@ class LocationModel (object):
         self.num_classes = num_classes
         
         # Load the (frozen) Tensorflow model into memory.
-        self.detection_graph = tf.Graph()
-        with self.detection_graph.as_default():
+        with tf.gfile.GFile(ckpt_path, 'rb') as fid:
             self.od_graph_def = tf.GraphDef()
-            with tf.gfile.GFile(ckpt_path, 'rb') as fid:
-                self.serialized_graph = fid.read()
-                self.od_graph_def.ParseFromString(self.serialized_graph)
-                tf.import_graph_def(self.od_graph_def, name='')
+            self.od_graph_def.ParseFromString(fid.read())
+        with tf.Graph().as_default() as graph:
+            tf.import_graph_def(self.od_graph_def, name='')
+        self.detection_graph = graph
                 
         # Loading label map
         # Label maps map indices to category names, so that when our convolution network predicts `5`, we know that this corresponds to `airplane`.  Here we use internal utility functions, but anything that returns a dictionary mapping integers to appropriate string labels would be fine
         self.label_map = label_map_util.load_labelmap(label_path)
         self.categories = label_map_util.convert_label_map_to_categories(self.label_map, max_num_classes=num_classes, use_display_name=True)
         self.category_index = label_map_util.create_category_index(self.categories)
+        
+        return self.detection_graph
             
     """
         next function : load image data to numpy array if it is a common image format  (Jpeg, png, bmp ...)
@@ -85,46 +86,39 @@ class LocationModel (object):
     """
         detect roadsign position from an image as numpy array (heigth x length x RGB)
     """
-    def detect_roadsigns_from_numpy_array(self, image_np):
-        with self.detection_graph.as_default():
-            with tf.Session(graph=self.detection_graph) as sess:
-                # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-                self.image_np_expanded = np.expand_dims(image_np, axis=0)
-                # Extract image tensor
-                self.image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
-                # Extract detection boxes
-                self.boxes = self.detection_graph.get_tensor_by_name('detection_boxes:0')
-                # Extract detection scores
-                self.scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
-                # Extract detection classes
-                self.classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
-                # Extract number of detectionsd
-                self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
-                # Actual detection.
-                feed_dict={self.image_tensor: self.image_np_expanded}
-                (self.boxes, self.scores, self.classes, self.num_detections) = sess.run(
-                    [self.boxes, self.scores, self.classes, self.num_detections],
-                    feed_dict={self.image_tensor: self.image_np_expanded})
-         
-                if (self.debug):
-                    # Visualization of the results of a detection.
-                    vis_util.visualize_boxes_and_labels_on_image_array(
-                        image_np,
-                        np.squeeze(self.boxes),
-                        np.squeeze(self.classes).astype(np.int32),
-                        np.squeeze(self.scores),
-                        self.category_index,
-                        use_normalized_coordinates=True,
-                        line_thickness=8)
+    def detect_roadsigns_from_numpy_array(self, sess, image_np):
+        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
+        self.image_np_expanded = np.expand_dims(image_np, axis=0)
 
-                    # Display output
-                    image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
-                    cv2.imshow('object detection', image_np)
-                    cv2.waitKey(0)
-                
-                return self.boxes, self.scores, self.classes
-                pass
-                    
-    
+        # Extract image tensor
+        self.image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
+        # Extract detection boxes
+        self.boxes = self.detection_graph.get_tensor_by_name('detection_boxes:0')
+        # Extract detection scores
+        self.scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
+        # Extract detection classes
+        self.classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
+        # Extract number of detections
+        self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
 
+        # Actual detection.
+        (self.boxes, self.scores, self.classes, self.num_detections) = sess.run([self.boxes, self.scores, self.classes, self.num_detections], feed_dict={self.image_tensor: self.image_np_expanded})
 
+        if (self.debug):
+            # Visualization of the results of a detection.
+            vis_util.visualize_boxes_and_labels_on_image_array(
+                image_np,
+                np.squeeze(self.boxes),
+                np.squeeze(self.classes).astype(np.int32),
+                np.squeeze(self.scores),
+                self.category_index,
+                use_normalized_coordinates=True,
+                line_thickness=8)
+
+            # Display output
+            image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+            cv2.imshow('object detection', image_np)
+            cv2.waitKey(0)
+        
+        return self.boxes, self.scores, self.classes
+        pass
