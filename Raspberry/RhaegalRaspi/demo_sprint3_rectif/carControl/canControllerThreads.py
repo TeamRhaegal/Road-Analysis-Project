@@ -6,7 +6,7 @@ Created on Sat Dec 07 09:26:29 2019
 """
 
 import can
-from time import time
+import time
 import os
 from threading import Thread, Event
 import sharedRessources as R
@@ -24,7 +24,7 @@ MS=0x100       #id for battery+speed
 class CanControllerThread(Thread):
     def __init__(self, runEvent):
         Thread.__init__(self)
-        self.bus = self.getBus(self) #initialization od CAN bus
+        self.bus = self.getBus() #initialization od CAN bus
         self.runEvent= runEvent
         self.connectEvent = Event()  
         self.modeControlThread = ModeControlThread(self.bus,self.connectEvent) 
@@ -67,7 +67,7 @@ class CanControllerThread(Thread):
 class ModeControlThread(Thread):
     def __init__(self, bus, connectEvent):
         Thread.__init__(self)
-        self.bus = self.getBus(self)
+        self.bus = bus
         self.connectEvent= connectEvent
         self.modeAutoThread = ModeAutoThread(self.bus)
         self.modeAssistThread = ModeAssistThread(self.bus)
@@ -120,7 +120,7 @@ class ModeControlThread(Thread):
 class CanReceiverThread(Thread):
     def __init__(self, bus, connectEvent):
         Thread.__init__(self)
-        self.bus = self.getBus(self)
+        self.bus = bus
         self.connectEvent= connectEvent
         
     def run(self):
@@ -147,7 +147,7 @@ class CanReceiverThread(Thread):
                 R.UFC = int(str(msg.data[4:6]).encode('hex'), 16) #center
                 R.lockFrontRadar.release()
             
-            time.speed(0.01)
+            time.sleep(0.01)
                         
             
     

@@ -43,6 +43,10 @@ class MessageFromIHMThread(Thread):
                     sr.turboLock.acquire()
                     sr.turbo = value #slice
                     sr.turboLock.release()
+                elif key == 'state':
+                    sr.stateLock.acquire()
+                    sr.state = value 
+                    sr.stateLock.release()
                 elif key == 'connect':
                     sr.lockConnectedDevice.acquire()
                     if value == 'on':

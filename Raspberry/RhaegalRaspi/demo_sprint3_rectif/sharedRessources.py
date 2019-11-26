@@ -14,6 +14,7 @@ UFL = 180
 UFR = 180
 modeLaunched = 0; #0 nothing, 1 assisted, 2 autonomous
 
+emergencyOn = False
 
 # variables to detect road sign and specify their width
 widthStop = 0
@@ -35,6 +36,7 @@ lockConnectedDevice = Lock()
 lockWidthStop = Lock()
 lockWidthSearch = Lock()
 
+lockEmergencyOn = Lock()
 
 modeLock =Lock()
 joystickLock = Lock()
