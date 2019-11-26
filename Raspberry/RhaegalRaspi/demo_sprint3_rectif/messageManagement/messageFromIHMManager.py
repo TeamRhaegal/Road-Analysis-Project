@@ -24,7 +24,7 @@ class MessageFromIHMThread(Thread):
 
             for i in range(0,len(listMsg)):
                 separatedMessage = listMsg[i].split('$',1)
-				if(len(separatedMessage)==2):
+                if(len(separatedMessage)==2):
 					key = separatedMessage[0]
 					value = separatedMessage[1]
 

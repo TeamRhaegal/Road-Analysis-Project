@@ -8,7 +8,7 @@ from threading import Thread
 import time
 import sharedRessources as R
 
-MAX_DISTANCE_US = 30
+MAX_DISTANCE_US = 20
 
 class BatteryLevelThread(Thread):
     def __init__(self, runEvent):
