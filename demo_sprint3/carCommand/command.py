@@ -35,19 +35,22 @@ class MyCommand(Thread):
        
 		# mettre la condition de detection d'obstacle ultrasons
         realSignWidth = 0.20  #nb à déterminer en cm
-        focal = 1026
+        focal = 342
         CMD_O = 50
         CMD_V = 50
         CMD_V_A = 50
+        CMD_V_AS = 50
         CMD_Turbo = 75
-        Temps_necessaire=0.01
+        Temps_necessaire=99999999999
         stopDetected = 0   #variable qui empeche d'envoyé un message infini à l'ihm quand un stop ets détecté
         searchDetected = 0 # de même pour le pnneau search
+        countStop = 0
+        timeNeedOK = 0
         while self.runEvent.isSet() :  #remplacer avec l'event du main
             while not(self.stopEvent.isSet()):
                 CMD_O = 50
                 CMD_V = 50
-                CMD_V_A= 50
+                CMD_V_A= 65
                 CMD_Turbo = 75
                 R.lockConnectedDevice.acquire()
                 check_connected = R.connectedDevice
@@ -57,28 +60,33 @@ class MyCommand(Thread):
                     #affectation des valeurs pour le mode assissté en fonction des commandes reçues
                     R.turboLock.acquire()
                     R.joystickLock.acquire()
-                    if R.turbo == "on" : CMD_Turbo = 100
-                    if R.turbo == "off" : CMD_Turbo = 75
-                    if R.joystick == "right" :  
-                        CMD_O = 100
-                        CMD_V= 50
-                    if R.joystick == "left" : 
-                        CMD_O = 0
-                        CMD_V = 50
-                    if R.joystick == "front" : 
-                        CMD_V = CMD_Turbo
-                        CMD_O = 50
-                    if R.joystick == "right&front" : 
-                        CMD_O = 100
-                        CMD_V = CMD_Turbo
-                    if R.joystick == "left&front" :
-                        CMD_O = 0
-                        CMD_V = CMD_Turbo
-                    if R.joystick == "none" : 
-                        CMD_V = 50
-                        CMD_O = 50
+                    tempJoystick = R.joystick
+                    tempTurbo = R.turbo
                     R.turboLock.release()
                     R.joystickLock.release()
+                    
+                    
+                    if tempTurbo == "on" : CMD_Turbo = 75
+                    if tempTurbo == "off" : CMD_Turbo = 65
+                    if tempJoystick == "right" :  
+                        CMD_O = 100 + 0x80
+                        CMD_V= 50 
+                    if tempJoystick == "left" : 
+                        CMD_O = 0 + 0x80
+                        CMD_V = 50
+                    if tempJoystick == "front" : 
+                        CMD_V = CMD_Turbo + 0x80
+                        CMD_O = 50 
+                    if tempJoystick== "right&front" : 
+                        CMD_O = 70 + 0x80
+                        CMD_V = CMD_Turbo+ 0x80
+                    if tempJoystick == "left&front" :
+                        CMD_O = 20+ 0x80
+                        CMD_V = CMD_Turbo+ 0x80
+                    if tempJoystick == "none" : 
+                        CMD_V = 50
+                        CMD_O = 50
+                  
                     
                     R.lockWidthStop.acquire()
                     R.lockWidthSearch.acquire()
@@ -91,45 +99,61 @@ class MyCommand(Thread):
                     
                     # envoie de message à l'ihm en fonction du panneau détecté ainsi que la commande à effectuer
                     if widthStopSign :
-                        CMD_V_A = 50  
-                        searchDetected = 0
+                        #searchDetected = 0
                         if  not(stopDetected) :
+                            print("ouui y a un stop"+ str(searchDetected))
                             R.constructMsgToIHM("sign","stop")
                             stopDetected = 1
+                            countStop = 0
                     elif widthSearchSign :
-                        CMD_V_A = 60
-                        stopDetected = 0
+                        CMD_V_A = 65
+                        #stopDetected = 0
                         if  not(searchDetected) :
+                            print("ouui y a un search" + str(stopDetected))
                             R.constructMsgToIHM("sign","search")
                             searchDetected = 1
                     else : 
-                        CMD_V_A = 60
+                        CMD_V_A = 65
                         stopDetected = 0
                         searchDetected = 0
     
-                    CMD_V = CMD_V + 0x80
-                    CMD_O = CMD_O + 0x80
                     CMD_V_A = CMD_V_A + 0x80
                     
                     R.modeLock.acquire()
                     modeC = R.mode
                     R.modeLock.release()
+                    print("mode :" + modeC)
                     if modeC == "auto" and R.joystick == "none":
-                        
-                        if widthStopSign :  #changer sign width avec index 2 du panneau 
+                        print("stopt detected" + str(stopDetected))
+                        print("time need : {}".format(timeNeedOK))
+                        if stopDetected and not(timeNeedOK) :  #changer sign width avec index 2 du panneau 
                             toSignDistance = (realSignWidth*focal)/widthStopSign #changer avec liste panneau index 2
-                            Temps_necessaire = (toSignDistance / ((1.2/5)))-1  #calcul du temps à  attendre, -1 car temps reconnaissance = 1 sec
-                            print(Temps_necessaire)
-                        else :  Temps_necessaire = 0.01
+                            print("distance :" + str(toSignDistance) + "pixel" + str(widthStopSign))
+                            R.speedLock.acquire()
+                            speedC= R.wheelSpeed
+                            R.speedLock.release()
+                            print("vitesse : " + str(speedC))
+                            if speedC >= 0.14 :
+                                Temps_necessaire = (toSignDistance / speedC)-1  #calcul du temps à  attendre, 1.2 => 100 pour la  vitesse avant -1 pour la reconnaissance
+                                print(Temps_necessaire)
+                                timeNeedOK = 1
                         
                         # condition du stop pour marquer un arrêt
                        
                         msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
-                        time.sleep(Temps_necessaire)
+                        time.sleep(0.01)
                         self.bus.send(msg)
                         #si c'est un panneau stop attendre 5 secondes à l'arrêt
-                        if widthStopSign :
-                            time.sleep(5)
+                        if countStop >= Temps_necessaire :
+                            countStop = 0
+                            timeNeedOK = 0
+                            print("OUAIS ON A FINIS")
+                            msg = can.Message(arbitration_id=MOT,data=[CMD_V_AS, CMD_V_AS, 0x00,0,0,0,0,0],extended_id=False)
+                            time.sleep(0.01)
+                            self.bus.send(msg)
+                            Temps_necessaire = 9999999999999
+                            time.sleep(4)
+
                         '''  # condition du search mode détecté
                         if signC == "search" : 
                             msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
@@ -140,21 +164,30 @@ class MyCommand(Thread):
                             time.sleep(10)
                             self.bus.send(msg)
                         '''   
-    
+                        countStop = countStop + 0.1
+                        
                     elif modeC == "assist" :
                         # comande en fonction des messages de l'ihm
                         msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
+                        time.sleep(0.01)
                         self.bus.send(msg)
-                        
+                        stopDetected = 0
+                        searchDetected = 0
+                        timeNeedOK = 0
+                    
                     
                 else:
                     msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
                     self.bus.send(msg)
+                
                 time.sleep(0.1)
             msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
+            time.sleep(0.01)
             self.bus.send(msg)
             
+            
         msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
+        time.sleep(0.1)
         self.bus.send(msg)
                 
 class MySensor(Thread):
@@ -172,15 +205,17 @@ class MySensor(Thread):
         UFL = 180
         UFR = 180
         UFC = 180
-        wheelPerimeter = 0.19 *2*3.14  
+        wheelPerimeter = 0.19 *3.14  
         emergencyOn = 0
         countEmergency = 0
+        countSpeed = 0
+        wheel_speed = 0
         while self.runEvent.isSet() :
             
             R.lockConnectedDevice.acquire()
             check_connected = R.connectedDevice
             R.lockConnectedDevice.release()
-        
+         
             if (check_connected == True):
                 
                 msg = self.bus.recv()
@@ -188,12 +223,18 @@ class MySensor(Thread):
                     Batmes = int(str(msg.data[2:4]).encode('hex'), 16)
                     U = (4095 / Batmes) * (3.3 / 0.2)
                     print(Batmes)"""
+                
                 if msg.arbitration_id == MS:
                     # Vitesse voiture
                     wheel_speed = int(str(msg.data[6:8]).encode('hex'), 16)
+                    R.speedLock.acquire()
                     R.wheelSpeed = (0.01*wheel_speed*wheelPerimeter / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
-                    #message = "Vitesse :" + str(wheelSpeed)+ ";"
-                    #print(message)
+                    wheel_speed = R.wheelSpeed
+                    R.speedLock.release()
+                    wheel_speed = round(wheel_speed, 3)
+                    #print("speed :" + str(wheel_speed))
+                    wheel_angle= int(str(msg.data[0:2]).encode('hex'), 16)
+                    #print(wheel_angle)
                     '''
                 if msg.arbitration_id == US2:
                     # ultrason arriere gauche
@@ -251,3 +292,7 @@ class MySensor(Thread):
                 emergencyOn = 0
                 countEmergency = 0
             time.sleep(0.01)
+            countSpeed = countSpeed + 1
+            if countSpeed == 100:
+                R.constructMsgToIHM("speed",wheel_speed)
+                countSpeed = 0

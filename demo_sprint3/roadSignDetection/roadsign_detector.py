@@ -67,10 +67,10 @@ def roadsign_detector(runEvent):
 
     #init camera from raspberry (raspicam)
     print("initializing camera")
-    camera = raspicam.Raspicam(resolution = (1640,922))
+    camera = raspicam.Raspicam(resolution = (300,300))
 
     # define location object instance
-    location_model = location_machinelearning.LocationModel()
+    location_model = location_machinelearning.LocationModel(debug = DRAW)
     # load model from specified files
     detection_graph = location_model.load_model(model_path=PATH_TO_MODEL, ckpt_path=PATH_TO_CKPT, label_path=PATH_TO_LABELS, num_classes=NUM_CLASSES)
     
@@ -122,6 +122,7 @@ def roadsign_detector(runEvent):
                 """
                 
                 # assume we start with no detection
+                result = 0
                 detected_stop = False
                 detected_search = False
                 width_stop = []
@@ -130,7 +131,7 @@ def roadsign_detector(runEvent):
                 # search for road sign in all the found boxes
                 for i in range(location_boxes.shape[1]):
                     # if the code go through the next condition, a road sign is detected. 
-                    if (location_boxes[0][i][0] != 0 and location_score[0][i] > 0.1):
+                    if (location_boxes[0][i][0] != 0 and location_score[0][i] > 0.75):
                         
                         # assign "no_detection_count" to 0  because a road sign has been detected
                         no_detection_count = 0
@@ -155,6 +156,9 @@ def roadsign_detector(runEvent):
                         elif (result == 2):
                             detected_search = True
                             width_search.append(w)
+                            
+                        elif(result==3):
+                            print("i have found a PROHIBITED sign")
                         
                         """
                         # compute road sign distance from the camera

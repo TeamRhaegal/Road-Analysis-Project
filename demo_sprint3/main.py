@@ -1,9 +1,9 @@
 from threading import Event, Thread, Lock
 from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 import carCommand.command as C
-#import roadSignDetection.roadsign_detector as detection
+import roadSignDetection.roadsign_detector as detection
 import threadManagement.messageFromIHMManager as msgManager
-import os
+import os, sys
 import can
 	
 def main():
@@ -29,32 +29,39 @@ def main():
     bleTransmitterThread= BLETransmitterThread(bleServer,runRaspiCodeEvent) #for transmitting messages to the server
     
     # roadsign detection part
-    #thread_roadsign_detector = Thread(target=detection.roadsign_detector, args=(runRaspiCodeEvent,))
+    thread_roadsign_detector = Thread(target=detection.roadsign_detector, args=(runRaspiCodeEvent,))
     
     #seprate the Message
     messageFromIHMThread = msgManager.MessageFromIHMThread(runRaspiCodeEvent)
     
     
     try:
+        threadsense.daemon = True
+        threadcom.daemon = True
+        bleTransmitterThread.daemon = True
+        thread_roadsign_detector.daemon = True
+        messageFromIHMThread.daemon = True
+        
         threadsense.start()
         threadcom.start()
         bleTransmitterThread.start()
-        #thread_roadsign_detector.start()
+        thread_roadsign_detector.start()
         messageFromIHMThread.start()
         bleServer.run() ##################################################################################################### a la fin
 				
     except KeyboardInterrupt:
         print ('Attempting to close all threads')
         runRaspiCodeEvent.clear()
-        threadsense.join()
-        threadcom.join()
-        bleTransmitterThread.join()
+        #threadsense.join()
+        #threadcom.join()
+        #bleTransmitterThread.join()
         #thread_roadsign_detector.join()
-        messageFromIHMThread.join()
+        #messageFromIHMThread.join()
     
         print ('All threads successfully closed')
         bleServer.quit()
         os.system("sudo find . -type f -name \"*.pyc\" -delete")
+        sys.exit(0)
 
 if __name__ == '__main__':
     main()

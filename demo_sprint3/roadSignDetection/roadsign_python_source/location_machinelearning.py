@@ -118,7 +118,7 @@ class LocationModel (object):
             # Display output
             image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
             cv2.imshow('object detection', image_np)
-            cv2.waitKey(0)
+            cv2.waitKey(1)
         
         return self.boxes, self.scores, self.classes
         pass
