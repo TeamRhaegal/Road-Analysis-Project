@@ -53,10 +53,9 @@ def main():
         messageFromIHMThread.join()
     
         print ('All threads successfully closed')
-		bleServer.quit()
-		os.system("sudo find . -type f -name \"*.pyc\" -delete")		
+        bleServer.quit()
+        os.system("sudo find . -type f -name \"*.pyc\" -delete")		
 
-		
 if __name__ == '__main__':
     main()
 
