@@ -17,7 +17,7 @@ import numpy as np
 
 class Raspicam(object):
 
-    def __init__(self, resolution = (1380,800), save=False, preview=False):
+    def __init__(self, resolution = (1920,1080), save=False, preview=False):
         # create raspicam instance
         self.camera = PiCamera()
         self.resolution = resolution
@@ -46,7 +46,7 @@ class Raspicam(object):
         input : save boolean value
     """
     def capture_image(self):
-        self.camera.capture(self.stream, format="rgb")
+        self.camera.capture(self.stream, format="rgb", use_video_port=True)
         pass
      
     """
