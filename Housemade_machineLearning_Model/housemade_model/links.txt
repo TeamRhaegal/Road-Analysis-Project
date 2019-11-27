@@ -1,0 +1,15 @@
+https://towardsdatascience.com/custom-object-detection-using-tensorflow-from-scratch-e61da2e10087
+
+https://github.com/niranjantdesai/traffic-sign-detection
+
+https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md
+
+https://github.com/EdjeElectronics/TensorFlow-Object-Detection-API-Tutorial-Train-Multiple-Objects-Windows-10#6-run-the-training
+
+https://github.com/pierluigiferrari/ssd_keras
+
+https://github.com/tanakataiki/ssd_kerasV2
+
+https://github.com/tensorflow/models/issues/5808
+
+https://machinethink.net/blog/mobilenet-ssdlite-coreml/
