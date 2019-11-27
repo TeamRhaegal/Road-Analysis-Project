@@ -17,10 +17,10 @@ if __name__ == "__main__":
     # define 
     counter = 0
     
-    y1 = 400
+    y1 = 0
     y2 = 1080
     x1 = 0
-    y2 ⁼ 1920
+    x2 = 1920
     
     
     while (counter < 100): 
@@ -30,6 +30,7 @@ if __name__ == "__main__":
         
         image = image[y1:y2 , x1:x2]
         skio.imsave(folderpath+str(counter)+".rgb", image)
+        print ("saved image number {}".format(counter))
             
         counter += 1
         time.sleep(10)

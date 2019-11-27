@@ -1,0 +1,11 @@
+Time to capture image : 0.713938236237
+Time to read image : 9.79900360107e-05
+Time to change image from BGR to RGB : 0.0482201576233
+Time to resize image : 0.0239388942719
+Time to calculate ratio : 4.29153442383e-05
+Time to put image in grey : 0.0151147842407
+Time to blur image : 0.0855669975281
+Time to calculate threshold : 0.0157108306885
+Time to calculate canny : 0.0461339950562
+Time to calculate contours in main image : 0.0443880558014
+Time to  find shapes (full process)  : 0.00744700431824
