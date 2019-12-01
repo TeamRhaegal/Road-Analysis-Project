@@ -8,7 +8,7 @@ joystick = "none"
 mode = "assist"
 sign = "none"
 signWidth = 0
-maxDistanceUS = 10   #distance max ultrasons obstacle
+maxDistanceUS = 15   #distance max ultrasons obstacle
 obstacleRear = 0
 obstacleFront = 0
 

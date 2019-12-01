@@ -24,10 +24,11 @@ MS=0x100
 			
 class MyCommand(Thread):
 
-    def __init__(self, bus,runEvent):
+    def __init__(self, bus,runEvent,stopEvent):
         Thread.__init__(self)
         self.bus = bus
         self.runEvent= runEvent
+        self.stopEvent = stopEvent
 
     def run(self):
        
@@ -124,12 +125,13 @@ class MyCommand(Thread):
                     self.bus.send(msg)
                     
                     
-                '''# gestion des obstacles : Emergency STOP    
-                elif obstacleRear or obstacleFront :
+                # gestion des obstacles : Emergency STOP    
+                elif self.stopEvent.isSet() :
                     msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
                     time.sleep(0.01)
                     self.bus.send(msg)
-                '''
+                    self.stopEvent.clear()
+                
             else:
                 msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
                 self.bus.send(msg)
@@ -140,10 +142,11 @@ class MyCommand(Thread):
                 
 class MySensor(Thread):
 
-    def __init__(self, bus, runEvent):
+    def __init__(self, bus, runEvent,stopEvent):
         Thread.__init__(self)
         self.bus = bus
         self.runEvent = runEvent
+        self.stopEvent = stopEvent
 
     def run(self):
         URL = 180
@@ -152,8 +155,6 @@ class MySensor(Thread):
         UFL = 180
         UFR = 180
         UFC = 180
-        obstacleFront = 0
-        obstacleRear = 0
         wheelPerimeter = 0.19 *2*3.14  
         while self.runEvent.isSet() :
             
@@ -195,6 +196,7 @@ class MySensor(Thread):
                     message = "UFC:" + str(distance)+ ";"
                     #print(message)
                     print("---------")
+                    '''
                 if msg.arbitration_id == US1:
                     # ultrason avant gauche
                     distance = int.from_bytes(msg.data[0:2], byteorder='big')
@@ -213,13 +215,8 @@ class MySensor(Thread):
                     #print(message)
                     print("---------")
                 
-                obstacleFrontLock.acquire()
-                obstacleRearLock.acquire()
-                if  URL <maxDistanceUS or URR<maxDistanceUS or URC <maxDistanceUS: obstacleRear = 1
-                else : obstacleRear = 0 
-                if UFL<maxDistanceUS or UFR<maxDistanceUS or UFC<maxDistanceUS: obstacleFront = 1
-                else: obstacleFront = 0 
-                obstacleFrontLock.release()
-                obstacleRearLock.release()
-                '''
+
+                if UFL<R.maxDistanceUS or UFR<R.maxDistanceUS or UFC<R.maxDistanceUS: self.stopEvent.set()
+
+                
             time.sleep(0.05)

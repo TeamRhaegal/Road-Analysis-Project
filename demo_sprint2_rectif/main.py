@@ -22,11 +22,12 @@ def main():
     
     
     runRaspiCodeEvent = Event()
+    runEmergencyEvent = Event()
     runRaspiCodeEvent.set()
 	
     #command part
-    threadsense = C.MySensor(bus,runRaspiCodeEvent)
-    threadcom = C.MyCommand(bus,runRaspiCodeEvent)
+    threadsense = C.MySensor(bus,runRaspiCodeEvent,runEmergencyEvent)
+    threadcom = C.MyCommand(bus,runRaspiCodeEvent,runEmergencyEvent)
     
 	#BLE part
     bleServer = BLEServer()
