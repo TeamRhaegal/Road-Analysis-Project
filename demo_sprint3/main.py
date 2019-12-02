@@ -1,7 +1,7 @@
 from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 from threading import Event, Thread, Lock
 import command as C
-import demo_detector_shapes as detection
+import roadsign_detector as detection
 import seprateMessageThread as sm
 import os
 import time
