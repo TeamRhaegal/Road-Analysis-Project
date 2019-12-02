@@ -101,10 +101,11 @@ class LocationModel (object):
                 # Extract number of detectionsd
                 self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
                 # Actual detection.
+                feed_dict={self.image_tensor: self.image_np_expanded}
                 (self.boxes, self.scores, self.classes, self.num_detections) = sess.run(
                     [self.boxes, self.scores, self.classes, self.num_detections],
                     feed_dict={self.image_tensor: self.image_np_expanded})
-                
+         
                 if (self.debug):
                     # Visualization of the results of a detection.
                     vis_util.visualize_boxes_and_labels_on_image_array(
@@ -117,7 +118,8 @@ class LocationModel (object):
                         line_thickness=8)
 
                     # Display output
-                    cv2.imshow('object detection', cv2.resize(image_np, (800, 600)))
+                    image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+                    cv2.imshow('object detection', image_np)
                     cv2.waitKey(0)
                 
                 return self.boxes, self.scores, self.classes

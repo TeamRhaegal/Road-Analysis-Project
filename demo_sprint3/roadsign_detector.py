@@ -38,12 +38,12 @@ DRAW = False
 PATH_FOR_EXAMPLE_IMAGE = "images/stoptest.ppm"
 
 # path to configuration model file
-PATH_TO_MODEL = "ssd_mobilenet_v1_gtsdb3.config"
+PATH_TO_MODEL = "machinelearning_model/300_300_pipeline.config"
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_CKPT = "frozen_inference_graph.pb"
+PATH_TO_CKPT = "machinelearning_model/300_300_frozen_inference_graph.pb"
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = "gtsdb3_label_map.pbtxt"
+PATH_TO_LABELS = "machinelearning_model/300_300_labelmap.pbtxt"
 
 # Number of classes to detect
 NUM_CLASSES = 3
@@ -114,7 +114,8 @@ def roadsign_detector(runEvent):
             if (RASPICAM_ENABLE):
                 camera.capture_image()
                 location_input_image = camera.read_image_as_numpy_array(save=False)
-            
+                location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_BGR2RGB)
+                
             # process prediction from model and get scores + corresponding boxes
             location_boxes, location_score, location_classes = location_model.detect_roadsigns_from_numpy_array(location_input_image.copy())
 
@@ -125,9 +126,9 @@ def roadsign_detector(runEvent):
                 If DEBUG is True, print, save and show image with all the boxes rendered. 
             """
             for i in range(location_boxes.shape[1]):
-                if (location_score[0][i] > 0.1):
-                    result = location_classes[i]
-                    print ("found roadsign : {}".format(result))
+                if (location_boxes[0][i][0] != 0 and location_score[0][i] > 0.1):
+                    result = int(location_classes[0][i])
+                    print ("found roadsign : {}".format(roadsign_types[result-1][0]))
                     # capture interesting part (box) from the global image
                     x1 = int(location_boxes[0][i][1]*location_input_image.shape[1])
                     x2 = int(location_boxes[0][i][3]*location_input_image.shape[1])
@@ -139,12 +140,13 @@ def roadsign_detector(runEvent):
                         distance = (0.195 * focal) / w
                         if (old_distance != distance):
                             old_distance = distance
-                            print ("distance = {}".format(distance))
+                            print ("distance = {} meters".format(distance))
                             print ("width = {} pixels".format(w))
                             
                     if (DRAW):
                         # draw rectangle boxes around Region of Interest (ROI)
                         cv2.rectangle(location_input_image, (x1,y1), (x2,y2), (255,0,0), 1)
+                        location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
                         cv2.imshow("object_detection", location_input_image)
                         cv2.waitKey(0)
                         
@@ -156,7 +158,7 @@ def roadsign_detector(runEvent):
 
                     # save result in global variable
                     sharedRessources.signLock.acquire()
-                    sharedRessources.sign = roadsign_types[result][0] 
+                    sharedRessources.sign = roadsign_types[result-1][0] 
                     sharedRessources.signLock.release()
                     
                     sharedRessources.signWidthLock.acquire()
