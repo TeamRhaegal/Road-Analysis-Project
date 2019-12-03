@@ -17,13 +17,13 @@ import numpy as np
 
 class Raspicam(object):
 
-    def __init__(self, resolution = (1920,1080), save=False, preview=False):
+    def __init__(self, resolution = (1640,922), save=False, preview=False):
         # create raspicam instance
         self.camera = PiCamera()
         self.resolution = resolution
         self.save = save
         # init camera resolution
-        self.set_resolution(self.resolution)
+        self.set_resolution(self.resolution, resolution)
         # init stream variable (contains the image at different times as BYTES (no image format specified))
         self.stream = PiRGBArray(self.camera)
         # check if preview option is True and if it is the case, start camera preview (only useful for debugging purposes
@@ -36,8 +36,8 @@ class Raspicam(object):
         
         input : resolution : X, Y tupple
     """
-    def set_resolution(self, resolution=(1380,800)):
-        self.camera.resolution = (self.resolution[0], self.resolution[1])
+    def set_resolution(self, resolution=(1640,922)):
+        self.camera.resolution = (resolution[0], resolution[1])
         pass
     
     """

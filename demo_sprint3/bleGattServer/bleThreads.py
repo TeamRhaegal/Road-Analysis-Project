@@ -53,4 +53,7 @@ class BLETransmitterThread(Thread):
 			    self.TXChara.send_tx(myMessagesToSend.pop())
 		
 		time.sleep(0.2)
+<<<<<<< HEAD
         print('Transmitter to server thread closed')
+=======
+>>>>>>> f289d6bf46ff39eb6d76f37f46127629f2a0642a
