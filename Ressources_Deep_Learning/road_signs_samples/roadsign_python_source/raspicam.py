@@ -23,7 +23,7 @@ class Raspicam(object):
         self.resolution = resolution
         self.save = save
         # init camera resolution
-        self.set_resolution(self.resolution, resolution)
+        self.set_resolution(resolution)
         # init stream variable (contains the image at different times as BYTES (no image format specified))
         self.stream = PiRGBArray(self.camera)
         # check if preview option is True and if it is the case, start camera preview (only useful for debugging purposes
