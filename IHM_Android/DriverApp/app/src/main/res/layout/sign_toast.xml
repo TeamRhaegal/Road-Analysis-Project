@@ -9,18 +9,17 @@
     >
 
     <ImageView
+        android:id="@+id/imageSign"
         android:layout_width="119dp"
         android:layout_height="112dp"
-        android:layout_marginEnd="8dp"
-        android:src="@drawable/stop_sign" />
+        android:layout_marginEnd="8dp"/>
 
     <TextView
-        android:id="@+id/textStop"
+        android:id="@+id/textSign"
         android:layout_width="wrap_content"
         android:layout_height="112dp"
         android:gravity="center"
         android:textStyle="bold"
-        android:text="Warning ! Stop sign detected"
         android:textColor="#FFF"
         android:textSize="30sp" />
 </LinearLayout>

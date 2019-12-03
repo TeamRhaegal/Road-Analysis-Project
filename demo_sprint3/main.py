@@ -8,12 +8,8 @@ import time
 import can
 	
 def main():
-    print('\n\rCAN Rx test')
-    print('Bring up CAN0....')
-
     # Bring up can0 interface at 500kbps
     os.system("sudo /sbin/ip link set can0 up type can bitrate 400000")
-    print('Press CTL-C to exit')
     try:
         bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
     except OSError:
@@ -59,9 +55,8 @@ def main():
     
         print ('All threads successfully closed')
         bleServer.quit()
-        """msg = can.Message(arbitration_id=MOT,data=[0x00, 0x00, 0x00,0,0,0,0,0],extended_id=False)
-        bus.send(msg)
-        os.system("sudo /sbin/ip link set can0 down")"""
+		os.system("sudo find . -type f -name \"*.pyc\" -delete")		
+
 		
 if __name__ == '__main__':
     main()
