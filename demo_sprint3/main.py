@@ -1,10 +1,9 @@
-from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 from threading import Event, Thread, Lock
-import command as C
-import roadsign_detector as detection
-import seprateMessageThread as sm
+from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
+import carCommand.command as C
+import roadSignDetection.roadsign_detector as detection
+import threadManagement.messageFromIHMManager as msgManager
 import os
-import time
 import can
 	
 def main():
@@ -33,7 +32,7 @@ def main():
     thread_roadsign_detector = Thread(target=detection.roadsign_detector, args=(runRaspiCodeEvent,))
     
     #seprate the Message
-    seprateMessageThread = sm.SeprateMessageThread(runRaspiCodeEvent)
+    messageFromIHMThread = msgManager.MessageFromIHMThread(runRaspiCodeEvent)
     
     
     try:
@@ -41,7 +40,7 @@ def main():
         threadcom.start()
         bleTransmitterThread.start()
         thread_roadsign_detector.start()
-        seprateMessageThread.start()
+        messageFromIHMThread.start()
         bleServer.run() ##################################################################################################### a la fin
 				
     except KeyboardInterrupt:
@@ -51,10 +50,10 @@ def main():
         threadcom.join()
         bleTransmitterThread.join()
         thread_roadsign_detector.join()
-        seprateMessageThread.join()
+        messageFromIHMThread.join()
     
         print ('All threads successfully closed')
-        bleServer.quit()
+		bleServer.quit()
 		os.system("sudo find . -type f -name \"*.pyc\" -delete")		
 
 		
