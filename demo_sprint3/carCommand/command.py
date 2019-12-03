@@ -47,13 +47,14 @@ class MyCommand(Thread):
             CMD_V = 50
             CMD_V_A= 50
             CMD_Turbo = 75
+            signC="none"
             R.lockConnectedDevice.acquire()
             check_connected = R.connectedDevice
             R.lockConnectedDevice.release()
             #print(check_connected)
-            if(check_connected == True):
-                time.sleep(0.01)            
-                
+            if(check_connected == True):           
+                    
+                #affectation des valeurs pour le mode assissté en fonction des commandes reçues
                 R.turboLock.acquire()
                 R.joystickLock.acquire()
                 if R.turbo == "on" : CMD_Turbo = 100
@@ -80,17 +81,21 @@ class MyCommand(Thread):
                 R.turboLock.release()
                 R.joystickLock.release()   
                 
-                R.signLock.acquire()
-                for i in R.signDetection :
-                    i=i+1
-                    if 
-                    signC = R.signDetection[0]  #liste panneau index n°1
-                R.signLock.release()
-                #changement le lock 
-                R.signLock.acquire()
-                if signDeteR.sign == "stop" : CMD_V_A = 50  #panneau lock, à changer avec la liste de panneau, condition ou pour le search 
+                #affectation du type de panneau reconnu ainsi que de sa largeur en pixel
+                R.signDetectionLock.acquire()
+                if len(R.signDetection):
+                    for i in len(R.signDetection) :
+                        
+                        if R.signDetection[i][0] == "stop":
+                            signC = R.signDetection[i][0]  #uniquement si le panneau reconnu est un stop : on réagit
+                            signWidth = R.signDetection[i][1] #☺ on récupère la largeur en pixel du panneau
+                            del R.signDetection[i]
+                        i=i+1
+                R.signDetectionLock.release()
+                
+                if signC == "stop" : CMD_V_A = 50  # si panneu stop reconnu ou search aussi ?
                 else : CMD_V_A = 60
-                R.signLock.release()
+
                 CMD_V = CMD_V + 0x80
                 CMD_O = CMD_O + 0x80
                 CMD_V_A = CMD_V_A + 0x80
@@ -99,29 +104,24 @@ class MyCommand(Thread):
                 modeC = R.mode
                 R.modeLock.release()
                 if modeC == "auto" and R.joystick == "none":
+                
                     
-
-                    
-                    R.signWidthLock.acquire()
-                    
-                    if R.signdetection[0][0] and signC == "stop":  #changer sign width avec index 2 du panneau 
-                        toSignDistance = (realSignWidth*focal)/R.signWidth  #changer avec liste panneau index 2
-                        Temps_necessaire = toSignDistance / ((1.2/5))   #calcul du temps à  attendre 
+                    if signWidth and signC == "stop":  #changer sign width avec index 2 du panneau 
+                        toSignDistance = (realSignWidth*focal)/signWidth  #changer avec liste panneau index 2
+                        Temps_necessaire = (toSignDistance / ((1.2/5)))-1  #calcul du temps à  attendre, -1 car temps reconnaissance = 1 sec
                         print(Temps_necessaire)
                     else :  Temps_necessaire = 0.01
-                    R.signWidthLock.release()
-                   
                     
                     # condition du stop pour marquer un arrêt
                    
-                    if signC == "stop" : 
-                        msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
-                        time.sleep(Temps_necessaire-1)
-                        self.bus.send(msg)
-                        #suppression de l'élément de la liste(panneau stop )  auquel on réagit 
+                    msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
+                    time.sleep(Temps_necessaire)
+                    self.bus.send(msg)
+                    #si c'est un panneau stop attendre 5 secondes à l'arrêt
+                    if signC == "stop":
                         time.sleep(5)
                   '''  # condition du search mode détecté
-                    elif signC == "search" : 
+                    if signC == "search" : 
                         msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
                         time.sleep(Temps_necessaire)
                         self.bus.send(msg)
@@ -130,12 +130,7 @@ class MyCommand(Thread):
                         time.sleep(10)
                         self.bus.send(msg)
                      '''   
-                    else : 
-                        msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
-                        time.sleep(Temps_necessaire)
-                        self.bus.send(msg)
-                    #mode autonome
-                
+
                 elif modeC == "assist" :
                     # comande en fonction des messages de l'ihm
                     msg = can.Message(arbitration_id=MOT,data=[CMD_V, CMD_V, CMD_O,0,0,0,0,0],extended_id=False)
@@ -189,10 +184,8 @@ class MySensor(Thread):
                     print(Batmes)"""
                 if msg.arbitration_id == MS:
                     # Vitesse voiture
-                    R.speedLock.acquire()
                     wheel_speed = int(str(msg.data[6:8]).encode('hex'), 16)
                     R.wheelSpeed = (0.01*wheel_speed*wheelPerimeter / 60) #metre/s max : 1.21 m/s donc 4,34 km/H
-                    R.speedLock.release()
                     #message = "Vitesse :" + str(wheelSpeed)+ ";"
                     #print(message)
                     '''
