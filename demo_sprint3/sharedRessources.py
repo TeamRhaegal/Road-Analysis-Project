@@ -6,11 +6,7 @@ wheelSpeed = 0
 turbo ="off"
 joystick = "none"
 mode = "assist"
-sign = "none"
-signWidth = 0
-maxDistanceUS = 10   #distance max ultrasons obstacle
-obstacleRear = 0
-obstacleFront = 0
+signDetection = []
 
 listMessagesToSend = []
 listMessagesReceived = []
@@ -25,8 +21,22 @@ lockConnectedDevice = Lock()
 modeLock =Lock()
 joystickLock = Lock()
 turboLock = Lock()
-signLock = Lock()
-signWidthLock = Lock()
+signDetectionLock = Lock()
 speedLock = Lock()
+
+def constructMsgToIHM(key,*args):
+	msg = str(key)
+	if len(args) :
+		int i = 0;
+		for i in range (0,len(args)):
+			msg= msg+"$"+str(args[i])
+			
+		lockMessagesToSend.acquire()
+		listMessagesToSend.append(msg)
+		lockMessagesToSend.release()
+	
+	
+	
+
 
 
