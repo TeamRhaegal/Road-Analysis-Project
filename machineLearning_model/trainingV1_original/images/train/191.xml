@@ -1,0 +1,26 @@
+<annotation>
+	<folder>dataset_original</folder>
+	<filename>191.jpg</filename>
+	<path>/home/vincent/Documents/Travail/INSA_T/5e_annee/ProjetSIEC/github/Road-Analysis-Project/Housemade_machineLearning_Model/dataset_original/191.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>1640</width>
+		<height>922</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>stop</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>886</xmin>
+			<ymin>591</ymin>
+			<xmax>975</xmax>
+			<ymax>681</ymax>
+		</bndbox>
+	</object>
+</annotation>
