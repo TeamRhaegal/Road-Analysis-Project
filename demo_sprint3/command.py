@@ -81,7 +81,14 @@ class MyCommand(Thread):
                 R.joystickLock.release()   
                 
                 R.signLock.acquire()
-                if R.sign == "stop": CMD_V_A = 50  #panneau lock
+                for i in R.signDetection :
+                    i=i+1
+                    if 
+                    signC = R.signDetection[0]  #liste panneau index n°1
+                R.signLock.release()
+                #changement le lock 
+                R.signLock.acquire()
+                if signDeteR.sign == "stop" : CMD_V_A = 50  #panneau lock, à changer avec la liste de panneau, condition ou pour le search 
                 else : CMD_V_A = 60
                 R.signLock.release()
                 CMD_V = CMD_V + 0x80
@@ -93,14 +100,12 @@ class MyCommand(Thread):
                 R.modeLock.release()
                 if modeC == "auto" and R.joystick == "none":
                     
-                    R.signLock.acquire()
-                    signC = R.sign
-                    R.signLock.release()
+
+                    
                     R.signWidthLock.acquire()
                     
-                    
-                    if R.signWidth and signC == "stop":
-                        toSignDistance = (realSignWidth*focal)/R.signWidth
+                    if R.signdetection[0][0] and signC == "stop":  #changer sign width avec index 2 du panneau 
+                        toSignDistance = (realSignWidth*focal)/R.signWidth  #changer avec liste panneau index 2
                         Temps_necessaire = toSignDistance / ((1.2/5))   #calcul du temps à  attendre 
                         print(Temps_necessaire)
                     else :  Temps_necessaire = 0.01
@@ -111,9 +116,20 @@ class MyCommand(Thread):
                    
                     if signC == "stop" : 
                         msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
+                        time.sleep(Temps_necessaire-1)
+                        self.bus.send(msg)
+                        #suppression de l'élément de la liste(panneau stop )  auquel on réagit 
+                        time.sleep(5)
+                  '''  # condition du search mode détecté
+                    elif signC == "search" : 
+                        msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
                         time.sleep(Temps_necessaire)
                         self.bus.send(msg)
-                        time.sleep(5)
+                        time.sleep(2)
+                        msg = can.Message(arbitration_id=MOT,data=[0, 0, 0x00,0,0,0,0,0],extended_id=False)
+                        time.sleep(10)
+                        self.bus.send(msg)
+                     '''   
                     else : 
                         msg = can.Message(arbitration_id=MOT,data=[CMD_V_A, CMD_V_A, 0x00,0,0,0,0,0],extended_id=False)
                         time.sleep(Temps_necessaire)
