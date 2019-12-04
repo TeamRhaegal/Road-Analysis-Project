@@ -18,7 +18,7 @@ import sys, time
 import tensorflow as tf
 import cv2
 
-sys.path.insert(1, "/home/vincent/Tensorflow/models/research/object_detection/")
+sys.path.insert(1, "/home/pi/Documents/Tensorflow/models/research/object_detection")
 
 from utils import label_map_util
 from utils import visualization_utils as vis_util
