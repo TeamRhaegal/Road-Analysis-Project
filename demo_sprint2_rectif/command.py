@@ -219,4 +219,4 @@ class MySensor(Thread):
                 if UFL<R.maxDistanceUS or UFR<R.maxDistanceUS or UFC<R.maxDistanceUS: self.stopEvent.set()
 
                 
-            time.sleep(0.05)
+            time.sleep(0.01)
