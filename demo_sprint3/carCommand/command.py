@@ -173,7 +173,8 @@ class MySensor(Thread):
         UFR = 180
         UFC = 180
         wheelPerimeter = 0.19 *2*3.14  
-        emergency = 0
+        emergencyOn = 0
+        emergencyOff = 0
         while self.runEvent.isSet() :
             
             R.lockConnectedDevice.acquire()
@@ -234,11 +235,15 @@ class MySensor(Thread):
 
                 if UFL<MAX_DISTANCE_US or UFR<MAX_DISTANCE_US or UFC<MAX_DISTANCE_US:
                     self.stopEvent.set()
+                    emergencyOff = 0
                     #envoi de message aussi
-                    if  not(emergency) :
-                        constructMsgToIHM("sign","stop")
-                        emergency = 1
-                    else : 
-                        emergency = 0
-                        self.stopEvent.clear()
+                    if  not(emergencyOn)  :
+                        constructMsgToIHM("urgent","on")
+                        emergencyOn = 1
+                else : 
+                    emergencyOn = 0
+                    self.stopEvent.clear()
+                    if not(emergencyOff) :
+                        constructMsgToIHM("urgent","off")
+                        emergencyOff = 1
             time.sleep(0.01)
