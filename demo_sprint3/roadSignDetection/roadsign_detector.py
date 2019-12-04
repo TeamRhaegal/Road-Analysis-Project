@@ -95,6 +95,11 @@ def roadsign_detector(runEvent):
     focal = 1026
     old_distance = None
 
+    # width of road signs
+    w = 0
+    width_stop = 0
+    width_search = 0
+    
     # no detection counter. Useful to detect if no road sign is present in the image, or if there is just a recognition error.
     no_detection = 0
     no_detection_count = 0
@@ -165,6 +170,11 @@ def roadsign_detector(runEvent):
                             location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
                             cv2.imshow("object_detection", location_input_image)
                             cv2.waitKey(0)
+                        
+                        if (result ==  1):
+                            
+                            
+                        
                         
                         # save sign width
                         if (result == 1):
