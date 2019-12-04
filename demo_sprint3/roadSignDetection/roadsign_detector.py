@@ -95,13 +95,16 @@ def roadsign_detector(runEvent):
     focal = 1026
     old_distance = None
 
+    # variable that shows 
+    detected_stop = False
+    detected_search = False
+
     # width of road signs
     w = 0
-    width_stop = 0
-    width_search = 0
+    width_stop = []
+    width_search = []
     
     # no detection counter. Useful to detect if no road sign is present in the image, or if there is just a recognition error.
-    no_detection = 0
     no_detection_count = 0
 
     print ("initialized roadsign detector. Ellapsed time : {} s".format(time.time()-init_time))
@@ -136,26 +139,42 @@ def roadsign_detector(runEvent):
                 """
                 
                 # assume we start with no detection
-                no_detection = 1
+                detected_stop = False
+                detected_search = False
+                width_stop = []
+                width_search  = []
                 
+                # search for road sign in all the found boxes
                 for i in range(location_boxes.shape[1]):
-                    if (location_boxes[0][i][0] != 0 and location_score[0][i] > 0.1):
+                    # if the code go through the next condition, a road sign is detected. 
+                    if (location_score[0][i] > 0.5):
                         
                         # assign "no_detection_count" to 0  because a road sign has been detected
-                        no_detection = 0
                         no_detection_count = 0
                         
                         # find prediction result from collected data (boxes, score for each box and class for each box)
                         result = int(location_classes[0][i])
                         print ("found roadsign : {}".format(roadsign_types[result-1][0]))
+                             
                         # capture interesting part (box) from the global image
                         x1 = int(location_boxes[0][i][1]*location_input_image.shape[1])
                         x2 = int(location_boxes[0][i][3]*location_input_image.shape[1])
                         y1 = int(location_boxes[0][i][0]*location_input_image.shape[0])
                         y2 = int(location_boxes[0][i][2]*location_input_image.shape[0])
                         # compute width of the road sign in pixels
-                        w = x2 - x1
+                        w = x2 - x1                   
                         
+                        # detected stop sign : add width to list of width for this sign
+                        if (result == 1):
+                            detected_stop = True
+                            width_stop.append(w)
+                        
+                        # detected search sign : add width to list of width for this sign
+                        elif (result == 2):
+                            detected_search = True
+                            width_search.append(w)
+                        
+                        """
                         # compute road sign distance from the camera
                         if (w != None and w > 0):
                             distance = (0.195 * focal) / w
@@ -163,41 +182,40 @@ def roadsign_detector(runEvent):
                                 old_distance = distance
                                 print ("distance = {} meters".format(distance))
                                 print ("width = {} pixels".format(w))
-                                
+                         
+                         
                         if (DRAW):
                             # draw rectangle boxes around Region of Interest (ROI)
                             cv2.rectangle(location_input_image, (x1,y1), (x2,y2), (255,0,0), 1)
                             location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
                             cv2.imshow("object_detection", location_input_image)
                             cv2.waitKey(0)
+                        """
                         
-                        if (result ==  1):
-                            
-                            
-                        
-                        
-                        # save sign width
-                        if (result == 1):
-                            sharedRessources.lockWidthStop.acquire()
-                            sharedRessources.widthStop = w
-                            sharedRessources.lockWidthStop.release()
-                            
-                        elif (result == 2):
-                            sharedRessources.lockWidthSearch.acquire()
-                            sharedRessources.widthSearch = w
-                            sharedRessources.lockWidthSearch.release()
-                    
-                if (no_detection == 1):
-                    # increase no detection counter
-                    no_detection_count += 1
-                    # if "no_detection_count" 
-                    if (no_detection_count >= 2):
-                        w = 0
+                    # save sign width (minimum bounding box around the sign
+                    if (detected_stop):
+                        w = min(width_stop)
                         sharedRessources.lockWidthStop.acquire()
                         sharedRessources.widthStop = w
                         sharedRessources.lockWidthStop.release()
                         
+                    elif (detected_search):
+                        w = min(width_search)
                         sharedRessources.lockWidthSearch.acquire()
                         sharedRessources.widthSearch = w
                         sharedRessources.lockWidthSearch.release()
+                    
+                    else :
+                        # increase no detection counter
+                        no_detection_count += 1
+                        # if "no_detection_count" 
+                        if (no_detection_count >= 2):
+                            w = 0
+                            sharedRessources.lockWidthStop.acquire()
+                            sharedRessources.widthStop = w
+                            sharedRessources.lockWidthStop.release()
+                            
+                            sharedRessources.lockWidthSearch.acquire()
+                            sharedRessources.widthSearch = w
+                            sharedRessources.lockWidthSearch.release()
 
