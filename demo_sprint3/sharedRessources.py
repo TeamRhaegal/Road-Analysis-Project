@@ -6,22 +6,26 @@ wheelSpeed = 0
 turbo ="off"
 joystick = "none"
 mode = "assist"
-signDetection = []
+
+# variables to detect road sign and specify their width
+widthStop = 0
+widthSearch = 0
 
 listMessagesToSend = []
 listMessagesReceived = []
 connectedDevice= False
-	
 
 #Locks
 lockMessagesToSend = Lock()
 lockMessagesReceived = Lock()
 lockConnectedDevice = Lock()
+lockWidthStop = Lock()
+lockWidthSearch = Lock()
+
 
 modeLock =Lock()
 joystickLock = Lock()
 turboLock = Lock()
-signDetectionLock = Lock()
 speedLock = Lock()
 
 def constructMsgToIHM(key,*args):

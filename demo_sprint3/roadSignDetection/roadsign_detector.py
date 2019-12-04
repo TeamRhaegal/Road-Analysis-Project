@@ -94,9 +94,10 @@ def roadsign_detector(runEvent):
     # camera focal value (used to calculate the roadsign distance from the camera
     focal = 1026
     old_distance = None
-    
-    # local variable to send "stop message" only 1 time"
-    send_message = 0
+
+    # no detection counter. Useful to detect if no road sign is present in the image, or if there is just a recognition error.
+    no_detection = 0
+    no_detection_count = 0
 
     print ("initialized roadsign detector. Ellapsed time : {} s".format(time.time()-init_time))
     
@@ -106,6 +107,7 @@ def roadsign_detector(runEvent):
     with tf.Session(graph=detection_graph) as sess:
         while(runEvent.isSet()):
             
+            time.sleep(0.1)
             sharedRessources.lockConnectedDevice.acquire()
             check_connected = sharedRessources.connectedDevice
             sharedRessources.lockConnectedDevice.release()
@@ -127,8 +129,18 @@ def roadsign_detector(runEvent):
                         - compute width of the corresponding box in order to be used after.
                     If DEBUG is True, print, save and show image with all the boxes rendered. 
                 """
+                
+                # assume we start with no detection
+                no_detection = 1
+                
                 for i in range(location_boxes.shape[1]):
                     if (location_boxes[0][i][0] != 0 and location_score[0][i] > 0.1):
+                        
+                        # assign "no_detection_count" to 0  because a road sign has been detected
+                        no_detection = 0
+                        no_detection_count = 0
+                        
+                        # find prediction result from collected data (boxes, score for each box and class for each box)
                         result = int(location_classes[0][i])
                         print ("found roadsign : {}".format(roadsign_types[result-1][0]))
                         # capture interesting part (box) from the global image
@@ -136,8 +148,10 @@ def roadsign_detector(runEvent):
                         x2 = int(location_boxes[0][i][3]*location_input_image.shape[1])
                         y1 = int(location_boxes[0][i][0]*location_input_image.shape[0])
                         y2 = int(location_boxes[0][i][2]*location_input_image.shape[0])
+                        # compute width of the road sign in pixels
                         w = x2 - x1
                         
+                        # compute road sign distance from the camera
                         if (w != None and w > 0):
                             distance = (0.195 * focal) / w
                             if (old_distance != distance):
@@ -151,24 +165,29 @@ def roadsign_detector(runEvent):
                             location_input_image = cv2.cvtColor(location_input_image, cv2.COLOR_RGB2BGR)
                             cv2.imshow("object_detection", location_input_image)
                             cv2.waitKey(0)
-                            
-                        if (result == 1 and send_message == 0):
-                            send_message = 1
-                            sharedRessources.lockMessagesToSend.acquire()
-                            sharedRessources.listMessagesToSend.append("sign$stop")
-                            sharedRessources.lockMessagesToSend.release()
-
-                        # save result in global variable
-                        sharedRessources.signLock.acquire()
-                        sharedRessources.sign.append(roadsign_types[result-1][0])                                                                                                                                                                                                                                                                                                                                                        
-                        sharedRessources.signLock.release()
                         
-                        sharedRessources.signWidthLock.acquire()
-                        sharedRessources.signWidth = w
-                        sharedRessources.signWidthLock.release()
-                                    
-            else : 
-                send_message = 0
-                
-            time.sleep(0.1)
-        
+                        # save sign width
+                        if (result == 1):
+                            sharedRessources.lockWidthStop.acquire()
+                            sharedRessources.widthStop = w
+                            sharedRessources.lockWidthStop.release()
+                            
+                        elif (result == 2):
+                            sharedRessources.lockWidthSearch.acquire()
+                            sharedRessources.widthSearch = w
+                            sharedRessources.lockWidthSearch.release()
+                    
+                if (no_detection == 1):
+                    # increase no detection counter
+                    no_detection_count += 1
+                    # if "no_detection_count" 
+                    if (no_detection_count >= 2):
+                        w = 0
+                        sharedRessources.lockWidthStop.acquire()
+                        sharedRessources.widthStop = w
+                        sharedRessources.lockWidthStop.release()
+                        
+                        sharedRessources.lockWidthSearch.acquire()
+                        sharedRessources.widthSearch = w
+                        sharedRessources.lockWidthSearch.release()
+
