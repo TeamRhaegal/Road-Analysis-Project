@@ -38,7 +38,7 @@ class MyCommand(Thread):
         focal = 1026
         CMD_O = 50
         CMD_V = 50
-        CMD_V_A=50
+        CMD_V_A = 50
         CMD_Turbo = 75
         Temps_necessaire=0.01
         stopDetected = 0   #variable qui empeche d'envoyé un message infini à l'ihm quand un stop ets détecté
@@ -99,7 +99,7 @@ class MyCommand(Thread):
                         CMD_V_A = 60
                         stopDetected = 0
                         if  not(searchDetected) :
-                            constructMsgToIHM("sign","stop")
+                            constructMsgToIHM("sign","search")
                             searchDetected = 1
                     else : 
                         CMD_V_A = 60
@@ -173,6 +173,7 @@ class MySensor(Thread):
         UFR = 180
         UFC = 180
         wheelPerimeter = 0.19 *2*3.14  
+        emergency = 0
         while self.runEvent.isSet() :
             
             R.lockConnectedDevice.acquire()
@@ -231,6 +232,13 @@ class MySensor(Thread):
                     print("---------")
                 
 
-                if UFL<MAX_DISTANCE_US or UFR<MAX_DISTANCE_US or UFC<MAX_DISTANCE_US: self.stopEvent.set()
-                else : self.stopEvent.clear()
+                if UFL<MAX_DISTANCE_US or UFR<MAX_DISTANCE_US or UFC<MAX_DISTANCE_US:
+                    self.stopEvent.set()
+                    #envoi de message aussi
+                    if  not(emergency) :
+                        constructMsgToIHM("sign","stop")
+                        emergency = 1
+                    else : 
+                        emergency = 0
+                        self.stopEvent.clear()
             time.sleep(0.01)
