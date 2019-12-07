@@ -75,14 +75,20 @@ class MyCommand(Thread):
                     if tempTurbo == "off" :
                         CMD_Turbo = 65
                     if tempJoystick == "right" :  
-                        CMD_O = 100 + 0x80
-                        CMD_V= 50 
+                        self.turn = -1
+                        self.enable_steering = 1
+			#CMD_O = 100 + 0x80
+                        #CMD_V= 50 
                     if tempJoystick == "left" : 
-                        CMD_O = 0 + 0x80
-                        CMD_V = 50
+			self.turn = 1
+                        self.enable_steering = 1
+                        #CMD_O = 0 + 0x80
+                        #CMD_V = 50
                     if tempJoystick == "front" : 
-                        CMD_V = CMD_Turbo + 0x80
-                        CMD_O = 50 
+                        self.movement = 1
+                        self.enable_speed = 1
+			#CMD_V = CMD_Turbo + 0x80
+                        #CMD_O = 50 
                     if tempJoystick== "right&front" :
                         self.turn = -1
                         self.enable_steering = 1
@@ -98,8 +104,13 @@ class MyCommand(Thread):
                         #CMD_O = 20+ 0x80
                         #CMD_V = CMD_Turbo+ 0x80
                     if tempJoystick == "none" : 
-                        CMD_V = 50
-                        CMD_O = 50
+			self.turn = 0
+                        self.enable_steering = 0
+                        self.movement = 0
+                        self.enable_speed = 0
+                        #CMD_V = 50
+                        #CMD_O = 50
+	
 
                     if self.enable_speed:
                         CMD_V = (50 + self.movement*self.speed_cmd) | 0x80
