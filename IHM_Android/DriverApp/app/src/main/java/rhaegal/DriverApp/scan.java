@@ -134,6 +134,7 @@ public class scan extends AppCompatActivity {
         scanningButton.setText(R.string.scan);
         scanningButton.getBackground().setColorFilter(Color.parseColor(Constants.night), PorterDuff.Mode.MULTIPLY);
 
+
         btScanner = btAdapter.getBluetoothLeScanner();
         //scan button
         scanningButton.setOnClickListener(new View.OnClickListener() {
@@ -145,6 +146,7 @@ public class scan extends AppCompatActivity {
                 }
             }
         });
+
 
     }
 
@@ -286,7 +288,7 @@ public class scan extends AppCompatActivity {
             public void onClick(View v) {
                 stopScanning();
                 //access to the Control page
-                final Intent intent = new Intent(scan.this, remote.class);
+                final Intent intent = new Intent(scan.this, ControlPanel.class);
                 intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, deviceAddress);
                 startActivity(intent);
             }

@@ -10,16 +10,19 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.CountDownTimer;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -67,10 +70,11 @@ public class remote extends AppCompatActivity {
 
     //STOP sign
     private Toast signToast;
+    private AlertDialog dialogEmergencyStop;
+    private AlertDialog dialogSearchSign;
 
     private CountDownTimer timerNotif;
     private CountDownTimer timerDisconnect;
-
 
     /**
      * Finds all the objects in the view, link them to lacal variables
@@ -82,6 +86,7 @@ public class remote extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.remote);
         //Log.i(TAG, "Create\n");
 
@@ -107,6 +112,35 @@ public class remote extends AppCompatActivity {
         signToast.setGravity(Gravity.TOP, 0, 0);
         signToast.setDuration(Toast.LENGTH_LONG);
         signToast.setView(layoutSign);
+
+        AlertDialog.Builder builderEmergency = new AlertDialog.Builder(remote.this);
+        builderEmergency.setMessage(R.string.emergencyMsg)
+                        .setTitle(R.string.emergencyTitle)
+                        .setCancelable(false)
+                        .setIcon(R.drawable.attention_icon);
+
+        dialogEmergencyStop = builderEmergency.create();
+
+        AlertDialog.Builder builderSearch = new AlertDialog.Builder(remote.this);
+        builderSearch.setMessage(R.string.searchMsg)
+                .setTitle(R.string.searchTitle)
+                .setCancelable(true)
+                .setIcon(R.drawable.search_sign)
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        changeMode(Constants.AUTONOMOUS);
+                        dialog.cancel();
+                    }
+                })
+                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        dialogSearchSign = builderSearch.create();
+
+
 
         setBt();
 
@@ -309,12 +343,12 @@ public class remote extends AppCompatActivity {
                                 turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
                                 turboed = false;
                                 //Log.i(TAG, "turbo off\n");
-                                //sendMessage(Constants.TURBO,Constants.OFF);
+                                sendMessage(Constants.TURBO,Constants.OFF);
                             } else {
                                 turbo.getBackground().setColorFilter(Color.parseColor(Constants.purple), PorterDuff.Mode.MULTIPLY);
                                 turboed = true;
                                 //Log.i(TAG, "turbo on\n");
-                                //sendMessage(Constants.TURBO,Constants.ON);
+                                sendMessage(Constants.TURBO,Constants.ON);
                             }
                         }
                     }
@@ -444,8 +478,8 @@ public class remote extends AppCompatActivity {
             //Log.i(TAG, "data: " + data + "\n");
 
             StringTokenizer tokens = new StringTokenizer(data, "$");
-            String key = tokens.nextToken();// this will contain "Fruit"
-            String value = tokens.nextToken();// this will contain " they taste good"
+            String key = tokens.nextToken();
+            String value = tokens.nextToken();
 
             switch (key) {
                 case Constants.MODE :
@@ -468,6 +502,9 @@ public class remote extends AppCompatActivity {
                     break;
                 case Constants.SIGN:
                     advertizeSign(value);
+                    break;
+                case Constants.EMERGENCYSTOP:
+                    advertizeEmergency(value);
                     break;
 
             }
@@ -587,6 +624,8 @@ public class remote extends AppCompatActivity {
                     start.setText(R.string.start);
                     turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
                     start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                    sendMessage(Constants.MODE,Constants.AUTONOMOUS);
+
 
                 } else if (modeValue.equals(Constants.ASSISTED) & autonomous) {
 
@@ -601,6 +640,7 @@ public class remote extends AppCompatActivity {
                     start.setText(R.string.start);
                     turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
                     start.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
+                    sendMessage(Constants.MODE,Constants.ASSISTED);
                 }
             }
         });
@@ -763,6 +803,25 @@ public class remote extends AppCompatActivity {
             advSign.setText(R.string.advSearch);
             imageSign.setImageResource(R.drawable.search_sign);
             signToast.show();
+        }
+    }
+
+    private void advertizeEmergency(final String emergencyValue){
+        if (emergencyValue.equals(Constants.ON)){
+            changeMode(Constants.ASSISTED);
+            runOnUiThread(new Runnable() {
+                              public void run() {
+                                  dialogEmergencyStop.show();
+                              }
+            });
+        }
+        if (emergencyValue.equals(Constants.OFF)){
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    dialogEmergencyStop.dismiss();
+                }
+            });
+            //dialogEmergencyStop.dismiss();
         }
     }
 

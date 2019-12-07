@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
@@ -25,6 +26,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".remote"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".ControlPanel"
             android:screenOrientation="portrait">
         </activity>
     </application>

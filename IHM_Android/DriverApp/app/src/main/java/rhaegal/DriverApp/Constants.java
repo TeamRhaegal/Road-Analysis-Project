@@ -29,6 +29,7 @@ public class Constants {
     public static final String STATE = "state";
     public static final String TURBO = "turbo";
     public static final String CONNECTION = "connect";
+    public static final String EMERGENCYSTOP = "urgent";
 
     //values
     public static final String RIGHT="right";
