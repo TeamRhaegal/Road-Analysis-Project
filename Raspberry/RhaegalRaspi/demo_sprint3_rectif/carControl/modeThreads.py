@@ -12,6 +12,7 @@ import sharedRessources as R
 
 MOT=0x010     #identifiant commande moteur CAN
 CMD_STOP = 0x00
+CMD_V_BACK = 35 + 0x80
 CMD_V_MIN = 50
 CMD_V_SLOW = 65 + 0x80
 CMD_V_TURBO = 75 + 0x80
@@ -87,7 +88,7 @@ class ModeAutoThread (ModeThread):
                     speedC= R.wheelSpeed
                     R.lockwheelSpeed.release()
                     if speedC >= 0.14 :
-                        finalValueStopCounter = (toSignDistance / speedC)-1  #calcul du temps à  attendre, 1.2 => 100 pour la  vitesse avant -1 pour la reconnaissance
+                        finalValueStopCounter = (toSignDistance / speedC)-3  #calcul du temps à  attendre, 1.2 => 100 pour la  vitesse avant -1 pour la reconnaissance
                         counterStopOn=True
                     
             
@@ -140,16 +141,26 @@ class ModeAssistThread (ModeThread):
                          
                      cmdO = CMD_O_MIN                    
                          
-                 """elif(currentJoystick=="right&front"):
-                     
-                 elif(currentJoystick=="left&front"):
+                elif (currentJoystick=="front&right"):
+                    cmdO = CMD_O_RIGHT
+                    cmdV= CMD_V_SLOW
+                
+                 elif(currentJoystick=="front&left"):
+                    cmdO = CMD_O_LEFT
+                    cmdV= CMD_V_SLOW
                      
                  elif(currentJoystick=="back"):
+                    cmdO = CMD_O_MIN
+                    cmdV= CMD_V_BACK
                      
-                 elif(currentJoystick=="right&back"):
+                 elif(currentJoystick=="back&right"):
+                     cmdO = CMD_O_RIGHT
+                     cmdV= CMD_V_BACK
                      
-                 elif(currentJoystick=="left&back"):""" #to do ?
-                 
+                 elif(currentJoystick=="back&left"):
+                    cmdO = CMD_O_LEFT
+                    cmdV= CMD_V_BACK
+                
                  self.sendMesgToMot(cmdV,cmdO)
                          
                          
