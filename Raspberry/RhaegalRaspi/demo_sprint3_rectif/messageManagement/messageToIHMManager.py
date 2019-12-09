@@ -5,10 +5,10 @@ Created on Sat Dec 07 13:27:03 2019
 @author: Anaïs, Nicolas
 """
 from threading import Thread
-from time import time
+import time
 import sharedRessources as R
 
-MAX_DISTANCE_US = 15
+MAX_DISTANCE_US = 30
 
 class BatteryLevelThread(Thread):
     def __init__(self, runEvent):
@@ -63,6 +63,7 @@ class EmergencyStopThread(Thread):
 
     def run(self):
         oldEmergencyState = False
+        counterEmergencyStop = 0
         while self.runEvent.isSet():
             R.lockFrontRadar.acquire()
             distanceLeft = R.UFL 
@@ -76,12 +77,17 @@ class EmergencyStopThread(Thread):
                 R.emergencyOn = True
                 R.lockEmergencyOn.release()
                 oldEmergencyState = True
+                counterEmergencyStop=0
             elif(not(distanceLeft<MAX_DISTANCE_US or distanceRight<MAX_DISTANCE_US or distanceCenter<MAX_DISTANCE_US) and oldEmergencyState):
-                R.constructMsgToIHM("urgent","off")
-                R.lockEmergencyOn.acquire()
-                R.emergencyOn = False
-                R.lockEmergencyOn.release()
-                oldEmergencyState = False
+                if(counterEmergencyStop<5):
+                    counterEmergencyStop+=1
+                else :
+                    R.constructMsgToIHM("urgent","off")
+                    R.lockEmergencyOn.acquire()
+                    R.emergencyOn = False
+                    R.lockEmergencyOn.release()
+                    oldEmergencyState = False
+                    counterEmergencyStop=0
                 
             time.sleep(0.1)
             

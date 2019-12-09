@@ -4,9 +4,9 @@ Created on Sat Dec 07 11:28:11 2019
 
 @author: Anaïs, Nicolas
 """
-from time import time
+import time
 import can
-from Threading import Thread, Lock
+from threading import Thread, Lock
 import sharedRessources as R
 
 
@@ -26,10 +26,10 @@ REAL_SIGN_WIDTH = 0.20  #nb à déterminer en cm
 FOCAL = 342
 
 #thread emergency+modeThread
-
+"""
 emergencyOn = False
 lockEmergencyOn = Lock()
-
+"""
 class ModeThread(Thread):
     def __init__(self, bus,intModeL):
         Thread.__init__(self)
@@ -56,9 +56,9 @@ class ModeAutoThread (ModeThread):
         
         while (currentModeL==self.intModeL):
             # Emergency stop block
-            lockEmergencyOn.acquire()
-            stateEmergency = emergencyOn
-            lockEmergencyOn.release()
+            R.lockEmergencyOn.acquire()
+            stateEmergency = R.emergencyOn
+            R.lockEmergencyOn.release()
             
             if(stateEmergency):
                 R.lockModeLaunched.acquire()
@@ -84,9 +84,9 @@ class ModeAutoThread (ModeThread):
                 R.lockWidthStop.release()
                 if(widthStopSign):
                     toSignDistance = (REAL_SIGN_WIDTH*FOCAL)/widthStopSign
-                    R.lockwheelSpeed.acquire()
+                    R.lockWheelSpeed.acquire()
                     speedC= R.wheelSpeed
-                    R.lockwheelSpeed.release()
+                    R.lockWheelSpeed.release()
                     if speedC >= 0.14 :
                         finalValueStopCounter = (toSignDistance / speedC)-3  #calcul du temps à  attendre, 1.2 => 100 pour la  vitesse avant -1 pour la reconnaissance
                         counterStopOn=True
@@ -114,54 +114,54 @@ class ModeAssistThread (ModeThread):
             currentState = R.state         
             R.stateLock.release()
             if(currentState=="on"):
-                 R.joystickLock.acquire()                 
-                 currentJoystick = R.joystick         
-                 R.joystickLock.release()
-                 if(currentJoystick =="none"):
-                     cmdO = CMD_O_MIN
-                     cmdV = CMD_V_MIN 
-                     
-                 elif(currentJoystick=="right"):
-                     cmdO = CMD_O_RIGHT
-                     cmdV= CMD_V_MIN 
-                     
-                 elif(currentJoystick=="left"):
-                     cmdO = CMD_O_LEFT
-                     cmdV = CMD_V_MIN 
-                     
-                 elif(currentJoystick=="front"):
-                     R.turboLock.acquire()                 
-                     currentTurbo = R.turbo        
-                     R.TurboLock.release()
-                     
-                     if(currentTurbo=="on"):
-                         cmdV=CMD_V_TURBO
-                     else:
-                         cmdV= CMD_V_SLOW
+                R.joystickLock.acquire()                 
+                currentJoystick = R.joystick         
+                R.joystickLock.release()
+                if(currentJoystick =="none"):
+                    cmdO = CMD_O_MIN
+                    cmdV = CMD_V_MIN 
+
+                elif(currentJoystick=="right"):
+                    cmdO = CMD_O_RIGHT
+                    cmdV= CMD_V_MIN 
+
+                elif(currentJoystick=="left"):
+                    cmdO = CMD_O_LEFT
+                    cmdV = CMD_V_MIN 
+
+                elif(currentJoystick=="front"):
+                    R.turboLock.acquire()                 
+                    currentTurbo = R.turbo        
+                    R.turboLock.release()
+
+                    if(currentTurbo=="on"):
+                        cmdV=CMD_V_TURBO
+                    else:
+                        cmdV= CMD_V_SLOW
+
+                    cmdO = CMD_O_MIN                    
                          
-                     cmdO = CMD_O_MIN                    
-                         
-                elif (currentJoystick=="front&right"):
+                elif(currentJoystick=="front&right"):
                     cmdO = CMD_O_RIGHT
                     cmdV= CMD_V_SLOW
-                
-                 elif(currentJoystick=="front&left"):
+
+                elif(currentJoystick=="front&left"):
                     cmdO = CMD_O_LEFT
                     cmdV= CMD_V_SLOW
-                     
-                 elif(currentJoystick=="back"):
+                 
+                elif(currentJoystick=="back"):
                     cmdO = CMD_O_MIN
                     cmdV= CMD_V_BACK
-                     
-                 elif(currentJoystick=="back&right"):
-                     cmdO = CMD_O_RIGHT
-                     cmdV= CMD_V_BACK
-                     
-                 elif(currentJoystick=="back&left"):
+                 
+                elif(currentJoystick=="back&right"):
+                    cmdO = CMD_O_RIGHT
+                    cmdV= CMD_V_BACK
+                 
+                elif(currentJoystick=="back&left"):
                     cmdO = CMD_O_LEFT
                     cmdV= CMD_V_BACK
-                
-                 self.sendMesgToMot(cmdV,cmdO)
+
+                self.sendMesgToMot(cmdV,cmdO)
                          
                          
             else:

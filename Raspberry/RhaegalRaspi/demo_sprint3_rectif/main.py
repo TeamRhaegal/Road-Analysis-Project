@@ -1,9 +1,9 @@
 from threading import Event, Thread
 from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
-import carControl.canControllerThread as C
+import carControl.canControllerThreads as C
 import roadSignDetection.roadsign_detector as detection
 import messageManagement.messageFromIHMManager as msgManager
-from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread
+from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread
 import os, sys
 	
 def main():   
@@ -26,6 +26,7 @@ def main():
     batteryLevelThread = BatteryLevelThread(runRaspiCodeEvent)
     speedLevelThread = SpeedThread(runRaspiCodeEvent)
     emergencyStopThread = EmergencyStopThread(runRaspiCodeEvent)
+    signNotificationThread = SignNotificationThread(runRaspiCodeEvent)
     
     try:
         canControllerThread.daemon = True
@@ -35,7 +36,7 @@ def main():
         batteryLevelThread.daemon = True
         speedLevelThread.daemon = True
         emergencyStopThread.daemon = True
-        
+        signNotificationThread.daemon = True
         
         canControllerThread.start()
         bleTransmitterThread.start()
@@ -44,6 +45,7 @@ def main():
         batteryLevelThread.start()
         speedLevelThread.start()
         emergencyStopThread.start()
+        signNotificationThread.start()
         bleServer.run() ##################################################################################################### a la fin
 				
     except KeyboardInterrupt:
@@ -53,9 +55,10 @@ def main():
         bleTransmitterThread.join()
         thread_roadsign_detector.join()
         messageFromIHMThread.join()
-        batteryLevelThread
-        speedLevelThread
-        emergencyStopThread
+        batteryLevelThread.join()
+        speedLevelThread.join()
+        emergencyStopThread.join()
+        signNotificationThread.join()
     
         print ('All threads successfully closed')
         bleServer.quit()
