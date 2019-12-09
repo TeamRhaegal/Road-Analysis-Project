@@ -396,7 +396,6 @@ public class ControlPanel extends AppCompatActivity {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 resetSymbols();
-                battery.setImageResource(R.drawable.ic_batt_full);
                 connected = true;
                 connexionChange();
                 //Log.i(TAG, "Connected to GATT server\n");
@@ -404,7 +403,6 @@ public class ControlPanel extends AppCompatActivity {
                 btGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 resetSymbols();
-                battery.setImageResource(R.drawable.ic_batt_full);
                 connected = false;
                 connexionChange();
                 //Log.i(TAG, "Disconnected from GATT server\n");
@@ -746,6 +744,12 @@ public class ControlPanel extends AppCompatActivity {
                 joystickCurrentValue = Constants.FRONT+"&"+Constants.LEFT;
             else if (joystick_angle <= 200 & joystick_angle > 155)
                 joystickCurrentValue = Constants.LEFT;
+            else if (joystick_angle <= 245 & joystick_angle > 200)
+                joystickCurrentValue = Constants.BACK+"&"+Constants.LEFT;
+            else if (joystick_angle <= 290 & joystick_angle > 245)
+                joystickCurrentValue = Constants.BACK;
+            else if (joystick_angle <= 335 & joystick_angle > 290)
+                joystickCurrentValue = Constants.BACK+"&"+Constants.RIGHT;
             else
                 joystickCurrentValue = Constants.NOTHING;
         } else {

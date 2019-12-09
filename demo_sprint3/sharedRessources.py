@@ -6,6 +6,7 @@ wheelSpeed = 0
 turbo ="off"
 joystick = "none"
 mode = "assist"
+state = "off"
 
 # variables to detect road sign and specify their width
 widthStop = 0
@@ -27,6 +28,7 @@ modeLock =Lock()
 joystickLock = Lock()
 turboLock = Lock()
 speedLock = Lock()
+stateLock = Lock()
 
 def constructMsgToIHM(key,*args):
 	msg = str(key)
