@@ -23,15 +23,15 @@ class BatteryLevelThread(Thread):
             R.lockBatteryLevel.release()
             
             if(batt<12 and oldBattLvl !="mid"):
-                R.constructMsgToIHM("batt","mid")
+                #R.constructMsgToIHM("batt","mid")
                 oldBattLvl = "mid"
                 
             elif(batt<11 and oldBattLvl !="low"):
-                R.constructMsgToIHM("batt","low")
+                #R.constructMsgToIHM("batt","low")
                 oldBattLvl = "low"
             
             elif(batt<11 and oldBattLvl !="critic"):
-                R.constructMsgToIHM("batt","critic")
+                #R.constructMsgToIHM("batt","critic")
                 oldBattLvl = "critic"           
             
             

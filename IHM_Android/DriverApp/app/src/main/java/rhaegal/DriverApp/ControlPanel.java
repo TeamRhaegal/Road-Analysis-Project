@@ -403,6 +403,8 @@ public class ControlPanel extends AppCompatActivity {
                 btGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 resetSymbols();
+                String conSpeedString = 0.0 + " km/h";
+                speed.setText(conSpeedString);
                 connected = false;
                 connexionChange();
                 //Log.i(TAG, "Disconnected from GATT server\n");
@@ -580,8 +582,8 @@ public class ControlPanel extends AppCompatActivity {
                 joystick.invalidate();
                 joystickValue = Constants.NOTHING;
                 //battery.setImageResource(R.drawable.ic_batt_full);
-                String conSpeedString = 0.0 + " km/h";
-                speed.setText(conSpeedString);
+                //String conSpeedString = 0.0 + " km/h";
+                //speed.setText(conSpeedString);
 
             }
         });
