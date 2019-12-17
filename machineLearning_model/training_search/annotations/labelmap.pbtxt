@@ -10,5 +10,5 @@ item {
 
 item {
   id: 3
-  name: 'large'
+  name: 'big'
 }
