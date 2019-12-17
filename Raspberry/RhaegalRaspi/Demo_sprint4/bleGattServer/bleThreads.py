@@ -7,17 +7,19 @@ import sharedRessources as r
 		
 class BLEServer(Application):
     def __init__(self):
-		Application.__init__(self)
-		self.initService()
-		self.initAdvertisement()
+	Application.__init__(self)
+	self.initService()
+	self.initAdvertisement()
 	
     def initService(self):
         self.add_service(RaspService(0))
         self.register()
+	print ("init Service OK")
 		
     def initAdvertisement(self):
         adv = RaspAdvertisement(0) #advertize
         adv.register()
+	print ("initAdvertissement OK ")
 	
 		
 
@@ -32,25 +34,25 @@ class BLETransmitterThread(Thread):
         print('Open transmitter thread')
 
     def retrieveTXCharacteristic(self, server):               #get the transmitter characteristic
-		serverService=server.services[0]                            #only one service in the app 
-		serverCharacteristics = serverService.get_characteristics() #retrieve all characteristics in the service
-		return serverCharacteristics[0]                          #the transmitter is the fist one in the list
+	serverService=server.services[0]                            #only one service in the app 
+	serverCharacteristics = serverService.get_characteristics() #retrieve all characteristics in the service
+	return serverCharacteristics[0]                          #the transmitter is the fist one in the list
 
     def run(self):
         while self.runEvent.isSet() :	
-			r.lockConnectedDevice.acquire()
-			deviceIsConnected= r.connectedDevice
-			r.lockConnectedDevice.release()
-			
-			if (deviceIsConnected):	
-			    r.lockMessagesToSend.acquire()
-			    myMessagesToSend = r.listMessagesToSend
-			    r.listMessagesToSend = []
-			    r.lockMessagesToSend.release()
-			    if myMessagesToSend :
-			        for i in range(0,len(myMessagesToSend)):				
-					    print ("To IHM : ",myMessagesToSend[-1])
-					    self.TXChara.send_tx(myMessagesToSend.pop())
+		r.lockConnectedDevice.acquire()
+		deviceIsConnected= r.connectedDevice
+		r.lockConnectedDevice.release()
+		
+		if (deviceIsConnected):	
+		    r.lockMessagesToSend.acquire()
+		    myMessagesToSend = r.listMessagesToSend
+		    r.listMessagesToSend = []
+		    r.lockMessagesToSend.release()
+		    if myMessagesToSend :
+			for i in range(0,len(myMessagesToSend)):				
+			    print ("To IHM : ",myMessagesToSend[-1])
+			    self.TXChara.send_tx(myMessagesToSend.pop())
 
-    time.sleep(0.2)
+		time.sleep(0.2)
 

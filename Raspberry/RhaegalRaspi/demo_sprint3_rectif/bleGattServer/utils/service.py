@@ -87,6 +87,7 @@ class Application(dbus.service.Object):
 
     def register(self):
         adapter = BleTools.find_adapter(self.bus)
+        print("in register() BLE")
 
         service_manager = dbus.Interface(
                 self.bus.get_object(BLUEZ_SERVICE_NAME, adapter),

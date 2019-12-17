@@ -1,28 +1,27 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
 
 from threading import Event, Thread
 from bleGattServer.bleThreads import BLETransmitterThread, BLEServer
 import carControl.canControllerThreads as C
-import roadSignDetection.object_detector as detection
+from roadSignDetection.object_detector import ObjectDetector
 import messageManagement.messageFromIHMManager as msgManager
-from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread
+from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread, SearchObjectNotificationThread
 import os, sys
 
 def main():   
     
     runRaspiCodeEvent = Event()
     runRaspiCodeEvent.set()
-    
+
     #control part
     canControllerThread = C.CanControllerThread(runRaspiCodeEvent)
     
     #BLE part
     bleServer = BLEServer()
     bleTransmitterThread= BLETransmitterThread(bleServer,runRaspiCodeEvent) #for transmitting messages to the server
-    
+
     # roadsign and objects detection part
-    objectDetectorThread = detection.ObjectDetector(runRaspiCodeEvent)
+    objectDetectorThread = ObjectDetector(runRaspiCodeEvent)
     
     #message management part
     messageFromIHMThread = msgManager.MessageFromIHMThread(runRaspiCodeEvent)
@@ -42,7 +41,7 @@ def main():
         emergencyStopThread.daemon = True
         signNotificationThread.daemon = True
         searchObjectNotificationThread.daemon = True
-        
+
         canControllerThread.start()
         bleTransmitterThread.start()
         objectDetectorThread.start()

@@ -15,7 +15,7 @@ print("Importing libraries for roadsign detector")
 begin = time.time()
 # system imports 
 import sys, os
-from threading import Thread, Lock
+from threading import Thread
 # Project's shared ressources import
 import sharedRessources
 # image processing imports
@@ -25,7 +25,7 @@ import cv2, imutils
 import numpy as np
 import tensorflow as tf
 # hardware and machine learning imports
-sys.path.append('roadSignDetection/roadsign_python_source/')
+sys.path.append('/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/roadsign_python_source/')
 from roadsign_python_source import location_machinelearning
 from roadsign_python_source import raspicam
     
@@ -38,24 +38,24 @@ SEARCH_DRAW = True
 """
     Define different paths for Roadsigns location model...
 """
-# path to configuration model file
-PATH_TO_ROADSIGN_MODEL = "machinelearning_model/roadsign_300_300_pipeline.config"
-# Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_ROADSIGN_CKPT = "machinelearning_model/roadsign_300_300_frozen_inference_graph.pb"
-# List of the strings that is used to add correct label for each box.
-PATH_TO_ROADSIGN_LABELS = "machinelearning_model/roadsign_300_300_labelmap.pbtxt"
+# path to configuration model file : '.config' file
+PATH_TO_ROADSIGN_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_pipeline.config"
+# Path to frozen detection graph. This is the actual model that is used for the object detection : '.pb' file
+PATH_TO_ROADSIGN_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/machinelearning_model/roadsign_300_300_frozen_inference_graph.pb"
+# List of the strings that is used to add correct label for each box : '.pbtxt' file
+PATH_TO_ROADSIGN_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_labelmap.pbtxt"
 # Number of classes to detect
 ROADSIGN_NUM_CLASSES = 3
 
 """
     Define different paths for objects (search mode) location model...
 """
-# path to configuration model file
-PATH_TO_SEARCH_MODEL = "machinelearning_model/search_300_300_pipeline.config"
-# Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_SEARCH_CKPT = "machinelearning_model/search_300_300_frozen_inference_graph.pb"
-# List of the strings that is used to add correct label for each box.
-PATH_TO_SEARCH_LABELS = "machinelearning_model/search_300_300_labelmap.pbtxt"
+# path to configuration model file : '.config' file
+PATH_TO_SEARCH_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_pipeline.config"
+# Path to frozen detection graph. This is the actual model that is used for the object detection : '.pb' file
+PATH_TO_SEARCH_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_frozen_inference_graph.pb"
+# List of the strings that is used to add correct label for each box : '.pbtxt' file
+PATH_TO_SEARCH_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_labelmap.pbtxt"
 # Number of classes to detect
 SEARCH_NUM_CLASSES = 3
 
@@ -63,6 +63,7 @@ SEARCH_NUM_CLASSES = 3
     OBJECT INSTANCES AND CONSTANTS
         - roadsign_types : meaning of each 3 classes of road signs, and a path to an image of each road sign (if needed)
         - search_object_types : meaning of each 3 classes for search mode, and a path to an image of each class (if needed)
+    This part is not useful anymore and is just information about existing classes
 """
 roadsign_types =    [   ["stop",                        ""],
                         ["search",                      ""],
@@ -95,8 +96,6 @@ class ObjectDetector(Thread):
         self.search_model = self.initLocationModel(self.search_draw)
         self.search_detection_graph = self.loadLocationModel(location_model=self.search_model, model_path=self.path_to_search_model, ckpt_path=self.path_to_search_ckpt, label_path=self.path_to_search_labels, num_classes=self.search_num_classes)
         print("Initialized hardware and machine learning model. Time taken : {} seconds".format(time.time()-begin))
-        # run thread loop
-        self.run()
         pass
     
     def getGlobalInfos(self):
@@ -148,6 +147,9 @@ class ObjectDetector(Thread):
         """
         with tf.Session(graph=self.roadsign_detection_graph) as roadsign_sess:
             with tf.Session(graph=self.search_detection_graph) as search_sess:
+                # capture one image and process both roadsign and search mode detection to test and init them
+                self.initTestDetection(camera=self.camera, roadsign_model=self.roadsign_model, search_model=self.search_model, roadsign_sess=roadsign_sess, search_sess=search_sess)
+                # Run detection loop while smartphone is connected to the car
                 while (self.runEvent.isSet()):
                     # wait minimum amount of time in order to avoid blocking other threads
                     time.sleep(0.1)
@@ -243,7 +245,7 @@ class ObjectDetector(Thread):
                             # search for road sign in all the found boxes (in the corresponding model
                             for i in range(search_location_boxes.shape[1]):
                                 # detect a road sign if probability score of a box is better than a defined threshold
-                                if (search_location_boxes[0][i][0] != 0 and search_location_score[0][i] > 0.75):
+                                if (search_location_boxes[0][i][0] != 0 and search_location_score[0][i] > 0.4):
                                     # assign "no_roadsign_detection_count" to 0  because a road sign has been detected
                                     no_object_detection_count = 0
                                     # find prediction result from collected data (boxes, score for each box and class for each box)
@@ -294,6 +296,23 @@ class ObjectDetector(Thread):
                                     self.setWidthBigObjectGlobalVariable(width=0)     
         pass
         
+        
+        # capture a 'dummy' image and process both roadsign and search detection for test. Return nothings
+    def initTestDetection(self, camera=None, roadsign_model=None, search_model=None, roadsign_sess=None, search_sess=None):
+        try:
+            print("testing Camera capture, then roadsign detection and search mode detection with defined models")
+            camera.captureImage()
+            input_image = camera.readImageAsNumpyArray(save=False)
+            print("\tCamera capture and save : \t\t[  OK  ]")
+            roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = roadsign_model.detectObjectsFromNumpyArray(roadsignSess, input_image.copy())
+            print("\tRoadsign detection using defined model : \t\t[  OK  ]")
+            search_location_boxes, search_location_score, search_location_classes = search_model.detectObjectsFromNumpyArray(search_sess, input_image.copy())
+            print("\tSearch mode detection using defined model : \t\t[  OK  ]")
+        except Exception as e:
+            print("[ERROR] : Couldn't run detection test. Exception : {}".format(str(e)))
+        pass
+    
+    # Next functions are useful to get or modify datas from shared (global) variables
     def getConnectedGlobalVariable(self):
         sharedRessources.lockConnectedDevice.acquire()
         check_connected = sharedRessources.connectedDevice

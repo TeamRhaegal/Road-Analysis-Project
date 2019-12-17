@@ -7,8 +7,9 @@ Created on Sat Dec 07 13:27:03 2019
 from threading import Thread
 import time
 import sharedRessources as R
+import numpy as np
 
-MAX_DISTANCE_US = 20  #maximum distance in cm when an obstacle is considered as a danger
+MAX_DISTANCE_US = 30  #maximum distance in cm when an obstacle is considered as a danger
 
 class BatteryLevelThread(Thread):
     def __init__(self, runEvent):
@@ -88,7 +89,7 @@ class EmergencyStopThread(Thread):
                 oldEmergencyStateFront = True
                 counterEmergencyStopFront=0
             # emergency stop arrière
-            elif((distanceLeftRear<MAX_DISTANCE_US or distanceRightRear<MAX_DISTANCE_US or distanceCenterFront<MAX_DISTANCE_US)and not(oldEmergencyStateRear)):
+            elif((distanceLeftRear<MAX_DISTANCE_US or distanceRightRear<MAX_DISTANCE_US or distanceCenterRear<MAX_DISTANCE_US)and not(oldEmergencyStateRear)):
                 R.constructMsgToIHM("urgent","rear","on")
                 R.lockEmergencyRearOn.acquire()
                 R.emergencyRearOn = True
@@ -161,11 +162,10 @@ class SearchObjectNotificationThread(Thread):
         Thread.__init__(self)
         self.runEvent= runEvent
 		
-	def sendImage(byte[] image):
+	def sendImage(self, image):
 		for i in range (0,30):
 			R.constructMsgToIHM("img",image[i,i+9000])
 		
-
     def run(self):
         smallObjectDetected = False
         mediumObjectDetected = False
@@ -206,16 +206,18 @@ class SearchObjectNotificationThread(Thread):
                 bigObjectDetected = False
 				
 			# image block
-			R.lockImageSearchObject.acquire()
-            image = R.imageSearchObject()
+            R.lockImageSearchObject.acquire()
+            image = R.imageSearchObject
             R.lockImageSearchObject.release()  
-			
-			if (image):
-				self.sendImage(image.tobytes())
-				R.lockImageSearchObject.acquire()
-				R.imageSearchObject() = np.empty(0)
-				R.lockImageSearchObject.release()  
-     
+
+            if (image != np.empty(0)):
+                #image = image.tobytes()
+                #for i in range (0,30):
+                #    R.constructMsgToIHM("img",image[i:i+9000])
+                R.lockImageSearchObject.acquire()
+                R.imageSearchObject = np.empty(0)
+                R.lockImageSearchObject.release()  
+
             time.sleep(0.1)     
     
         

@@ -115,7 +115,7 @@ class ModeAutoThread (ModeThread):
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = True
                     R.lockSearchModeActivated.release()
-                    time.sleep(10)
+                    time.sleep(30)
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = False
                     R.lockSearchModeActivated.release()
