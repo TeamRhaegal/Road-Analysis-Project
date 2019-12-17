@@ -41,7 +41,7 @@ SEARCH_DRAW = True
 # path to configuration model file : '.config' file
 PATH_TO_ROADSIGN_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_pipeline.config"
 # Path to frozen detection graph. This is the actual model that is used for the object detection : '.pb' file
-PATH_TO_ROADSIGN_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/machinelearning_model/roadsign_300_300_frozen_inference_graph.pb"
+PATH_TO_ROADSIGN_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_frozen_inference_graph.pb"
 # List of the strings that is used to add correct label for each box : '.pbtxt' file
 PATH_TO_ROADSIGN_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_labelmap.pbtxt"
 # Number of classes to detect
@@ -303,8 +303,8 @@ class ObjectDetector(Thread):
             print("testing Camera capture, then roadsign detection and search mode detection with defined models")
             camera.captureImage()
             input_image = camera.readImageAsNumpyArray(save=False)
-            print("\tCamera capture and save : \t\t[  OK  ]")
-            roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = roadsign_model.detectObjectsFromNumpyArray(roadsignSess, input_image.copy())
+            print("\tCamera capture and save : \t\t\t\t[  OK  ]")
+            roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = roadsign_model.detectObjectsFromNumpyArray(roadsign_sess, input_image.copy())
             print("\tRoadsign detection using defined model : \t\t[  OK  ]")
             search_location_boxes, search_location_score, search_location_classes = search_model.detectObjectsFromNumpyArray(search_sess, input_image.copy())
             print("\tSearch mode detection using defined model : \t\t[  OK  ]")
