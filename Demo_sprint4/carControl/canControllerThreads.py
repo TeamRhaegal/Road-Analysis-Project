@@ -146,6 +146,13 @@ class CanReceiverThread(Thread):
                 R.UFR = int(str(msg.data[2:4]).encode('hex'), 16) #right side
                 R.UFC = int(str(msg.data[4:6]).encode('hex'), 16) #center
                 R.lockFrontRadar.release()
+            if msg.arbitration_id == US2: #front radar
+                
+                R.lockRearRadar.acquire()
+                R.URL = int(str(msg.data[0:2]).encode('hex'), 16) #left side
+                R.URR = int(str(msg.data[2:4]).encode('hex'), 16) #right side
+                R.URC = int(str(msg.data[4:6]).encode('hex'), 16) #center
+                R.lockRearRadar.release()
             
             time.sleep(0.01)
                         

@@ -12,9 +12,13 @@ batteryLevel = 0
 UFC = 180
 UFL = 180
 UFR = 180
+URC = 180
+URL = 180
+URR = 180
 modeLaunched = 0; #0 nothing, 1 assisted, 2 autonomous
 
-emergencyOn = False
+emergencyFrontOn = False
+emergencyRearOn = False
 
 # variables to detect road sign and specify their width
 widthStop = 0
@@ -28,6 +32,7 @@ connectedDevice= False
 lockWheelSpeed = Lock()
 lockBatteryLevel = Lock()
 lockFrontRadar = Lock()
+lockRearRadar = Lock()
 lockModeLaunched = Lock()
 
 lockMessagesToSend = Lock()
@@ -36,7 +41,8 @@ lockConnectedDevice = Lock()
 lockWidthStop = Lock()
 lockWidthSearch = Lock()
 
-lockEmergencyOn = Lock()
+lockEmergencyFrontOn = Lock()
+lockEmergencyRearOn = Lock()
 
 modeLock =Lock()
 joystickLock = Lock()

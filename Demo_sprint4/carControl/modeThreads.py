@@ -56,13 +56,14 @@ class ModeAutoThread (ModeThread):
         
         while (currentModeL==self.intModeL):
             # Emergency stop block
-            R.lockEmergencyOn.acquire()
-            stateEmergency = R.emergencyOn
-            R.lockEmergencyOn.release()
+            R.lockEmergencyFrontOn.acquire()
+            stateEmergencyFront = R.emergencyFrontOn
+            R.lockEmergencyFrontOn.release()
             
-            if(stateEmergency):
+            
+            if(stateEmergencyFront):
                 R.modeLock.acquire()
-                mode = "assist"
+                R.mode = "assist"
                 R.modeLock.release()
                 
             # Stop sign block
@@ -117,6 +118,8 @@ class ModeAssistThread (ModeThread):
         R.stateLock.acquire()
         R.state = "off"
         R.stateLock.release()
+        emergencyFront = False
+        emergencyRear = False
         
         while (currentModeL==self.intModeL):
             R.stateLock.acquire()                 
@@ -124,8 +127,17 @@ class ModeAssistThread (ModeThread):
             R.stateLock.release()
             if(currentState=="on"):
                 R.joystickLock.acquire()                 
-                currentJoystick = R.joystick         
+                currentJoystick = R.joystick     #joystick    
                 R.joystickLock.release()
+                
+                R.lockEmergencyFrontOn.acquire()
+                emergencyFront = R.emergencyFrontOn     #emergency avant
+                R.lockEmergencyFrontOn.release()
+                
+                R.lockEmergencyRearOn.acquire()
+                emergencyRear = R.emergencyRearOn       #emergency arrière
+                R.lockEmergencyRearOn.release()
+                
                 if(currentJoystick =="none"):
                     cmdO = CMD_O_MIN
                     cmdV = CMD_V_MIN 
@@ -138,7 +150,7 @@ class ModeAssistThread (ModeThread):
                     cmdO = CMD_O_LEFT
                     cmdV = CMD_V_MIN 
 
-                elif(currentJoystick=="front"):
+                elif(currentJoystick=="front" and not(emergencyFront)):
                     R.turboLock.acquire()                 
                     currentTurbo = R.turbo        
                     R.turboLock.release()
@@ -150,23 +162,23 @@ class ModeAssistThread (ModeThread):
 
                     cmdO = CMD_O_MIN                    
                          
-                elif(currentJoystick=="front&right"):
+                elif(currentJoystick=="front&right" and not(emergencyFront)):
                     cmdO = CMD_O_RIGHT
                     cmdV= CMD_V_SLOW
 
-                elif(currentJoystick=="front&left"):
+                elif(currentJoystick=="front&left" and not(emergencyFront)):
                     cmdO = CMD_O_LEFT
                     cmdV= CMD_V_SLOW
                  
-                elif(currentJoystick=="back"):
+                elif(currentJoystick=="back" and not(emergencyRear)):
                     cmdO = CMD_O_MIN
                     cmdV= CMD_V_BACK
                  
-                elif(currentJoystick=="back&right"):
+                elif(currentJoystick=="back&right" and not(emergencyRear)):
                     cmdO = CMD_O_RIGHT
                     cmdV= CMD_V_BACK
                  
-                elif(currentJoystick=="back&left"):
+                elif(currentJoystick=="back&left" and not(emergencyRear)):
                     cmdO = CMD_O_LEFT
                     cmdV= CMD_V_BACK
 

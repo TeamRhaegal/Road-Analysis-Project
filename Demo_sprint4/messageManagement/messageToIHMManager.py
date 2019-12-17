@@ -62,32 +62,60 @@ class EmergencyStopThread(Thread):
         self.runEvent= runEvent
 
     def run(self):
-        oldEmergencyState = False
-        counterEmergencyStop = 0
+        oldEmergencyStateFront = False
+        oldEmergencyStateRear = False
+        counterEmergencyStopFront = 0
+        counterEmergencyStopRear = 0
         while self.runEvent.isSet():
             R.lockFrontRadar.acquire()
-            distanceLeft = R.UFL 
-            distanceRight = R.UFR 
-            distanceCenter = R.UFC 
+            distanceLeftFront = R.UFL 
+            distanceRightFront = R.UFR 
+            distanceCenterFront = R.UFC 
             R.lockFrontRadar.release()
             
-            if((distanceLeft<MAX_DISTANCE_US or distanceRight<MAX_DISTANCE_US or distanceCenter<MAX_DISTANCE_US)and not(oldEmergencyState)):
-                R.constructMsgToIHM("urgent","on")
-                R.lockEmergencyOn.acquire()
-                R.emergencyOn = True
-                R.lockEmergencyOn.release()
-                oldEmergencyState = True
-                counterEmergencyStop=0
-            elif(not(distanceLeft<MAX_DISTANCE_US or distanceRight<MAX_DISTANCE_US or distanceCenter<MAX_DISTANCE_US) and oldEmergencyState):
-                if(counterEmergencyStop<5):
-                    counterEmergencyStop+=1
+            R.lockRearRadar.acquire()
+            distanceLeftRear = R.URL 
+            distanceRightRear = R.URR 
+            distanceCenterRear = R.URC
+            R.lockRearRadar.release()
+            #emergency stop avant
+            if((distanceLeftFront<MAX_DISTANCE_US or distanceRightFront<MAX_DISTANCE_US or distanceCenterFront<MAX_DISTANCE_US)and not(oldEmergencyStateFront)):
+                R.constructMsgToIHM("urgent","front","on")
+                R.lockEmergencyFrontOn.acquire()
+                R.emergencyFrontOn = True
+                R.lockEmergencyFrontOn.release()
+                oldEmergencyStateFront = True
+                counterEmergencyStopFront=0
+            # emergency stop arrière
+            elif((distanceLeftRear<MAX_DISTANCE_US or distanceRightRear<MAX_DISTANCE_US or distanceCenterFront<MAX_DISTANCE_US)and not(oldEmergencyStateRear)):
+                R.constructMsgToIHM("urgent","rear","on")
+                R.lockEmergencyRearOn.acquire()
+                R.emergencyRearOn = True
+                R.lockEmergencyRearOn.release()
+                oldEmergencyStateRear = True
+                counterEmergencyStopRear=0
+            #  Emergency stop avant 
+            elif(not(distanceLeftFront<MAX_DISTANCE_US or distanceRightFront<MAX_DISTANCE_US or distanceCenterFront<MAX_DISTANCE_US) and oldEmergencyStateFront):
+                if(counterEmergencyStopFront<5):
+                    counterEmergencyStopFront+=1
                 else :
-                    R.constructMsgToIHM("urgent","off")
-                    R.lockEmergencyOn.acquire()
-                    R.emergencyOn = False
-                    R.lockEmergencyOn.release()
-                    oldEmergencyState = False
-                    counterEmergencyStop=0
+                    R.constructMsgToIHM("urgent","front","off")
+                    R.lockEmergencyFrontOn.acquire()
+                    R.emergencyFrontOn = False
+                    R.lockEmergencyFrontOn.release()
+                    oldEmergencyStateFront = False
+                    counterEmergencyStopFront=0
+            #emergency stop  arrière
+            elif(not(distanceLeftRear<MAX_DISTANCE_US or distanceRightRear<MAX_DISTANCE_US or distanceCenterRear<MAX_DISTANCE_US) and oldEmergencyStateRear):
+                if(counterEmergencyStopRear<5):
+                    counterEmergencyStopRear+=1
+                else :
+                    R.constructMsgToIHM("urgent","rear","off")
+                    R.lockEmergencyRearOn.acquire()
+                    R.emergencyRearOn = False
+                    R.lockEmergencyRearOn.release()
+                    oldEmergencyStateRear = False
+                    counterEmergencyStopRear=0
                 
             time.sleep(0.1)
             
