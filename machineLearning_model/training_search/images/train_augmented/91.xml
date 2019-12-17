@@ -1,0 +1,26 @@
+<annotation>
+	<folder>train_augmented</folder>
+	<filename>91.jpg</filename>
+	<path>/home/vincent/Documents/Travail/INSA_T/5e_annee/ProjetSIEC/github/Road-Analysis-Project/machineLearning_model/training_search/images/train_augmented/91.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>1640</width>
+		<height>922</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>medium</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>691</xmin>
+			<ymin>641</ymin>
+			<xmax>786</xmax>
+			<ymax>687</ymax>
+		</bndbox>
+	</object>
+</annotation>
