@@ -9,12 +9,12 @@ state = "off"
 
 wheelSpeed = 0
 batteryLevel = 0
-UFC = 180
-UFL = 180
-UFR = 180
-URC = 180
-URL = 180
-URR = 180
+UFC = 180      #front center US sensor
+UFL = 180       #front left US sensor
+UFR = 180       #front right US sensor
+URC = 180       #front center US sensor
+URL = 180       #front left US sensor
+URR = 180       #front right US sensor
 modeLaunched = 0; #0 nothing, 1 assisted, 2 autonomous
 
 emergencyFrontOn = False
