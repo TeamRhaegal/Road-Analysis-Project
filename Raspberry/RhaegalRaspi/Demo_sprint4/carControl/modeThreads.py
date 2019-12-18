@@ -11,24 +11,30 @@ import sharedRessources as R
 
 
 MOT=0x010     #identifiant commande moteur CAN
-CMD_STOP = 0x00
-CMD_V_BACK = 35 + 0x80
-CMD_V_MIN = 50
-CMD_V_SLOW = 65 + 0x80
-CMD_V_TURBO = 75 + 0x80
-CMD_O_LEFT = 0x80
-CMD_O_RIGHT = 100 + 0x80
+CMD_STOP = 0x00     # command to stop the motor
+CMD_V_BACK = 35 + 0x80 # command to go backward 
+CMD_V_MIN = 50      
+CMD_V_SLOW = 65 + 0x80 # command to go forward at a small speed
+CMD_V_TURBO = 75 + 0x80 # command to go forward at a high speed
+CMD_O_LEFT = 0x80  # command to turn the wheel to left
+CMD_O_RIGHT = 100 + 0x80  # command to turn the wheel to right
 CMD_O_MIN = 50
 
 
 #for auto only
-REAL_SIGN_WIDTH = 0.20  #nb à déterminer en cm
-FOCAL = 342
+REAL_SIGN_WIDTH = 0.20  #real size of the sign in cm
+FOCAL = 342   # computed focal of the raspicam
 
 #thread emergency+modeThread
 """
 emergencyOn = False
 lockEmergencyOn = Lock()
+"""
+
+"""
+The class mode is the mother class of Mode auto and Mode assist : 
+    attributes : mode, CAN bus
+    methods : sending message to the CAN bus
 """
 class ModeThread(Thread):
     def __init__(self, bus,intModeL):
@@ -61,17 +67,18 @@ class ModeAutoThread (ModeThread):
             R.lockEmergencyFrontOn.release()
             
             
-            if(stateEmergencyFront):
+            if(stateEmergencyFront):  #testing if an emergency stop is needed in front of the car, => switch in assist mode and stop the vehicle
                 R.modeLock.acquire()
                 R.mode = "assist"
                 R.modeLock.release()
                 
             # Stop sign block
             
-            if(counterStopOn):
-                if(counterStop<finalValueStopCounter):
+            if(counterStopOn):                 
+                if(counterStop<finalValueStopCounter): # counting until we reach the computed time to wait until reaching the "stop" sign
                     counterStop+=0.1
                 else:
+                    # reaction to the stop sign : the car stop during 4 seconds and go forward again
                     self.sendMesgToMot(CMD_STOP,CMD_STOP)   
                     time.sleep(4)
                     self.sendMesgToMot(CMD_V_SLOW,CMD_STOP) 
@@ -84,12 +91,12 @@ class ModeAutoThread (ModeThread):
                 widthStopSign = R.widthStop           
                 R.lockWidthStop.release()
                 if(widthStopSign):
-                    toSignDistance = (REAL_SIGN_WIDTH*FOCAL)/widthStopSign
+                    toSignDistance = (REAL_SIGN_WIDTH*FOCAL)/widthStopSign  #computing the distance to the sign detected using the width in pixel of the sign
                     R.lockWheelSpeed.acquire()
                     speedC= R.wheelSpeed
                     R.lockWheelSpeed.release()
                     if speedC >= 0.14 :
-                        finalValueStopCounter = (toSignDistance / speedC)-3  #calcul du temps à  attendre, 1.2 => 100 pour la  vitesse avant -1 pour la reconnaissance
+                        finalValueStopCounter = (toSignDistance / speedC)-3  #computing time to wait until the car reachs ths "stop" sign
                         counterStopOn=True
                     
             
@@ -106,6 +113,7 @@ class ModeAssistThread (ModeThread):
         
     def run(self):
         self.sendMesgToMot(CMD_STOP,CMD_STOP)     
+       #initialisation of all variables
         currentModeL=self.intModeL
         cmdV = CMD_STOP
         cmdO = CMD_STOP
@@ -131,13 +139,14 @@ class ModeAssistThread (ModeThread):
                 R.joystickLock.release()
                 
                 R.lockEmergencyFrontOn.acquire()
-                emergencyFront = R.emergencyFrontOn     #emergency avant
+                emergencyFront = R.emergencyFrontOn     #front emergency
                 R.lockEmergencyFrontOn.release()
                 
                 R.lockEmergencyRearOn.acquire()
-                emergencyRear = R.emergencyRearOn       #emergency arrière
+                emergencyRear = R.emergencyRearOn       # rear emergency 
                 R.lockEmergencyRearOn.release()
                 
+                # sending the correct command according to the HMI messages
                 if(currentJoystick =="none"):
                     cmdO = CMD_O_MIN
                     cmdV = CMD_V_MIN 
@@ -182,11 +191,11 @@ class ModeAssistThread (ModeThread):
                     cmdO = CMD_O_LEFT
                     cmdV= CMD_V_BACK
 
-                self.sendMesgToMot(cmdV,cmdO)
+                self.sendMesgToMot(cmdV,cmdO) #sending command to the motors
                          
                          
             else:
-                 self.sendMesgToMot(CMD_STOP,CMD_STOP)
+                 self.sendMesgToMot(CMD_STOP,CMD_STOP)    #sending command to the motors
                     
             
             R.lockModeLaunched.acquire()
