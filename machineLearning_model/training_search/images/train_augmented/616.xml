@@ -1,7 +1,7 @@
 <annotation>
 	<folder>train_augmented</folder>
 	<filename>616.jpg</filename>
-	<path>/home/anais/Documents/Road-Analysis-Project/machineLearning_model/training_search/images/train_augmented/616.jpg</path>
+	<path>/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/machineLearning_model/training_search/images/train_augmented/616.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>
@@ -30,9 +30,9 @@
 		<difficult>0</difficult>
 		<bndbox>
 			<xmin>865</xmin>
-			<ymin>319</ymin>
+			<ymin>320</ymin>
 			<xmax>990</xmax>
-			<ymax>404</ymax>
+			<ymax>405</ymax>
 		</bndbox>
 	</object>
 </annotation>

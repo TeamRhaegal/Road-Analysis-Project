@@ -18,13 +18,13 @@
 		<difficult>0</difficult>
 		<bndbox>
 			<xmin>864</xmin>
-			<ymin>627</ymin>
+			<ymin>626</ymin>
 			<xmax>1002</xmax>
-			<ymax>723</ymax>
+			<ymax>722</ymax>
 		</bndbox>
 	</object>
 	<object>
-		<name>gib</name>
+		<name>big</name>
 		<pose>Unspecified</pose>
 		<truncated>0</truncated>
 		<difficult>0</difficult>
