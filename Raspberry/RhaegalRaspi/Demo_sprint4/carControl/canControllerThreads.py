@@ -115,7 +115,10 @@ class ModeControlThread(Thread):
             self.modeAutoThread.join()
             
             
-            
+'''
+This thread receive all the sensors informations from the can bus and update 
+global variables associated to this sensors
+'''            
             
 class CanReceiverThread(Thread):
     def __init__(self, bus, connectEvent):
@@ -132,7 +135,7 @@ class CanReceiverThread(Thread):
                 batt = int(str(msg.data[2:4]).encode('hex'), 16)
                 
                 R.lockWheelSpeed.acquire()
-                R.wheelSpeed = (0.01*wheel_speed*WHEEL_PERIMETER / 60)
+                R.wheelSpeed = (0.01*wheel_speed*WHEEL_PERIMETER / 60)  #computing speed in m/s
                 R.lockWheelSpeed.release()
                 
                 R.lockBatteryLevel.acquire()
@@ -146,7 +149,7 @@ class CanReceiverThread(Thread):
                 R.UFR = int(str(msg.data[2:4]).encode('hex'), 16) #right side
                 R.UFC = int(str(msg.data[4:6]).encode('hex'), 16) #center
                 R.lockFrontRadar.release()
-            if msg.arbitration_id == US2: #front radar
+            if msg.arbitration_id == US2: #rear radar
                 
                 R.lockRearRadar.acquire()
                 R.URL = int(str(msg.data[0:2]).encode('hex'), 16) #left side
