@@ -8,7 +8,7 @@ from threading import Thread
 import time
 import sharedRessources as R
 
-MAX_DISTANCE_US = 20
+MAX_DISTANCE_US = 20  #maximum distance in cm when an obstacle is considered as a danger
 
 class BatteryLevelThread(Thread):
     def __init__(self, runEvent):
@@ -67,6 +67,7 @@ class EmergencyStopThread(Thread):
         counterEmergencyStopFront = 0
         counterEmergencyStopRear = 0
         while self.runEvent.isSet():
+            #retrieving sensors information from global variables
             R.lockFrontRadar.acquire()
             distanceLeftFront = R.UFL 
             distanceRightFront = R.UFR 
