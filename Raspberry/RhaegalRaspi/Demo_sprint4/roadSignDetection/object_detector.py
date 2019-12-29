@@ -77,7 +77,7 @@ search_object_types  =  [   ["small",                       ""]
     Capture an image from the raspicam, then process it, find location of different shapes (road signs) and classify each sign. 
     Modify roadsign class and width global variables in order to be used by other threads
 """
-class RoadsignDetector(Thread):
+class ObjectDetector(Thread):
     def __init__(self):
         Thread.__init__(self, runEvent)
         # variable used to check if connection has been established between smartphone (HMI) and car
@@ -141,7 +141,8 @@ class RoadsignDetector(Thread):
         old_distance = None
         # no detection counter. Useful to detect if no road sign is present in the image, or if there is just a recognition error.
         no_detection_count = 0
-        
+        # variable used to check if connection is established between smartphone (HMI) and car
+        self.check_connected = False
         """
             MAIN LOOP
         """
@@ -150,8 +151,8 @@ class RoadsignDetector(Thread):
             while (self.runEvent.isSet()):
                 # wait minimum amount of time in order to avoid blocking other threads
                 time.sleep(0.1)
-                self.getConnectedGlobalVariable()
-                if (self.check_connected == True):
+                self.check_connected = self.getConnectedGlobalVariable()
+                if (self.check_connected):
                     # capture and save image from raspicam
                     self.camera.captureImage()
                     input_image = self.camera.readImageAsNumpyArray(save=False)
@@ -235,8 +236,9 @@ class RoadsignDetector(Thread):
         
     def getConnectedGlobalVariable(self):
         sharedRessources.lockConnectedDevice.acquire()
-        self.check_connected = sharedRessources.connectedDevice
+        check_connected = sharedRessources.connectedDevice
         sharedRessources.lockConnectedDevice.release()
+        return check_connected
         pass
 
     def setWidthStopGlobalVariable(self, width=0):

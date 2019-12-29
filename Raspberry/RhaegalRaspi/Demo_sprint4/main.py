@@ -1,7 +1,7 @@
 from threading import Event, Thread
 from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
 import carControl.canControllerThreads as C
-import roadSignDetection.roadsign_detector as detection
+import roadSignDetection.object_detector as detection
 import messageManagement.messageFromIHMManager as msgManager
 from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread
 import os, sys
@@ -18,8 +18,8 @@ def main():
     bleServer = BLEServer()
     bleTransmitterThread= BLETransmitterThread(bleServer,runRaspiCodeEvent) #for transmitting messages to the server
     
-    # roadsign detection part
-    thread_roadsign_detector = detection.RoadsignDetector(runRaspiCodeEvent)
+    # roadsign and ojbects detection part
+    thread_object_detector = detection.ObjectDetector(runRaspiCodeEvent)
     
     #message management part
     messageFromIHMThread = msgManager.MessageFromIHMThread(runRaspiCodeEvent)
@@ -31,7 +31,7 @@ def main():
     try:
         canControllerThread.daemon = True
         bleTransmitterThread.daemon = True
-        thread_roadsign_detector.daemon = True
+        thread_object_detector.daemon = True
         messageFromIHMThread.daemon = True
         batteryLevelThread.daemon = True
         speedLevelThread.daemon = True
@@ -40,7 +40,7 @@ def main():
         
         canControllerThread.start()
         bleTransmitterThread.start()
-        thread_roadsign_detector.start()
+        thread_object_detector.start()
         messageFromIHMThread.start()
         batteryLevelThread.start()
         speedLevelThread.start()
@@ -53,7 +53,7 @@ def main():
         runRaspiCodeEvent.clear()
         canControllerThread.join()
         bleTransmitterThread.join()
-        thread_roadsign_detector.join()
+        thread_object_detector.join()
         messageFromIHMThread.join()
         batteryLevelThread.join()
         speedLevelThread.join()
