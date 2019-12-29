@@ -10,6 +10,7 @@
 
 # import libraries 
 import time
+from __builtin__ import None
 
 print("Importing libraries for roadsign detector")
 begin = time.time()
@@ -135,12 +136,9 @@ class ObjectDetector(Thread):
         pass
     
     def run(self):
-        # define local variables
-        # camera focal value (used to calculate the roadsign distance from the camera
-        focal = 1026
-        old_distance = None
-        # no detection counter. Useful to detect if no road sign is present in the image, or if there is just a recognition error.
-        no_detection_count = 0
+        # no detection counter. Useful to detect if no road sign/object is present in the image, or if there is just a recognition error.
+        no_roadsign_detection_count = 0
+        no_object_detection_count = 0
         # variable used to check if connection is established between smartphone (HMI) and car
         self.check_connected = False
         """
@@ -156,82 +154,137 @@ class ObjectDetector(Thread):
                     # capture and save image from raspicam
                     self.camera.captureImage()
                     input_image = self.camera.readImageAsNumpyArray(save=False)
-                    #input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)   
-                    # process prediction from model and get scores + corresponding boxes FOR ROADSIGN DETECTION MODEL AND SEARCH MODE MODEL
-                    roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectRoadsignsFromNumpyArray(roadsign_sess, input_image.copy())
-                    search_location_boxes, search_location_score, search_location_classes = self.search_model.detectRoadsignsFromNumpyArray(search_sess, input_image.copy())
+                    #input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR) 
+                    # get current car mode
+                    self.check_carmode = self.getCarModeGlobalVariable()
                     """
-                    Next part of code :
-                        - save each box where the probability score is better than a defined threshold 
-                        - compute width of the corresponding box in order to be used after.
-                    If DEBUG is True, print, save and show image with all the boxes rendered. 
+                        Roadsign detection if we are in "common modes" (assisted / autonomous)
                     """
-                    # assume we start with no detection
-                    result = 0
-                    detected_stop = False
-                    detected_search = False
-                    width_stop = []
-                    width_search  = []
-                    # search for road sign in all the found boxes (in the corresponding model
-                    for i in range(roadsign_location_boxes.shape[1]):
-                        # detect a road sign if probability score of a box is better than a defined threshold
-                        if (roadsign_location_boxes[0][i][0] != 0 and roadsign_location_score[0][i] > 0.75):
-                            # assign "no_detection_count" to 0  because a road sign has been detected
-                            no_detection_count = 0
-                            # find prediction result from collected data (boxes, score for each box and class for each box)
-                            result = int(roadsign_location_classes[0][i])             
-                            # capture interesting part (box) from the global image
-                            x1 = int(roadsign_location_boxes[0][i][1]*input_image.shape[1])
-                            x2 = int(roadsign_location_boxes[0][i][3]*input_image.shape[1])
-                            y1 = int(roadsign_location_boxes[0][i][0]*input_image.shape[0])
-                            y2 = int(roadsign_location_boxes[0][i][2]*input_image.shape[0])
-                            # compute width of the road sign in pixels
-                            w = x2 - x1
-                            # detected stop sign : add width to list of widths for this sign
-                            if (result == 1):
-                                detected_stop = True
-                                width_stop.append(w)
-                            # detected search sign : add width to list of widths for this sign
-                            elif (result == 2):
-                                detected_search = True
-                                width_search.append(w)
-                            # detected prohibited way sign
-                            elif(result==3):
-                                print("i have found a PROHIBITED sign")
-                            """
-                            # compute road sign distance from the camera
-                            if (w != None and w > 0):
-                                # 0.195 is the real width (in meters) of signs. Here 19.5 cm
-                                distance = (0.195 * focal) / w
-                                if (old_distance != distance):
-                                    old_distance = distance
-                                    print ("distance = {} meters".format(distance))
-                                    print ("width = {} pixels".format(w))
-                             
-                             
-                            if (DRAW):
-                                # draw rectangle boxes around Region of Interest (ROI)
-                                cv2.rectangle(input_image, (x1,y1), (x2,y2), (255,0,0), 1)
-                                input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
-                                cv2.imshow("object_detection", input_image)
-                                cv2.waitKey(0)
-                            """     
-                    # save sign width (minimum bounding box around the sign)
-                    if (detected_stop):
-                        print("i have found a STOP !")
-                        w = min(width_stop)
-                        self.setWidthStopGlobalVariable(width=w)       
-                    if (detected_search):
-                        print("i have found a SEARCH")
-                        w = min(width_search)
-                        self.setWidthSearchGlobalVariable(width=w)  
-                    else:
-                        # increase no detection counter
-                        no_detection_count += 1
-                        # if "no_detection_count" 
-                        if (no_detection_count >= 2):
-                            self.setWidthStopGlobalVariable(width=0)
-                            self.setWidthSearchGlobalVariable(width=0)
+                    if (self.check_carmode == "assist" or self.check_carmode == "autonomous"):
+                        # process prediction from roadsign model and get scores + corresponding boxes FOR ROADSIGN DETECTION MODEL
+                        roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectRoadsignsFromNumpyArray(roadsign_sess, input_image.copy())
+                        """
+                            Next part of code :
+                                - save each box where the probability score is better than a defined threshold 
+                            If DEBUG is True, print, save and show image with all the boxes rendered. 
+                        """
+                        # assume we start with no detection
+                        result = 0
+                        detected_stop = False
+                        detected_search = False
+                        width_stop = []
+                        width_search  = []
+                        # search for road sign in all the found boxes (in the corresponding model
+                        for i in range(roadsign_location_boxes.shape[1]):
+                            # detect a road sign if probability score of a box is better than a defined threshold
+                            if (roadsign_location_boxes[0][i][0] != 0 and roadsign_location_score[0][i] > 0.75):
+                                # assign "no_roadsign_detection_count" to 0  because a road sign has been detected
+                                no_roadsign_detection_count = 0
+                                # find prediction result from collected data (boxes, score for each box and class for each box)
+                                result = int(roadsign_location_classes[0][i])             
+                                # capture interesting part (box) from the global image
+                                x1 = int(roadsign_location_boxes[0][i][1]*input_image.shape[1])
+                                x2 = int(roadsign_location_boxes[0][i][3]*input_image.shape[1])
+                                y1 = int(roadsign_location_boxes[0][i][0]*input_image.shape[0])
+                                y2 = int(roadsign_location_boxes[0][i][2]*input_image.shape[0])
+                                # compute width of the road sign in pixels
+                                w = x2 - x1
+                                # detected stop sign : add width to list of widths for this sign
+                                if (result == 1):
+                                    detected_stop = True
+                                    width_stop.append(w)
+                                # detected search sign : add width to list of widths for this sign
+                                elif (result == 2):
+                                    detected_search = True
+                                    width_search.append(w)
+                                # detected prohibited way sign
+                                elif(result == 3):
+                                    print("i have found a PROHIBITED SIGN")
+
+                        # save sign width (minimum bounding box around the sign)
+                        if (detected_stop):
+                            print("i have found a STOP SIGN !")
+                            w = min(width_stop)
+                            self.setWidthStopGlobalVariable(width=w)       
+                        if (detected_search):
+                            print("i have found a SEARCH SIGN !")
+                            w = min(width_search)
+                            self.setWidthSearchGlobalVariable(width=w)  
+                        if (not detected_stop and not detected_search):
+                            # increase no detection counter
+                            no_roadsign_detection_count += 1
+                            # if "no_roadsign_detection_count" after multiple try, then set widths to 0
+                            if (no_roadsign_detection_count >= 2):
+                                self.setWidthStopGlobalVariable(width=0)
+                                self.setWidthSearchGlobalVariable(width=0)  
+     
+                    #Object detection (small, medium, big) if we are in "search" mode
+                    elif (self.check_carmode == "search"):
+                        # process prediction from search mode model and get scores + corresponding boxes FOR SEARCH MODE MODEL
+                        search_location_boxes, search_location_score, search_location_classes = self.search_model.detectRoadsignsFromNumpyArray(search_sess, input_image.copy())
+                        """
+                            Next part of code :
+                                - save each box where the probability score is better than a defined threshold 
+                            If DEBUG is True, print, save and show image with all the boxes rendered. 
+                        """
+                        # assume we start with no detection
+                        result = 0
+                        detected_small = False
+                        detected_medium = False
+                        detected_big = False
+                        width_small = []
+                        width_medium  = []
+                        width_big = []
+                        # search for road sign in all the found boxes (in the corresponding model
+                        for i in range(search_location_boxes.shape[1]):
+                            # detect a road sign if probability score of a box is better than a defined threshold
+                            if (search_location_boxes[0][i][0] != 0 and search_location_score[0][i] > 0.75):
+                                # assign "no_roadsign_detection_count" to 0  because a road sign has been detected
+                                no_object_detection_count = 0
+                                # find prediction result from collected data (boxes, score for each box and class for each box)
+                                result = int(search_location_classes[0][i])             
+                                # capture interesting part (box) from the global image
+                                x1 = int(search_location_boxes[0][i][1]*input_image.shape[1])
+                                x2 = int(search_location_boxes[0][i][3]*input_image.shape[1])
+                                y1 = int(search_location_boxes[0][i][0]*input_image.shape[0])
+                                y2 = int(search_location_boxes[0][i][2]*input_image.shape[0])
+                                # compute width of the road sign in pixels
+                                w = x2 - x1
+                                # detected small object : add width to list of widths for this type of object
+                                if (result == 1):
+                                    detected_small = True
+                                    width_small.append(w)
+                                # detected medium object : add width to list of widths for this type of object
+                                elif (result == 2):
+                                    detected_medium = True
+                                    width_medium.append(w)
+                                # detected big object : add width to list of widths for this type of object
+                                elif (result == 3):
+                                    print ("i have found a big sized object !")
+                                    detected_big = True
+                                    width_big.append(w)
+                                    
+                         # save object width (minimum bounding box around the object)
+                        if (detected_small):
+                            print ("i have found a small sized object !")
+                            w = min(width_small)
+                            self.setWidthSmallObjectGlobalVariable(width=w)       
+                        if (detected_medium):
+                            print ("i have found a medium sized object !")
+                            w = min(detected_medium)
+                            self.setWidthMediumObjectGlobalVariable(width=w)  
+                        if (detected_big):
+                            print ("i have found a big sized object !")
+                            w = min(width_big)
+                            self.setWidthBigObjectGlobalVariable(width=w)             
+                        if (not detected_small and not detected_medium and not detected_big):
+                            # increase no detection counter
+                            no_object_detection_count += 1
+                            # if "no_object_detection_count" after multiple try, then set widths to 0
+                            if (no_object_detection_count >= 5):
+                                self.setWidthSmallObjectGlobalVariable(width=0)
+                                self.setWidthMediumObjectGlobalVariable(width=0)
+                                self.setWidthBigObjectGlobalVariable(width=0)     
         pass
         
     def getConnectedGlobalVariable(self):
@@ -239,6 +292,13 @@ class ObjectDetector(Thread):
         check_connected = sharedRessources.connectedDevice
         sharedRessources.lockConnectedDevice.release()
         return check_connected
+        pass
+    
+    def getCarModeGlobalVariable(self):
+        sharedRessources.modeLock.acquire()
+        check_carmode = sharedRessources.mode
+        sharedRessources.modeLock.release()
+        return check_carmode
         pass
 
     def setWidthStopGlobalVariable(self, width=0):
@@ -252,3 +312,38 @@ class ObjectDetector(Thread):
         sharedRessources.widthSearch = w
         sharedRessources.lockWidthSearch.release()
         pass
+    
+    def setWidthSmallObjectGlobalVariable(self, width=0):
+        None
+        """
+            TO COMPLETE ! 
+        """
+        pass
+    
+    def setWidthMediumObjectGlobalVariable(self, width=0): 
+        None
+        """
+            TO COMPLETE ! 
+        """
+        pass
+    
+    def setWidthBigObjectGlobalVariable(self, width=0):
+        None
+        """
+            TO COMPLETE ! 
+        """
+        pass
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
