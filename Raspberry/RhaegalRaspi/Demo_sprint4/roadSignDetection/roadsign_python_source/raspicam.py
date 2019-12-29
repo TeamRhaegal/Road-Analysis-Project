@@ -23,38 +23,38 @@ class Raspicam(object):
         self.resolution = resolution
         self.save = save
         # init camera resolution
-        self.set_resolution(resolution)
+        self.setResolution(resolution)
         # init stream variable (contains the image at different times as BYTES (no image format specified))
         self.stream = PiRGBArray(self.camera)
         # check if preview option is True and if it is the case, start camera preview (only useful for debugging purposes
         if(preview):
-            self.enable_preview()
+            self.enablePreview()
         pass
     
     """
-        set_resolution : modify camera resolution property with defined tupple parameter (resolution x, y)
+        setResolution : modify camera resolution property with defined tupple parameter (resolution x, y)
         
         input : resolution : X, Y tupple
     """
-    def set_resolution(self, resolution=(1640,922)):
+    def setResolution(self, resolution=(1640,922)):
         self.camera.resolution = (resolution[0], resolution[1])
         pass
     
     """
-        capture_image : capture one image in our stream variable and eventually save it as ppm file (if enabled)
+        captureImage : capture one image in our stream variable and eventually save it as ppm file (if enabled)
         
         input : save boolean value
     """
-    def capture_image(self):
+    def captureImage(self):
         self.camera.capture(self.stream, format="rgb", use_video_port=True)
         pass
      
     """
-        read_image_as_numpy_array : return image as classic RGB numpy array
+        readImageAsNumpyArray : return image as classic RGB numpy array
         
         output : image as numpy array
     """
-    def read_image_as_numpy_array(self, save=False):
+    def readImageAsNumpyArray(self, save=False):
         #self.stream.seek(0)
         image = self.stream.array
         #data = np.fromstring(self.stream.getvalue(), dtype=np.uint8)
@@ -73,31 +73,31 @@ class Raspicam(object):
         
         output : image as PIL image variable
     """
-    def read_image_as_pil(self):
+    def readImageAsPil(self):
         self.stream.seek(0)
         return Image.open(self.stream)
         pass
     
     """
-        show_image : brutal way to show current capture as image. Only useful for debug, you should use QT window file instead (in the same folder)
+        showImage : brutal way to show current capture as image in a dedicated window. Only useful for debug
     """
-    def show_image(self):
+    def showImage(self):
         self.stream.seek(0)
         image = Image.open(self.stream)
         image.show()
         pass
       
     """
-        enable_preview : show a camera preview if decided by the user
+        enablePreview : show a camera preview if decided by the user
     """
-    def enable_preview(self):
+    def enablePreview(self):
         self.camera.start_preview()
         pass
         
     """
-        disable_preview : close the camera vision (preview window) if decided by the user
+        disablePreview : close the camera vision (preview window) if decided by the user
     """
-    def disable_preview(self):
+    def disablePreview(self):
         self.camera.stop_preview()
         pass
     

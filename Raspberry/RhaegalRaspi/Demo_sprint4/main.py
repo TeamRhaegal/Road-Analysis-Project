@@ -19,7 +19,7 @@ def main():
     bleTransmitterThread= BLETransmitterThread(bleServer,runRaspiCodeEvent) #for transmitting messages to the server
     
     # roadsign detection part
-    thread_roadsign_detector = Thread(target=detection.roadsign_detector, args=(runRaspiCodeEvent,))
+    thread_roadsign_detector = detection.RoadsignDetector(runRaspiCodeEvent)
     
     #message management part
     messageFromIHMThread = msgManager.MessageFromIHMThread(runRaspiCodeEvent)

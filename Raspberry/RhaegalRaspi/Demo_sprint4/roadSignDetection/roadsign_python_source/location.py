@@ -59,7 +59,7 @@ class LocationModel (object):
     """
         Load F-RCNN model to be used, in order to find the location of road signs. 
     """
-    def load_model(self, model_path=DEFAULT_PATH_TO_MODEL, ckpt_path=DEFAULT_PATH_TO_CKPT, label_path=DEFAULT_PATH_TO_LABELS, num_classes=DEFAULT_NUM_CLASSES):
+    def loadModel(self, model_path=DEFAULT_PATH_TO_MODEL, ckpt_path=DEFAULT_PATH_TO_CKPT, label_path=DEFAULT_PATH_TO_LABELS, num_classes=DEFAULT_NUM_CLASSES):
         # save model path
         self.model_path = model_path
         self.ckpt_path = ckpt_path
@@ -85,7 +85,7 @@ class LocationModel (object):
         next function : load image data to numpy array if it is a common image format  (Jpeg, png, bmp ...)
         useful if an example image is used (and not camera. py file where you can store images as numpy arrays)
     """
-    def load_image_into_numpy_array(self, image):
+    def loadImageIntoNumpyArray(self, image):
         (im_width, im_height) = image.size
         return np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
         pass
@@ -93,9 +93,9 @@ class LocationModel (object):
     """
         detect roadsign position from an image as numpy array (heigth x length x RGB)
     """
-    def detect_roadsigns_from_numpy_array(self, image_np, image_size=DEFAULT_OUTPUT_IMAGE_SIZE):
+    def detectRoadsignsFromNumpyArray(self, image_np, image_size=DEFAULT_OUTPUT_IMAGE_SIZE):
         if (self.detection_graph == None):
-            print ("\nError : please run 'load_model' function before trying to detect roadsigns")
+            print ("\nError : please run 'loadModel' function before trying to detect roadsigns")
             return None
         with self.detection_graph.as_default():      
             with tf.Session(graph=self.detection_graph) as sess:
@@ -134,16 +134,16 @@ class LocationModel (object):
     """
         detect roadsigns from stored image (as ppm file in general)
     """
-    def detect_roadsigns_from_image(self, image_path, image_size=DEFAULT_OUTPUT_IMAGE_SIZE):
+    def detectRoadsignsFromImage(self, image_path, image_size=DEFAULT_OUTPUT_IMAGE_SIZE):
         if (self.detection_graph == None):
-            print ("\nError : please run 'load_model' function before trying to detect roadsigns")
+            print ("\nError : please run 'loadModel' function before trying to detect roadsigns")
             return None
             pass
         
         image = Image.open(image_path)
         # the array based representation of the image will be used later in order to prepare the
         # result image with boxes and labels on it.
-        image_np = load_image_into_numpy_array(image)
+        image_np = loadImageIntoNumpyArray(image)
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         image_np_expanded = np.expand_dims(image_np, axis=0)
         image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')

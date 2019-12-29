@@ -50,7 +50,7 @@ class LocationModel (object):
     """
         Load machine learning model into memory. Includes inference graph, CKPT file and labels map
     """
-    def load_model(self, model_path=DEFAULT_PATH_TO_MODEL, ckpt_path=DEFAULT_PATH_TO_CKPT, label_path=DEFAULT_PATH_TO_LABELS, num_classes=DEFAULT_NUM_CLASSES):
+    def loadModel(self, model_path=DEFAULT_PATH_TO_MODEL, ckpt_path=DEFAULT_PATH_TO_CKPT, label_path=DEFAULT_PATH_TO_LABELS, num_classes=DEFAULT_NUM_CLASSES):
         
         # save model path
         self.model_path = model_path
@@ -78,7 +78,7 @@ class LocationModel (object):
         next function : load image data to numpy array if it is a common image format  (Jpeg, png, bmp ...)
         useful if an example image is used (and not camera. py file where you can store images as numpy arrays)
     """
-    def load_image_into_numpy_array(image):
+    def loadImageIntoNumpyArray(image):
         (im_width, im_height) = image.size
         return np.array(image.getdata()).reshape(
             (im_height, im_width, 3)).astype(np.uint8)
@@ -86,7 +86,7 @@ class LocationModel (object):
     """
         detect roadsign position from an image as numpy array (heigth x length x RGB)
     """
-    def detect_roadsigns_from_numpy_array(self, sess, image_np):
+    def detectRoadsignsFromNumpyArray(self, sess, image_np):
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         self.image_np_expanded = np.expand_dims(image_np, axis=0)
 
