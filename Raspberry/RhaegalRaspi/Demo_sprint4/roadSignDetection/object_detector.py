@@ -160,7 +160,7 @@ class ObjectDetector(Thread):
                         """
                             Roadsign detection if we are in "common modes" (assisted / autonomous)
                         """
-                        if (self.check_carmode == "assist" or self.check_carmode == "autonomous"):
+                        if (self.check_carmode == "assist" or self.check_carmode == "auto"):
                             # process prediction from roadsign model and get scores + corresponding boxes FOR ROADSIGN DETECTION MODEL
                             roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectRoadsignsFromNumpyArray(roadsign_sess, input_image.copy())
                             """
