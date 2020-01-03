@@ -31,36 +31,36 @@ class MessageFromIHMThread(Thread):
 					#there is a table of keys and values
 					#Mode, Joystick, Turbo are GLOBAL!!!
 					if key == 'mode':
-						sr.modeLock.acquire()
+						sr.lockMode.acquire()
 						sr.mode = value #slice
-						sr.modeLock.release()
+						sr.lockMode.release()
 					elif key == 'joy':
-						sr.joystickLock.acquire()
+						sr.lockJoystick.acquire()
 						sr.joystick = value #slice
-						sr.joystickLock.release()
+						sr.lockJoystick.release()
 					elif key == 'turbo':
-						sr.turboLock.acquire()
+						sr.lockTurbo.acquire()
 						sr.turbo = value #slice
-						sr.turboLock.release()
+						sr.lockTurbo.release()
 					elif key == 'state':
-						sr.stateLock.acquire()
+						sr.lockState.acquire()
 						sr.state = value 
-						sr.stateLock.release()
+						sr.lockState.release()
 					elif key == 'connect':
 						sr.lockConnectedDevice.acquire()
 						if value == 'on':
 							sr.connectedDevice = True
 						else:
 							sr.connectedDevice = False
-							sr.modeLock.acquire()
+							sr.lockMode.acquire()
 							sr.mode = "assist" #slice
-							sr.modeLock.release()
-							sr.joystickLock.acquire()
+							sr.lockMode.release()
+							sr.lockJoystick.acquire()
 							sr.joystick = "none" #slice
-							sr.joystickLock.release()
-							sr.turboLock.acquire()
+							sr.lockJoystick.release()
+							sr.lockTurbo.acquire()
 							sr.turbo = "off" #slice
-							sr.turboLock.release()
+							sr.lockTurbo.release()
 						
 							
 						sr.lockConnectedDevice.release()

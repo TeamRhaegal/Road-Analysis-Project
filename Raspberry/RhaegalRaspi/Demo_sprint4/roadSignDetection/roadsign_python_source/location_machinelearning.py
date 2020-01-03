@@ -12,7 +12,6 @@
     WARNING ! IF YOU WANT TO USE THIS LIBRARY, YOU NEED TO AT LEAST MODIFY PATH TO TENSORFLOW OBJECT DETECTION FOLDER TO THE EFFECTIVE FOLDER IN 
     YOUR COMPUTER !
 """
-
 import numpy as np
 import sys, time
 import tensorflow as tf
@@ -27,10 +26,8 @@ from utils import visualization_utils as vis_util
 DEFAULT_PATH_TO_MODEL = ""
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 DEFAULT_PATH_TO_CKPT = ""
-
 # List of the strings that is used to add correct label for each box.
 DEFAULT_PATH_TO_LABELS = ""
-
 # Number of classes to detect
 DEFAULT_NUM_CLASSES = 3
 
@@ -46,7 +43,6 @@ class LocationModel (object):
         self.ckpt_path = None
         self.label_path = None
         pass
-    
     """
         Load machine learning model into memory. Includes inference graph, CKPT file and labels map
     """
@@ -57,15 +53,13 @@ class LocationModel (object):
         self.ckpt_path = ckpt_path
         self.label_path = label_path
         self.num_classes = num_classes
-        
         # Load the (frozen) Tensorflow model into memory.
         with tf.gfile.GFile(ckpt_path, 'rb') as fid:
             self.od_graph_def = tf.GraphDef()
             self.od_graph_def.ParseFromString(fid.read())
         with tf.Graph().as_default() as graph:
             tf.import_graph_def(self.od_graph_def, name='')
-        self.detection_graph = graph
-                
+        self.detection_graph = graph     
         # Loading label map
         # Label maps map indices to category names, so that when our convolution network predicts `5`, we know that this corresponds to `airplane`.  Here we use internal utility functions, but anything that returns a dictionary mapping integers to appropriate string labels would be fine
         self.label_map = label_map_util.load_labelmap(label_path)
@@ -89,7 +83,6 @@ class LocationModel (object):
     def detectRoadsignsFromNumpyArray(self, sess, image_np):
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         self.image_np_expanded = np.expand_dims(image_np, axis=0)
-
         # Extract image tensor
         self.image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
         # Extract detection boxes
@@ -100,7 +93,6 @@ class LocationModel (object):
         self.classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
         # Extract number of detections
         self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
-
         # Actual detection.
         (self.boxes, self.scores, self.classes, self.num_detections) = sess.run([self.boxes, self.scores, self.classes, self.num_detections], feed_dict={self.image_tensor: self.image_np_expanded})
 

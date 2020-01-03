@@ -24,6 +24,11 @@ emergencyRearOn = False
 widthStop = 0
 widthSearch = 0
 
+# variables to detect sized objects from search mode
+widthSmall = 0
+widthMedium = 0
+widthBig = 0
+
 listMessagesToSend = []
 listMessagesReceived = []
 connectedDevice= False
@@ -44,11 +49,22 @@ lockWidthSearch = Lock()
 lockEmergencyFrontOn = Lock()
 lockEmergencyRearOn = Lock()
 
-modeLock =Lock()
+lockMode = Lock()
+lockJoystick = Lock()
+lockTurbo = Lock()
+lockSpeed = Lock()
+lockState = Lock()
+
+"""
+NEXT VARIABLES ARE NOW USELESS ! (replaced by the ones just before) 
+
+modeLock = Lock()
 joystickLock = Lock()
 turboLock = Lock()
 speedLock = Lock()
 stateLock = Lock()
+"""
+
 
 def constructMsgToIHM(key,*args):
 	msg = str(key)

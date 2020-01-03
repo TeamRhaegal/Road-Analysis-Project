@@ -74,9 +74,9 @@ class ModeControlThread(Thread):
     
     def run(self):
         while self.connectEvent.isSet():                             
-            R.modeLock.acquire()
+            R.lockMode.acquire()
             modeC = R.mode
-            R.modeLock.release()
+            R.lockMode.release()
             
             R.lockModeLaunched.acquire()
             currentModeLaunched = R.modeLaunched
@@ -149,6 +149,7 @@ class CanReceiverThread(Thread):
                 R.UFR = int(str(msg.data[2:4]).encode('hex'), 16) #right side
                 R.UFC = int(str(msg.data[4:6]).encode('hex'), 16) #center
                 R.lockFrontRadar.release()
+                
             if msg.arbitration_id == US2: #rear radar
                 
                 R.lockRearRadar.acquire()

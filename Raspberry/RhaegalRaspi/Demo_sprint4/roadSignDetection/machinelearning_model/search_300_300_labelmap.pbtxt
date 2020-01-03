@@ -1,0 +1,14 @@
+item {
+  id: 1
+  name: 'small'
+}
+
+item {
+  id: 2
+  name: 'medium'
+}
+
+item {
+  id: 3
+  name: 'big'
+}

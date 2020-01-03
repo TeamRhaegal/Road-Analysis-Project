@@ -68,9 +68,9 @@ class ModeAutoThread (ModeThread):
             
             
             if(stateEmergencyFront):  #testing if an emergency stop is needed in front of the car, => switch in assist mode and stop the vehicle
-                R.modeLock.acquire()
+                R.lockMode.acquire()
                 R.mode = "assist"
-                R.modeLock.release()
+                R.lockMode.release()
                 
             # Stop sign block
             
@@ -117,26 +117,26 @@ class ModeAssistThread (ModeThread):
         currentModeL=self.intModeL
         cmdV = CMD_STOP
         cmdO = CMD_STOP
-        R.turboLock.acquire()
+        R.lockTurbo.acquire()
         R.turbo ="off"
-        R.turboLock.release()
-        R.joystickLock.acquire()
+        R.lockTurbo.release()
+        R.lockJoystick.acquire()
         R.joystick = "none"
-        R.joystickLock.release()
-        R.stateLock.acquire()
+        R.lockJoystick.release()
+        R.lockState.acquire()
         R.state = "off"
-        R.stateLock.release()
+        R.lockState.release()
         emergencyFront = False
         emergencyRear = False
         
         while (currentModeL==self.intModeL):
-            R.stateLock.acquire()                 
+            R.lockState.acquire()                 
             currentState = R.state         
-            R.stateLock.release()
+            R.lockState.release()
             if(currentState=="on"):
-                R.joystickLock.acquire()                 
+                R.lockJoystick.acquire()                 
                 currentJoystick = R.joystick     #joystick    
-                R.joystickLock.release()
+                R.lockJoystick.release()
                 
                 R.lockEmergencyFrontOn.acquire()
                 emergencyFront = R.emergencyFrontOn     #front emergency
@@ -160,9 +160,9 @@ class ModeAssistThread (ModeThread):
                     cmdV = CMD_V_MIN 
 
                 elif(currentJoystick=="front" and not(emergencyFront)):
-                    R.turboLock.acquire()                 
+                    R.lockTurbo.acquire()                 
                     currentTurbo = R.turbo        
-                    R.turboLock.release()
+                    R.lockTurbo.release()
 
                     if(currentTurbo=="on"):
                         cmdV=CMD_V_TURBO
