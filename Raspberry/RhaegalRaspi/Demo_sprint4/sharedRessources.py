@@ -30,7 +30,7 @@ widthSearch = 0
 widthSmall = 0
 widthMedium = 0
 widthBig = 0
-# variable that contain an image with detected objects from search mode, and boxes aroung interesting objects
+# variable that contains an image with detected objects from search mode, and boxes around interesting objects
 # careful, image is given as A NUMPY ARRAY
 # numpy.empty(0) gives the same result as : "a = []"
 imageSearchObject = np.empty(0)
