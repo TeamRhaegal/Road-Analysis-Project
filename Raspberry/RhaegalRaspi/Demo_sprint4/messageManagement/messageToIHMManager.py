@@ -155,8 +155,51 @@ class SignNotificationThread(Thread):
             
             
             time.sleep(0.1)
+        
+class SearchObjectNotificationThread(Thread):
+    def __init__(self, runEvent):
+        Thread.__init__(self)
+        self.runEvent= runEvent
+
+    def run(self):
+        smallObjectDetected = False
+        mediumObjectDetected = False
+        bigObjectDetected = False
+        
+        while self.runEvent.isSet():
+            # small object block
+            R.lockWidthSmall.acquire()
+            smallObjectWidth = R.widthSmall
+            R.lockWidthSmall.release()                      
             
-        
-        
+            if(smallObjectWidth and not(smallObjectDetected)):
+                R.constructMsgToIHM("object","small")
+                smallObjectDetected = True
+            elif(not(smallObjectWidth) and (smallObjectDetected)):
+                smallObjectDetected = False
+                
+            # medium object block
+            R.lockWidthMedium.acquire()
+            mediumObjectWidth = R.widthMedium
+            R.lockWidthMedium.release()  
+            
+            if(mediumObjectWidth and not(mediumObjectDetected)):
+                R.constructMsgToIHM("object","medium")
+                mediumObjectDetected = True
+            elif(not(mediumObjectWidth) and (mediumObjectDetected)):
+                mediumObjectDetected = False
+                
+            # big object block
+            R.lockWidthBig.acquire()
+            bigObjectWidth = R.widthBig
+            R.lockWidthBig.release()  
+            
+            if(bigObjectWidth and not(bigObjectDetected)):
+                R.constructMsgToIHM("object","big")
+                bigObjectDetected = True
+            elif(not(bigObjectWidth) and (bigObjectDetected)):
+                bigObjectDetected = False
+     
+            time.sleep(0.1)     
     
         

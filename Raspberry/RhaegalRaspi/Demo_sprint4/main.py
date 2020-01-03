@@ -5,6 +5,7 @@ import roadSignDetection.object_detector as detection
 import messageManagement.messageFromIHMManager as msgManager
 from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread
 import os, sys
+from __builtin__ import True
 	
 def main():   
     
@@ -27,6 +28,7 @@ def main():
     speedLevelThread = SpeedThread(runRaspiCodeEvent)
     emergencyStopThread = EmergencyStopThread(runRaspiCodeEvent)
     signNotificationThread = SignNotificationThread(runRaspiCodeEvent)
+    searchObjectNotificationThread ⁼ SearchObjectNotificationThread(runRaspiCodeEvent)
     
     try:
         canControllerThread.daemon = True
@@ -37,6 +39,7 @@ def main():
         speedLevelThread.daemon = True
         emergencyStopThread.daemon = True
         signNotificationThread.daemon = True
+        searchObjectNotificationThread.daemon = True
         
         canControllerThread.start()
         bleTransmitterThread.start()
@@ -46,6 +49,7 @@ def main():
         speedLevelThread.start()
         emergencyStopThread.start()
         signNotificationThread.start()
+        searchObjectNotificationThread.start()
         bleServer.run() ##################################################################################################### a la fin
 				
     except KeyboardInterrupt:
@@ -59,6 +63,7 @@ def main():
         speedLevelThread.join()
         emergencyStopThread.join()
         signNotificationThread.join()
+        searchObjectNotificationThread.join()
     
         print ('All threads successfully closed')
         bleServer.quit()

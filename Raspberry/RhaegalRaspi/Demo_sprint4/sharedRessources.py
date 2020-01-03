@@ -43,8 +43,12 @@ lockModeLaunched = Lock()
 lockMessagesToSend = Lock()
 lockMessagesReceived = Lock()
 lockConnectedDevice = Lock()
+
 lockWidthStop = Lock()
 lockWidthSearch = Lock()
+lockWidthSmall = Lock()
+lockWidthMedium = Lock()
+lockWidthBig = Lock()
 
 lockEmergencyFrontOn = Lock()
 lockEmergencyRearOn = Lock()
