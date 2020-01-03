@@ -17,6 +17,7 @@ URC = 180       #front center US sensor
 URL = 180       #front left US sensor
 URR = 180       #front right US sensor
 modeLaunched = 0; #0 nothing, 1 assisted, 2 autonomous
+searchModeActivated = False # True if a search sign has been detected and the car is in front of it
 
 emergencyFrontOn = False
 emergencyRearOn = False
@@ -44,6 +45,7 @@ lockBatteryLevel = Lock()
 lockFrontRadar = Lock()
 lockRearRadar = Lock()
 lockModeLaunched = Lock()
+lockSearchModeActivated = Lock()
 
 lockMessagesToSend = Lock()
 lockMessagesReceived = Lock()

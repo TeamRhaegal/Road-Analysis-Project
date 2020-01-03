@@ -78,9 +78,9 @@ class LocationModel (object):
             (im_height, im_width, 3)).astype(np.uint8)
 
     """
-        detect roadsign position from an image as numpy array (heigth x length x RGB)
+        detect interesting object position from an image as numpy array (heigth x length x RGB)
     """
-    def detectRoadsignsFromNumpyArray(self, sess, image_np):
+    def detectObjectsFromNumpyArray(self, sess, image_np):
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         self.image_np_expanded = np.expand_dims(image_np, axis=0)
         # Extract image tensor

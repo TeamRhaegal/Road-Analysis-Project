@@ -157,12 +157,12 @@ class ObjectDetector(Thread):
                         self.camera.captureImage()
                         input_image = self.camera.readImageAsNumpyArray(save=False)
                         #input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR) 
-                        # get current car mode
-                        self.check_carmode = self.getCarModeGlobalVariable()
-                        """
-                            Roadsign detection if we are in "common modes" (assisted / autonomous)
-                        """
-                        if (self.check_carmode == "assist" or self.check_carmode == "auto"):
+                        # check if we are in search mode or not
+                        self.check_searchmode = self.getSearchModeGlobalVariable()
+                        #------------------------------------------------------------------------
+                        #    Road sign detection if we are in "common" mode (auto, assist)
+                        #------------------------------------------------------------------------
+                        if (not self.check_searchmode):
                             # process prediction from roadsign model and get scores + corresponding boxes FOR ROADSIGN DETECTION MODEL
                             roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectObjectsFromNumpyArray(roadsign_sess, input_image.copy())
                             """
@@ -220,8 +220,10 @@ class ObjectDetector(Thread):
                                     self.setWidthStopGlobalVariable(width=0)
                                     self.setWidthSearchGlobalVariable(width=0)  
          
-                        #Object detection (small, medium, big) if we are in "search" mode
-                        elif (self.check_carmode == "search"):
+                        #------------------------------------------------------------------------
+                        #    Object detection (small, medium, big) if we are in "search" mode"
+                        #------------------------------------------------------------------------
+                        elif (self.check_searchmode):
                             # process prediction from search mode model and get scores + corresponding boxes FOR SEARCH MODE MODEL
                             output_image = input_image.copy()
                             search_location_boxes, search_location_score, search_location_classes = self.search_model.detectObjectsFromNumpyArray(search_sess, output_image)
@@ -299,11 +301,11 @@ class ObjectDetector(Thread):
         return check_connected
         pass
     
-    def getCarModeGlobalVariable(self):
-        sharedRessources.lockMode.acquire()
-        check_carmode = sharedRessources.mode
-        sharedRessources.lockMode.release()
-        return check_carmode
+    def getSearchModeGlobalVariable(self):
+        sharedRessources.lockSearchModeActivated.acquire()
+        check_searchmode = sharedRessources.searchModeActivated
+        sharedRessources.lockSearchModeActivated.release()
+        return check_searchmode
         pass
 
     def setWidthStopGlobalVariable(self, width=0):
