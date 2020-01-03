@@ -32,7 +32,8 @@ from roadsign_python_source import raspicam
 print("imported libraries : ellapsed time : {} s".format(time.time() - begin))
       
 # define if we want to draw rectangles around ROIs and save corresonding images (for DEBUG purposes)
-DRAW = False
+ROADSIGN_DRAW = False
+SEARCH_DRAW = True
 
 """
     Define different paths for Roadsigns location model...
@@ -89,9 +90,9 @@ class ObjectDetector(Thread):
         print("initializing hardware and machine learning models")
         begin = time.time()
         self.camera = self.openCamera(resolution=(300,300), save=False, preview=False)
-        self.roadsign_model = self.initLocationModel(self.draw)
+        self.roadsign_model = self.initLocationModel(self.roadsign_draw)
         self.roadsign_detection_graph = self.loadLocationModel(location_model=self.roadsign_model, model_path=self.path_to_roadsign_model, ckpt_path=self.path_to_roadsign_ckpt, label_path=self.path_to_roadsign_labels, num_classes=self.roadsign_num_classes)
-        self.search_model = self.initLocationModel(self.draw)
+        self.search_model = self.initLocationModel(self.search_draw)
         self.search_detection_graph = self.loadLocationModel(location_model=self.search_model, model_path=self.path_to_search_model, ckpt_path=self.path_to_search_ckpt, label_path=self.path_to_search_labels, num_classes=self.search_num_classes)
         print("Initialized hardware and machine learning model. Time taken : {} seconds".format(time.time()-begin))
         # run thread loop
@@ -100,7 +101,8 @@ class ObjectDetector(Thread):
     
     def getGlobalInfos(self):
          # configure options from global variables
-        self.draw = DRAW
+        self.roadsign_draw = ROADSIGN_DRAW
+        self.search_draw = SEARCH_DRAW
         self.path_to_roadsign_model = PATH_TO_ROADSIGN_MODEL
         self.path_to_roadsign_ckpt = PATH_TO_ROADSIGN_CKPT
         self.path_to_roadsign_labels = PATH_TO_ROADSIGN_LABELS
@@ -162,7 +164,7 @@ class ObjectDetector(Thread):
                         """
                         if (self.check_carmode == "assist" or self.check_carmode == "auto"):
                             # process prediction from roadsign model and get scores + corresponding boxes FOR ROADSIGN DETECTION MODEL
-                            roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectRoadsignsFromNumpyArray(roadsign_sess, input_image.copy())
+                            roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectObjectsFromNumpyArray(roadsign_sess, input_image.copy())
                             """
                                 Next part of code :
                                     - save each box where the probability score is better than a defined threshold 
@@ -221,7 +223,8 @@ class ObjectDetector(Thread):
                         #Object detection (small, medium, big) if we are in "search" mode
                         elif (self.check_carmode == "search"):
                             # process prediction from search mode model and get scores + corresponding boxes FOR SEARCH MODE MODEL
-                            search_location_boxes, search_location_score, search_location_classes = self.search_model.detectRoadsignsFromNumpyArray(search_sess, input_image.copy())
+                            output_image = input_image.copy()
+                            search_location_boxes, search_location_score, search_location_classes = self.search_model.detectObjectsFromNumpyArray(search_sess, output_image)
                             """
                                 Next part of code :
                                     - save each box where the probability score is better than a defined threshold 
@@ -244,10 +247,10 @@ class ObjectDetector(Thread):
                                     # find prediction result from collected data (boxes, score for each box and class for each box)
                                     result = int(search_location_classes[0][i])             
                                     # capture interesting part (box) from the global image
-                                    x1 = int(search_location_boxes[0][i][1]*input_image.shape[1])
-                                    x2 = int(search_location_boxes[0][i][3]*input_image.shape[1])
-                                    y1 = int(search_location_boxes[0][i][0]*input_image.shape[0])
-                                    y2 = int(search_location_boxes[0][i][2]*input_image.shape[0])
+                                    x1 = int(search_location_boxes[0][i][1]*output_image.shape[1])
+                                    x2 = int(search_location_boxes[0][i][3]*output_image.shape[1])
+                                    y1 = int(search_location_boxes[0][i][0]*output_image.shape[0])
+                                    y2 = int(search_location_boxes[0][i][2]*output_image.shape[0])
                                     # compute width of the road sign in pixels
                                     w = x2 - x1
                                     # detected small object : add width to list of widths for this type of object
@@ -263,7 +266,10 @@ class ObjectDetector(Thread):
                                         detected_big = True
                                         width_big.append(w)
                                         
-                             # save object width (minimum bounding box around the object)
+                            # save image with rectangle boxes around detected objects (if objects are detected), as global variable
+                            if (detected_small or detected_medium or detected_big):
+                                self.setImageSearchObjectGlobalVariable(image=output_image)
+                            # save object width (minimum bounding box around the object)
                             if (detected_small):
                                 print ("i have found a small sized object !")
                                 w = min(width_small)
@@ -325,12 +331,16 @@ class ObjectDetector(Thread):
         pass
     
     def setWidthBigObjectGlobalVariable(self, width=0):
-        None
         sharedRessources.lockWidthBig.acquire()
         sharedRessources.widthBig = width
         sharedRessources.lockWidthBig.release()
         pass
     
+    def setImageSearchObjectGlobalVariable(self, image=np.empty(0)):
+        sharedRessources.lockImageSearchObject.acquire()
+        sharedRessources.imageSearchObject = image
+        sharedRessources.lockImageSearchObject.release()
+        pass
     
     
     

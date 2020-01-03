@@ -60,7 +60,7 @@ class CanControllerThread(Thread):
         
         if (self.connectEvent.isSet()):
             self.connectEvent.clear()
-            self.canTransmitterThread.join()
+            self.ModeControlThread.join()
             self.canReceiverThread.join()
                 
 
@@ -113,8 +113,101 @@ class ModeControlThread(Thread):
             self.modeAssistThread.join()
         elif(currentModeLaunched==2):
             self.modeAutoThread.join()
+    
+"""
+CI DESSOUS : TENTATIVE DE NOUVELLE CLASSE "ModeControlThread" INCLUANT LE "SEARCH MODE"
+la variable globale "mode" à maintenant 3 valeurs : 
+    - "assist" : mode assisté 
+    - "auto" : mode autonome
+    - "search" : mode search
+    
+il y a maintenant un 3e type de "controlThread" : le "modeSearchThread"
+
+ Pour le moment le mode search (modeSearchThread) ne fait que les étapes suivantes : 
+    - arrête les moteurs pendant X secondes (7/8 par exemple) 
+    - repasse dans le mode précédemment utilisé (pour cela on met la variable "currentModeLaunched" en paramètre du thread "modeSearchThread" lors de son initialisation
+    
+la variable "modeLaunched" va maintenant de 0 à 3:
+    - 0 : aucun mode
+    - 1 : assist
+    - 2 : auto
+    - 3 : search
+"""
+ 
+"""     
+class ModeControlThread(Thread):
+    def __init__(self, bus, connectEvent):
+        Thread.__init__(self)
+        self.bus = bus
+        self.connectEvent= connectEvent
+        self.modeAutoThread = ModeAutoThread(self.bus)
+        self.modeAssistThread = ModeAssistThread(self.bus)
+        self.modeSearchThread = ModeSearchThread(self.bus)
+    
+    def run(self):
+        while self.connectEvent.isSet():                             
+            R.lockMode.acquire()
+            modeC = R.mode
+            R.lockMode.release()
             
+            R.lockModeLaunched.acquire()
+            currentModeLaunched = R.modeLaunched
+            R.lockModeLaunched.release()
             
+            # mode auto block
+            if (modeC=="auto" and currentModeLaunched!=2):
+                R.lockModeLaunched.acquire()
+                R.modeLaunched = 2
+                R.lockModeLaunched.release()
+                if (currentModeLaunched==1):
+                    self.modeAssistThread.join() 
+                elif (currentModeLaunched==3):
+                    self.modeSearchThread.join()
+                    
+                self.modeAutoThread = ModeAutoThread(self.bus)
+                self.modeAutoThread.start()
+            
+            # mode assist block
+            if(modeC=="assist" and currentModeLaunched!=1):
+                R.lockModeLaunched.acquire()
+                R.modeLaunched = 1
+                R.lockModeLaunched.release()
+                if (currentModeLaunched==2):
+                    self.modeAutoThread.join() 
+                elif (currentModeLaunched==3):
+                    self.modeSearchThread.join()
+                
+                self.modeAssistThread = ModeAssistThread(self.bus)
+                self.modeAssistThread.start()
+                
+            # mode search block
+            if (modeC=="search" and currentModeLaunched!=3):
+                R.lockModeLaunched.acquire()
+                R.modeLaunched = 3
+                R.lockModeLaunched.release()
+                if (currentModeLaunched==1):
+                    self.modeAssistThread.join() 
+                elif (currentModeLaunched==2):
+                    self.modeAutoThread.join()
+                
+                self.modeSearchThread = ModeSearchThread(self.bus, currentModeLaunched)
+                self.modeSearchThread.start()
+                
+            time.sleep(0.1)
+            
+        R.lockModeLaunched.acquire()
+        currentModeLaunched = R.modeLaunched
+        R.modeLaunched=0
+        R.lockModeLaunched.release()
+        
+        if(currentModeLaunched==1):
+            self.modeAssistThread.join()
+        elif(currentModeLaunched==2):
+            self.modeAutoThread.join()    
+        elif(currentModeLaunched==3):
+            self.modeSearchThread.join()
+"""
+       
 '''
 This thread receive all the sensors informations from the can bus and update 
 global variables associated to this sensors
