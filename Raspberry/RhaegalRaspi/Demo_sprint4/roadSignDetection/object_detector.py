@@ -80,8 +80,8 @@ search_object_types  =  [   ["small",                       ""],
 """
 class ObjectDetector(Thread):
     
-    def __init__(self):
-        Thread.__init__(self, runEvent)
+    def __init__(self, runEvent):
+        Thread.__init__(self)
         # variable used to check if connection has been established between smartphone (HMI) and car
         self.runEvent = runEvent
         # retrieve default informations from global variables in this file
