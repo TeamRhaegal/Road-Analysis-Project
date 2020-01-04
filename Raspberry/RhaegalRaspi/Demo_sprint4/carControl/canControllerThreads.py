@@ -115,7 +115,8 @@ class ModeControlThread(Thread):
             self.modeAutoThread.join()
     
 """
-CI DESSOUS : TENTATIVE DE NOUVELLE CLASSE "ModeControlThread" INCLUANT LE "SEARCH MODE"
+-------> maintenant inutile, nous avons décidé de n'utiliser que deux modes "assist" et "auto", chacun ayant une manière différente de gérer l'activation du mode "search"
+CI DESSOUS : TENTATIVE DE NOUVELLE CLASSE "ModeControlThread" INCLUANT LE "SEARCH MODE" 
 la variable globale "mode" à maintenant 3 valeurs : 
     - "assist" : mode assisté 
     - "auto" : mode autonome

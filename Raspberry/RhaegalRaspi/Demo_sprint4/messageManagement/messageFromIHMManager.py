@@ -25,47 +25,47 @@ class MessageFromIHMThread(Thread):
             for i in range(0,len(listMsg)):
                 separatedMessage = listMsg[i].split('$',1)
                 if(len(separatedMessage)==2):
-					key = separatedMessage[0]
-					value = separatedMessage[1]
+                    key = separatedMessage[0]
+                    value = separatedMessage[1]
 
-					#there is a table of keys and values
-					#Mode, Joystick, Turbo are GLOBAL!!!
-					if key == 'mode':
-						sr.lockMode.acquire()
-						sr.mode = value #slice
-						sr.lockMode.release()
-					elif key == 'joy':
-						sr.lockJoystick.acquire()
-						sr.joystick = value #slice
-						sr.lockJoystick.release()
-					elif key == 'turbo':
-						sr.lockTurbo.acquire()
-						sr.turbo = value #slice
-						sr.lockTurbo.release()
-					elif key == 'state':
-						sr.lockState.acquire()
-						sr.state = value 
-						sr.lockState.release()
-					elif key == 'connect':
-						sr.lockConnectedDevice.acquire()
-						if value == 'on':
-							sr.connectedDevice = True
-						else:
-							sr.connectedDevice = False
-							sr.lockMode.acquire()
-							sr.mode = "assist" #slice
-							sr.lockMode.release()
-							sr.lockJoystick.acquire()
-							sr.joystick = "none" #slice
-							sr.lockJoystick.release()
-							sr.lockTurbo.acquire()
-							sr.turbo = "off" #slice
-							sr.lockTurbo.release()
-						
-							
-						sr.lockConnectedDevice.release()
-					else:
-						None
+                    #there is a table of keys and values
+                    #Mode, Joystick, Turbo are GLOBAL!!!
+                    if key == 'mode':
+                        sr.lockMode.acquire()
+                        sr.mode = value #slice
+                        sr.lockMode.release()
+                    elif key == 'joy':
+                        sr.lockJoystick.acquire()
+                        sr.joystick = value #slice
+                        sr.lockJoystick.release()
+                    elif key == 'turbo':
+                        sr.lockTurbo.acquire()
+                        sr.turbo = value #slice
+                        sr.lockTurbo.release()
+                    elif key == 'state':
+                        sr.lockState.acquire()
+                        sr.state = value 
+                        sr.lockState.release()
+                    elif key == 'connect':
+                        sr.lockConnectedDevice.acquire()
+                        if value == 'on':
+                            sr.connectedDevice = True
+                        else:
+                            sr.connectedDevice = False
+                            sr.lockMode.acquire()
+                            sr.mode = "assist" #slice
+                            sr.lockMode.release()
+                            sr.lockJoystick.acquire()
+                            sr.joystick = "none" #slice
+                            sr.lockJoystick.release()
+                            sr.lockTurbo.acquire()
+                            sr.turbo = "off" #slice
+                            sr.lockTurbo.release()
+                        
+                            
+                        sr.lockConnectedDevice.release()
+                    else:
+                        None
 
             time.sleep(0.1)
 

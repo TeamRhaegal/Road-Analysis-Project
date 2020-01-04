@@ -79,18 +79,16 @@ stateLock = Lock()
 
 
 def constructMsgToIHM(key,*args):
-	msg = str(key)
-	if len(args) :
-		i = 0
-		for i in range (0,len(args)):
-			msg= msg+"$"+str(args[i])
-			
-		lockMessagesToSend.acquire()
-		listMessagesToSend.append(msg)
-		lockMessagesToSend.release()
-	
-	
-	
+    msg = str(key)
+    if len(args) :
+        i = 0
+        for i in range (0,len(args)):
+            msg= msg+"$"+str(args[i])
+    
+        lockMessagesToSend.acquire()
+        listMessagesToSend.append(msg)
+        lockMessagesToSend.release()
+
 
 
 

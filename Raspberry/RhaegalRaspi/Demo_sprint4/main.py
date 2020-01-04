@@ -1,21 +1,23 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+
 from threading import Event, Thread
-from bleGattServer.bleThreads import BLETransmitterThread,BLEServer
+from bleGattServer.bleThreads import BLETransmitterThread, BLEServer
 import carControl.canControllerThreads as C
 import roadSignDetection.object_detector as detection
 import messageManagement.messageFromIHMManager as msgManager
 from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread
 import os, sys
-from __builtin__ import True
-	
+
 def main():   
     
     runRaspiCodeEvent = Event()
     runRaspiCodeEvent.set()
-	
+    
     #control part
     canControllerThread = C.CanControllerThread(runRaspiCodeEvent)
     
-	#BLE part
+    #BLE part
     bleServer = BLEServer()
     bleTransmitterThread= BLETransmitterThread(bleServer,runRaspiCodeEvent) #for transmitting messages to the server
     
@@ -28,7 +30,7 @@ def main():
     speedLevelThread = SpeedThread(runRaspiCodeEvent)
     emergencyStopThread = EmergencyStopThread(runRaspiCodeEvent)
     signNotificationThread = SignNotificationThread(runRaspiCodeEvent)
-    searchObjectNotificationThread ⁼ SearchObjectNotificationThread(runRaspiCodeEvent)
+    searchObjectNotificationThread = SearchObjectNotificationThread(runRaspiCodeEvent)
     
     try:
         canControllerThread.daemon = True
@@ -51,7 +53,7 @@ def main():
         signNotificationThread.start()
         searchObjectNotificationThread.start()
         bleServer.run() ##################################################################################################### a la fin
-				
+
     except KeyboardInterrupt:
         print ('Attempting to close all threads')
         runRaspiCodeEvent.clear()

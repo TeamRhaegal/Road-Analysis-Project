@@ -38,19 +38,19 @@ class BLETransmitterThread(Thread):
 
     def run(self):
         while self.runEvent.isSet() :	
-		r.lockConnectedDevice.acquire()
-		deviceIsConnected= r.connectedDevice
-		r.lockConnectedDevice.release()
-		
-		if (deviceIsConnected):	
-		    r.lockMessagesToSend.acquire()
-		    myMessagesToSend = r.listMessagesToSend
-		    r.listMessagesToSend = []
-		    r.lockMessagesToSend.release()
-		    if myMessagesToSend :
-		        for i in range(0,len(myMessagesToSend)):				
-			    print ("To IHM : ",myMessagesToSend[-1])
-			    self.TXChara.send_tx(myMessagesToSend.pop())
-		
-		time.sleep(0.2)
+			r.lockConnectedDevice.acquire()
+			deviceIsConnected= r.connectedDevice
+			r.lockConnectedDevice.release()
+			
+			if (deviceIsConnected):	
+			    r.lockMessagesToSend.acquire()
+			    myMessagesToSend = r.listMessagesToSend
+			    r.listMessagesToSend = []
+			    r.lockMessagesToSend.release()
+			    if myMessagesToSend :
+			        for i in range(0,len(myMessagesToSend)):				
+					    print ("To IHM : ",myMessagesToSend[-1])
+					    self.TXChara.send_tx(myMessagesToSend.pop())
+
+    time.sleep(0.2)
 
