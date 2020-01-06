@@ -155,11 +155,16 @@ class SignNotificationThread(Thread):
             
             
             time.sleep(0.1)
-        
+			
 class SearchObjectNotificationThread(Thread):
     def __init__(self, runEvent):
         Thread.__init__(self)
         self.runEvent= runEvent
+		
+	def sendImage(byte[] image):
+		for i in range (0,30):
+			R.constructMsgToIHM("img",image[i,i+9000])
+		
 
     def run(self):
         smallObjectDetected = False
@@ -199,6 +204,17 @@ class SearchObjectNotificationThread(Thread):
                 bigObjectDetected = True
             elif(not(bigObjectWidth) and (bigObjectDetected)):
                 bigObjectDetected = False
+				
+			# image block
+			R.lockImageSearchObject.acquire()
+            image = R.imageSearchObject()
+            R.lockImageSearchObject.release()  
+			
+			if (image):
+				self.sendImage(image.tobytes())
+				R.lockImageSearchObject.acquire()
+				R.imageSearchObject() = np.empty(0)
+				R.lockImageSearchObject.release()  
      
             time.sleep(0.1)     
     

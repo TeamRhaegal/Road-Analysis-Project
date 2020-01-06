@@ -16,12 +16,15 @@
     <string name="advStop">Warning ! Stop sign detected</string>
     <string name="advSearch">Warning ! Search sign detected</string>
     <string name="emergencyTitle">Emergency stop</string>
-    <string name="emergencyMsg">The car encountered an obstacle. Please remove it.</string>
+    <string name="emergencyMsg">The car has encountered an obstacle. </string>
+    <string name="emergencyMsgFront">There is an obstacle in front of the car. </string>
+    <string name="emergencyMsgBack">There is an obstacle behind the car. </string>
     <string name="searchTitle">Search sign detected</string>
-    <string name="searchMsg">Do you want to switch to autonomous mode</string>
+    <string name="searchMsg">Do you want to switch to autonomous mode ?</string>
     <string name="ok">OK</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
+    <string name="file_prompt">Choose a session date</string>
 
 
 

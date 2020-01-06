@@ -23,6 +23,8 @@ public class Constants {
     public static final String ROUTE = "route";
     public static final String SPEED = "speed";
     public static final String SIGN = "sign";
+    public static final String IMAGE = "img";
+    public static final String OBJECT = "object";
 
 
     public static final String JOYSTIC = "joy";
@@ -46,6 +48,9 @@ public class Constants {
     public static final String NOTHING = "none";
     public static final String STOP = "stop";
     public static final String SEARCH = "search";
+    public static final String BIG = "big";
+    public static final String SMALL = "small";
+    public static final String MEDIUM = "medium";
 
 
 }

@@ -17,6 +17,9 @@ import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,6 +35,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 
 
@@ -55,6 +59,7 @@ public class scan extends AppCompatActivity {
 
     private final static int REQUEST_BLUETOOTH = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
+    private static final int REQUEST_WRITE_STORAGE = 3;
     private int i = 0;
     ////////////////////////////////--------------------------////////////////////////
 
@@ -101,6 +106,9 @@ public class scan extends AppCompatActivity {
             });
             builder.show();
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_STORAGE);
+        }
 
         // Ensures coarse location is enabled on the device. If not displays a dialog requesting
         // user to enable coarse location.
@@ -121,6 +129,12 @@ public class scan extends AppCompatActivity {
                     });
             AlertDialog alert = builder.create();
             alert.show();
+        }
+
+        String path = Environment.getExternalStorageDirectory().getPath() + "/Android/data/DriverAppData/";
+        File FileDir= new File(path);
+        if (!FileDir.exists()) {
+            FileDir.mkdir();
         }
 
 

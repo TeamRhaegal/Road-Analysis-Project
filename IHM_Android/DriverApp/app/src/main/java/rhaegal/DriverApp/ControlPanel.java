@@ -12,12 +12,16 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.CountDownTimer;
+import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +31,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -63,14 +73,19 @@ public class ControlPanel extends AppCompatActivity {
     private TextView speed;
     private ImageView imageSign;
     private TextView advSign;
+    private Button logButton;
 
     //STOP sign
     private Toast signToast;
     private AlertDialog dialogEmergencyStop;
     private AlertDialog dialogSearchSign;
+    private Boolean emergencyFront = false;
+    private Boolean emergencyBack = false;
 
     private CountDownTimer timerNotif;
     private CountDownTimer timerDisconnect;
+    private byte[] searchImage;
+    private int counterSearchImage;
 
     /**
      * Finds all the objects in the view, link them to lacal variables
@@ -93,6 +108,8 @@ public class ControlPanel extends AppCompatActivity {
         joystick = findViewById(R.id.joystick);
         battery = findViewById(R.id.battery);
         speed = findViewById(R.id.speed);
+        logButton = findViewById(R.id.file);
+        counterSearchImage = 0;
 
         LayoutInflater inflater = getLayoutInflater();
         View layoutSign = inflater.inflate(R.layout.sign_toast,
@@ -107,17 +124,21 @@ public class ControlPanel extends AppCompatActivity {
         signToast.setView(layoutSign);
 
         AlertDialog.Builder builderEmergency = new AlertDialog.Builder(ControlPanel.this);
-        builderEmergency.setMessage(R.string.emergencyMsg)
-                .setTitle(R.string.emergencyTitle)
+        builderEmergency.setTitle(R.string.emergencyTitle)
                 .setCancelable(false)
-                .setIcon(R.drawable.attention_icon);
+                .setIcon(R.drawable.attention_icon)
+                .setNeutralButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
 
         dialogEmergencyStop = builderEmergency.create();
 
         AlertDialog.Builder builderSearch = new AlertDialog.Builder(ControlPanel.this);
         builderSearch.setMessage(R.string.searchMsg)
                 .setTitle(R.string.searchTitle)
-                .setCancelable(true)
+                .setCancelable(false)
                 .setIcon(R.drawable.search_sign)
                 .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
@@ -142,6 +163,7 @@ public class ControlPanel extends AppCompatActivity {
         setAutoButton();
         setTurboButton();
         setJoystick();
+        setLogButton();
 
         speed.setText(R.string.speed);
 
@@ -381,6 +403,17 @@ public class ControlPanel extends AppCompatActivity {
         }, 50);
     }
 
+    private void setLogButton() {
+        logButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(!autonomous && !started) {
+                    final Intent intent = new Intent(ControlPanel.this, LogDisplay.class);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     //callbacks
     public final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
@@ -403,8 +436,6 @@ public class ControlPanel extends AppCompatActivity {
                 btGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 resetSymbols();
-                String conSpeedString = 0.0 + " km/h";
-                speed.setText(conSpeedString);
                 connected = false;
                 connexionChange();
                 //Log.i(TAG, "Disconnected from GATT server\n");
@@ -476,24 +507,34 @@ public class ControlPanel extends AppCompatActivity {
 
             StringTokenizer tokens = new StringTokenizer(data, "$");
             String key = tokens.nextToken();
-            String value = tokens.nextToken();
+            String value1 = tokens.nextToken();
+            String value2 = "";
+            try{
+                value2 = tokens.nextToken();}
+            catch(Exception e){
+
+            }
 
             switch (key) {
                 case Constants.MODE :
-                    changeMode(value);
+                    changeMode(value1);
                     break;
                 case Constants.BATTERY :
-                    changeBatt(value);
+                    changeBatt(value1);
                     break;
                 case Constants.SPEED:
-                    changeSpeed(value);
+                    changeSpeed(value1);
                     break;
                 case Constants.SIGN:
-                    advertizeSign(value);
+                    advertizeSign(value1);
                     break;
                 case Constants.EMERGENCYSTOP:
-                    advertizeEmergency(value);
+                    advertizeEmergency(value1,value2);
                     break;
+                case Constants.IMAGE:
+                    getImage(value1.getBytes());
+                case Constants.OBJECT:
+                    objectFound(value1);
 
             }
         }
@@ -501,6 +542,20 @@ public class ControlPanel extends AppCompatActivity {
 
     ////////////////////////////////////////////////////////////////////////////////
     //Bluetooth functions
+
+    private void objectFound(final String sizeValue){
+        if (sizeValue.equals(Constants.BIG)){
+            Toast.makeText(ControlPanel.this,"Found a big object",Toast.LENGTH_SHORT).show();
+        }
+        else if (sizeValue.equals(Constants.MEDIUM)){
+            Toast.makeText(ControlPanel.this,"Found a medium object",Toast.LENGTH_SHORT).show();
+
+        }
+        else{
+            Toast.makeText(ControlPanel.this,"Found a small object",Toast.LENGTH_SHORT).show();
+
+        }
+    }
 
 
     /**
@@ -528,6 +583,8 @@ public class ControlPanel extends AppCompatActivity {
             turboed = false;
             autonomous = false;
             driving = false;
+            emergencyBack = false;
+            emergencyFront = false;
             joystickValue = Constants.NOTHING;
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -537,6 +594,9 @@ public class ControlPanel extends AppCompatActivity {
                     start.setText(R.string.start);
                     auto.setText(R.string.manual);
                     connect.setText(R.string.connect);
+                    String conSpeedString = 0.0 + " km/h";
+                    speed.setText(conSpeedString);
+                    battery.setImageResource(R.drawable.ic_batt_full);
                 }
             });
             transmitterCharacteristic = null;
@@ -554,7 +614,6 @@ public class ControlPanel extends AppCompatActivity {
             boolean result;
             BluetoothGattCharacteristic characteristic = receiverCharacteristic;
             gatt.setCharacteristicNotification(characteristic, true);
-            // 0x2902 org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
             UUID uuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(uuid);
 
@@ -581,9 +640,6 @@ public class ControlPanel extends AppCompatActivity {
                 joystick.resetButtonPosition();
                 joystick.invalidate();
                 joystickValue = Constants.NOTHING;
-                //battery.setImageResource(R.drawable.ic_batt_full);
-                //String conSpeedString = 0.0 + " km/h";
-                //speed.setText(conSpeedString);
 
             }
         });
@@ -609,7 +665,6 @@ public class ControlPanel extends AppCompatActivity {
                     start.setText(R.string.start);
                     turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
                     start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                    sendMessage(Constants.MODE,Constants.AUTONOMOUS);
 
                 } else if (modeValue.equals(Constants.ASSISTED)) {
                     if(autonomous) {
@@ -633,7 +688,6 @@ public class ControlPanel extends AppCompatActivity {
                     start.setText(R.string.start);
                     turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
                     start.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                    sendMessage(Constants.MODE, Constants.ASSISTED);
                 }
 
             }
@@ -700,28 +754,108 @@ public class ControlPanel extends AppCompatActivity {
             signToast.show();
         }
         if (signValue.equals(Constants.SEARCH)){
-            advSign.setText(R.string.advSearch);
-            imageSign.setImageResource(R.drawable.search_sign);
-            signToast.show();
+            if(autonomous) {
+                advSign.setText(R.string.advSearch);
+                imageSign.setImageResource(R.drawable.search_sign);
+                signToast.show();
+            }
+            else{
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        dialogSearchSign.show();
+                    }
+                });
+            }
         }
     }
 
-    private void advertizeEmergency(final String emergencyValue){
-        if (emergencyValue.equals(Constants.ON)){
-            changeMode(Constants.ASSISTED);
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    dialogEmergencyStop.show();
+    private void advertizeEmergency(final String areaValue,final String stateValue){
+        if (areaValue.equals(Constants.FRONT)){
+            if (stateValue.equals(Constants.ON)){
+                emergencyFront = true;
+                if(autonomous) {
+                    changeMode(Constants.ASSISTED);
+                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsg));
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogEmergencyStop.show();
+                        }
+                    });
                 }
-            });
+
+            }
+            else if (stateValue.equals(Constants.OFF)){
+                emergencyFront = false;
+
+            }
         }
-        if (emergencyValue.equals(Constants.OFF)){
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    dialogEmergencyStop.dismiss();
+        else if (areaValue.equals(Constants.BACK)){
+            if(!autonomous) {
+                if (stateValue.equals(Constants.ON)) {
+                    emergencyBack = true;
+
+                } else if (stateValue.equals(Constants.OFF)) {
+                    emergencyBack = false;
+
                 }
-            });
+            }
         }
+    }
+
+    private void getImage(final byte[] dataValue){
+        if (counterSearchImage < 30){
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+            try {
+                outputStream.write(searchImage);
+                outputStream.write(dataValue);
+            }
+            catch(Exception e ){
+                Toast.makeText(ControlPanel.this,"Can't add byte",Toast.LENGTH_LONG).show();
+
+            }
+            counterSearchImage +=1;
+            searchImage = outputStream.toByteArray( );
+            if(counterSearchImage == 30) {
+                FileOutputStream myOutput = createDataFile();
+                Bitmap myBitmap = BitmapFactory.decodeByteArray(searchImage, 0, searchImage.length);
+                try {
+                    myBitmap.compress(Bitmap.CompressFormat.JPEG, 85, myOutput);
+                    myOutput.close();
+                } catch (Exception e) {
+                    Toast.makeText(ControlPanel.this, "Can't write in file", Toast.LENGTH_LONG).show();
+                }
+                searchImage = new byte[0];
+            }
+        }
+
+    }
+
+    private FileOutputStream createDataFile(){
+
+        String search_path = null;
+        String file_name_search = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+
+        // If there is external and writable storage
+        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(Environment.getExternalStorageState())) {
+            try {
+                search_path = Environment.getExternalStorageDirectory().getPath() + "/Android/data/DriverAppData/" + file_name_search+".jpg";
+                File searchFile = new File(search_path);
+                searchFile.createNewFile(); // create new file if it does not already exists
+
+                FileOutputStream output_search = new FileOutputStream(searchFile);
+                Log.v("FILE", "File created");
+
+                return output_search;
+
+            } catch (IOException e) {
+                return null;
+            }
+
+        } else {
+            Toast.makeText(ControlPanel.this,"No ext storage",Toast.LENGTH_LONG).show();
+            return null;
+        }
+
     }
 
 
@@ -736,30 +870,97 @@ public class ControlPanel extends AppCompatActivity {
     private void computeJoystickValue(int joystick_angle) {
         String joystickCurrentValue="";
         if (driving) {
-            if (joystick_angle <= 20 | joystick_angle > 340)
+            if (joystick_angle <= 20 || joystick_angle > 340)
                 joystickCurrentValue = Constants.RIGHT;
-            else if (joystick_angle <= 65 & joystick_angle > 20)
-                joystickCurrentValue = Constants.FRONT+"&"+Constants.RIGHT;
-            else if (joystick_angle <= 110 & joystick_angle > 65)
-                joystickCurrentValue = Constants.FRONT;
-            else if (joystick_angle <= 155 & joystick_angle > 110)
-                joystickCurrentValue = Constants.FRONT+"&"+Constants.LEFT;
-            else if (joystick_angle <= 200 & joystick_angle > 155)
+            else if (joystick_angle <= 200 && joystick_angle > 155)
                 joystickCurrentValue = Constants.LEFT;
-            else if (joystick_angle <= 245 & joystick_angle > 200)
-                joystickCurrentValue = Constants.BACK+"&"+Constants.LEFT;
-            else if (joystick_angle <= 290 & joystick_angle > 245)
-                joystickCurrentValue = Constants.BACK;
-            else if (joystick_angle <= 335 & joystick_angle > 290)
-                joystickCurrentValue = Constants.BACK+"&"+Constants.RIGHT;
-            else
+            else if (joystick_angle <= 65 && joystick_angle > 20){
+                if(emergencyFront) {
+                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogEmergencyStop.show();
+                        }
+                    });
+                }
+                else {
+                    joystickCurrentValue = Constants.FRONT + "&" + Constants.RIGHT;
+                }
+            }
+            else if (joystick_angle <= 110 && joystick_angle > 65){
+                if(emergencyFront) {
+                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogEmergencyStop.show();
+                        }
+                    });
+                }
+                else {
+                    joystickCurrentValue = Constants.FRONT;
+                }
+            }
+            else if (joystick_angle <= 155 && joystick_angle > 110){
+                if(emergencyFront) {
+                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogEmergencyStop.show();
+                        }
+                    });
+                }
+                else {
+                    joystickCurrentValue = Constants.FRONT + "&" + Constants.LEFT;
+                }
+            }
+
+            else if (joystick_angle <= 245 && joystick_angle > 200){
+                if(emergencyBack) {
+                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgBack));
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogEmergencyStop.show();
+                        }
+                    });
+                }
+                else {
+                    joystickCurrentValue = Constants.BACK+"&"+Constants.LEFT;
+                }
+            }
+            else if (joystick_angle <= 290 && joystick_angle > 245){
+                if(emergencyBack) {
+                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgBack));
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogEmergencyStop.show();
+                        }
+                    });
+                }
+                else {
+                    joystickCurrentValue = Constants.BACK;
+                }
+            }
+            else if (joystick_angle <= 335 && joystick_angle > 290){
+                if(emergencyBack) {
+                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgBack));
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogEmergencyStop.show();
+                        }
+                    });
+                }
+                else {
+                    joystickCurrentValue = Constants.BACK+"&"+Constants.RIGHT;
+                }
+            }
+            if (joystickCurrentValue.equals(""))
                 joystickCurrentValue = Constants.NOTHING;
         } else {
             joystickCurrentValue = Constants.NOTHING;
         }
         if (!joystickCurrentValue.equals(joystickValue)){
-            joystickValue=joystickCurrentValue;
-            sendMessage(Constants.JOYSTIC,joystickCurrentValue);
+            joystickValue = joystickCurrentValue;
+            sendMessage(Constants.JOYSTIC, joystickCurrentValue);
         }
     }
 
