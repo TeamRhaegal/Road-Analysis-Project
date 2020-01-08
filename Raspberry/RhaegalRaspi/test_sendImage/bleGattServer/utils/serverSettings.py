@@ -59,7 +59,7 @@ class TxCharacteristic(Characteristic):
             return
         value = []
         for c in s:
-            value.append(dbus.Byte(c.encode()))
+            value.append(dbus.Byte(c))
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
  
     def StartNotify(self):

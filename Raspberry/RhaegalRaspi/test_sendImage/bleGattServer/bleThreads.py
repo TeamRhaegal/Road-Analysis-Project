@@ -39,6 +39,7 @@ class BLETransmitterThread(Thread):
 	return serverCharacteristics[0]                          #the transmitter is the fist one in the list
 
     def run(self):
+	counter = 0
         while self.runEvent.isSet() :	
 		r.lockConnectedDevice.acquire()
 		deviceIsConnected= r.connectedDevice
@@ -51,7 +52,9 @@ class BLETransmitterThread(Thread):
 		    r.lockMessagesToSend.release()
 		    if myMessagesToSend :
 			for i in range(0,len(myMessagesToSend)):				
-			    print ("To IHM : ",myMessagesToSend[-1])
+			    #print ("To IHM : ",myMessagesToSend[-1])
+			    counter += 1
+			    print("counter = ", counter)
 			    self.TXChara.send_tx(myMessagesToSend.pop())
 
 		time.sleep(0.2)

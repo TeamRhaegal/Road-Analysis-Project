@@ -13,19 +13,26 @@ class SendImageThread(Thread):
         self.runEvent= runEvent
         
     def run(self):
+        flag = 0
         while self.runEvent.isSet():
             R.lockConnectedDevice.acquire()
             check_connected = R.connectedDevice
             R.lockConnectedDevice.release()
             
-            if(check_connected):
+            if(check_connected and flag==0):
                 time.sleep(1)
                 shared_image = cv2.imread(IMAGE_PATH)
                 encodedImage = cv2.imencode('.jpg', shared_image)[1].tobytes()
+                reconstitueBytes = []
+                
                 
                 for i in range (0,309):
-                    R.constructMsgToIHM("img",encodedImage[900*i:(900*i)+900].decode('utf-8'))
-                R.constructMsgToIHM("img",encodedImage[900*i:-1].decode('utf-8'))
+                    #R.constructMsgToIHM("img",encodedImage[900*i:(900*i)+900])
+                    reconstitueBytes = reconstitueBytes + encodedImage[900*i:(900*i)+900]
+                #R.constructMsgToIHM("img",encodedImage[900*i:-1])
+                reconstitueBytes = reconstitueBytes + encodedImage[900*i:-1]
+                
+                flag = 1
             time.sleep(0.5)
                 
                 
