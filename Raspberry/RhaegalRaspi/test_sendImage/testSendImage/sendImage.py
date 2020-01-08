@@ -5,7 +5,7 @@ from threading import Thread
 import time
 import sharedRessources as R
 
-IMAGE_PATH = "D:\\INSA\\5e\\projetRhaegal\\Road-Analysis-Project\\Raspberry\\RhaegalRaspi\\test_sendImage\\266.jpg"
+IMAGE_PATH = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/test_sendImage/testSendImage/266.jpg"
 
 class SendImageThread(Thread):
     def __init__(self, runEvent):
@@ -24,8 +24,8 @@ class SendImageThread(Thread):
                 encodedImage = cv2.imencode('.jpg', shared_image)[1].tobytes()
                 
                 for i in range (0,309):
-                    R.constructMsgToIHM("img",encodedImage[900*i:(900*i)+900])
-                R.constructMsgToIHM("img",encodedImage[900*i:-1])
+                    R.constructMsgToIHM("img",encodedImage[900*i:(900*i)+900].decode('utf-8'))
+                R.constructMsgToIHM("img",encodedImage[900*i:-1].decode('utf-8'))
             time.sleep(0.5)
                 
                 
