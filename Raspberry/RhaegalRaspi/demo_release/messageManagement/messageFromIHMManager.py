@@ -44,24 +44,18 @@ class MessageFromIHMThread(Thread):
                         sr.lockState.release()
                     elif key == 'connect':
                         sr.lockConnectedDevice.acquire()
-                        connect = value
-                        sr.lockConnectedDevice.release()
-                        print("connect = ",connect)
-                        if(connect=="on"):
-                            time.sleep(1)
-                            sr.lockConnectedDevice.acquire()
+                        if(value=="on"):
                             sr.connectedDevice = True
-                            sr.lockConnectedDevice.release()
                         else:
                             sr.lockConnectedDevice.acquire()
                             sr.connectedDevice = False
-                            sr.lockConnectedDevice.release()
                             sr.lockMode.acquire()
                             sr.mode = "assist" #slice
                             sr.lockMode.release()
                             sr.lockJoystick.acquire()
                             sr.joystick = "none" #slice
                             sr.lockJoystick.release()
+                        sr.lockConnectedDevice.release()
                     else:
                         None
 

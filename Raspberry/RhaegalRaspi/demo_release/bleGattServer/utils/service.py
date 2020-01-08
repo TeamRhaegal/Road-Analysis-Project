@@ -47,15 +47,19 @@ class NotPermittedException(dbus.exceptions.DBusException):
 
 class Application(dbus.service.Object):
     def __init__(self):
-        GObject.threads_init()
-        dbus.mainloop.glib.threads_init()
-        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-        self.mainloop = GObject.MainLoop()
-        self.bus = BleTools.get_bus()
-        self.path = "/"
-        self.services = []
-        self.next_index = 0
-        dbus.service.Object.__init__(self, self.bus, self.path)
+        
+        try:
+            GObject.threads_init()
+            dbus.mainloop.glib.threads_init()
+            dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+            self.mainloop = GObject.MainLoop()
+            self.bus = BleTools.get_bus()
+            self.path = "/"
+            self.services = []
+            self.next_index = 0
+            dbus.service.Object.__init__(self, self.bus, self.path)
+        except dbus.DBusException as e:
+            print("BLE crash !!!!!!!!!!!!!! init")
         
 
     def get_path(self):
@@ -86,18 +90,25 @@ class Application(dbus.service.Object):
         print("Failed to register application: " + str(error))
 
     def register(self):
-        adapter = BleTools.find_adapter(self.bus)
+        try :
+            adapter = BleTools.find_adapter(self.bus)
 
-        service_manager = dbus.Interface(
-                self.bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-                GATT_MANAGER_IFACE)
+            service_manager = dbus.Interface(
+                    self.bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+                    GATT_MANAGER_IFACE)
 
-        service_manager.RegisterApplication(self.get_path(), {},
-                reply_handler=self.register_app_callback,
-                error_handler=self.register_app_error_callback)
+            service_manager.RegisterApplication(self.get_path(), {},
+                    reply_handler=self.register_app_callback,
+                    error_handler=self.register_app_error_callback)
+        
+        except dbus.DBusException as e:
+            print("BLE crash !!!!!!!!!!!!!! register\n")
 
     def run(self):
-        self.mainloop.run()
+        try:
+            self.mainloop.run()
+        except dbus.DBusException as e:
+            print("BLE crash !!!!!!!!!!!!!!")
 
     def quit(self):
         print("\nGATT application terminated")
