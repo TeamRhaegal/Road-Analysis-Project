@@ -29,18 +29,18 @@ print("imported libraries : time taken : {}".format(time.time()-start))
     Define different paths for input model...
 """
 # path to configuration model file : '.config' file
-PATH_TO_MODEL = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_release/roadSignDetection/machinelearning_model/roadsign_300_300_pipeline.config"
+PATH_TO_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_release/roadSignDetection/machinelearning_model/search_300_300_pipeline.config"
 # Path to frozen detection graph. This is the actual model that is used for the object detection : '.pb' file
-PATH_TO_CKPT = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_release/roadSignDetection/machinelearning_model/roadsign_300_300_frozen_inference_graph.pb"
+PATH_TO_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_release/roadSignDetection/machinelearning_model/search_300_300_frozen_inference_graph.pb"
 # List of the strings that is used to add correct label for each box : '.pbtxt' file
-PATH_TO_LABELMAP = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_release/roadSignDetection/machinelearning_model/roadsign_300_300_labelmap.pbtxt"
+PATH_TO_LABELMAP = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_release/roadSignDetection/machinelearning_model/search_300_300_labelmap.pbtxt"
 # Number of classes to detect
-NUM_CLASSES = 2
+NUM_CLASSES = 3
 
 """
     define path for input folder
 """
-FOLDERNAME = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/machineLearning_model/training_roadsign/images/test/" 
+FOLDERNAME = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/machineLearning_model/new_images_roadsign/" 
 IMAGE_FOLDER = glob.glob(FOLDERNAME+"*.jpg")
 
 if __name__ == '__main__':

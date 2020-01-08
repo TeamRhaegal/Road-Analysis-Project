@@ -3,6 +3,7 @@
 
 # imports 
 import os, sys, time,keyboard, can
+sys.dont_write_bytecode = True
 from skimage import io as skio
 from threading import Event, Thread, Lock
 from picamera import PiCamera
@@ -16,7 +17,7 @@ import random
 #sys.path.append('roadsign_python_source/')
 #from roadsign_python_source import raspicam
     
-folderpath = "new_images_roadsign/"
+folderpath = "new_images_search/"
 MOT = 0x010    
 
 class MyCapture(Thread):
