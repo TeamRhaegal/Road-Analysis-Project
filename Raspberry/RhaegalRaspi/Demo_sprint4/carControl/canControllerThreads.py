@@ -60,7 +60,7 @@ class CanControllerThread(Thread):
         
         if (self.connectEvent.isSet()):
             self.connectEvent.clear()
-            self.ModeControlThread.join()
+            self.modeControlThread.join()
             self.canReceiverThread.join()
                 
 

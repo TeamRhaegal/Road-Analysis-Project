@@ -138,7 +138,8 @@ class ObjectDetector(Thread):
     
     def run(self):
         # no detection counter. Useful to detect if no road sign/object is present in the image, or if there is just a recognition error.
-        no_roadsign_detection_count = 0
+        no_stopsign_detection_count = 0
+        no_searchsign_detection_count = 0
         no_object_detection_count = 0
         # variable used to check if connection is established between smartphone (HMI) and car
         self.check_connected = False
@@ -182,8 +183,6 @@ class ObjectDetector(Thread):
                             for i in range(roadsign_location_boxes.shape[1]):
                                 # detect a road sign if probability score of a box is better than a defined threshold
                                 if (roadsign_location_boxes[0][i][0] != 0 and roadsign_location_score[0][i] > 0.75):
-                                    # assign "no_roadsign_detection_count" to 0  because a road sign has been detected
-                                    no_roadsign_detection_count = 0
                                     # find prediction result from collected data (boxes, score for each box and class for each box)
                                     result = int(roadsign_location_classes[0][i])             
                                     # capture interesting part (box) from the global image
@@ -204,19 +203,26 @@ class ObjectDetector(Thread):
     
                             # save sign width (minimum bounding box around the sign)
                             if (detected_stop):
-                                print("i have found a STOP SIGN !")
+                                print("I have found a STOP SIGN !")
                                 w = min(width_stop)
-                                self.setWidthStopGlobalVariable(width=w)       
+                                self.setWidthStopGlobalVariable(width=w)   
+                                # assign "no_stopsign_detection_count" to 0  because a stop sign has been detected
+                                no_stopsign_detection_count = 0    
+                            else :
+                                # increase no detection counter
+                                no_stopsign_detection_count += 1   
+                                # if "no_stopsign_detection_count" after multiple try, then set widths to 0
+                                if (no_stopsign_detection_count >= 2):
+                                    self.setWidthStopGlobalVariable(width=0)
                             if (detected_search):
-                                print("i have found a SEARCH SIGN !")
+                                print("I have found a SEARCH SIGN !")
                                 w = min(width_search)
                                 self.setWidthSearchGlobalVariable(width=w)  
-                            if (not detected_stop and not detected_search):
-                                # increase no detection counter
-                                no_roadsign_detection_count += 1
-                                # if "no_roadsign_detection_count" after multiple try, then set widths to 0
-                                if (no_roadsign_detection_count >= 2):
-                                    self.setWidthStopGlobalVariable(width=0)
+                                # assign "no_searchsign_detection_count" to 0  because a search sign has been detected
+                                no_searchsign_detection_count = 0    
+                            else :
+                                no_searchsign_detection_count += 1   
+                                if (no_searchsign_detection_count >= 2):
                                     self.setWidthSearchGlobalVariable(width=0)  
          
                         #------------------------------------------------------------------------
@@ -239,6 +245,7 @@ class ObjectDetector(Thread):
                             width_small = []
                             width_medium  = []
                             width_big = []
+                            self.setWidthSearchGlobalVariable(width=0)  
                             # search for road sign in all the found boxes (in the corresponding model
                             for i in range(search_location_boxes.shape[1]):
                                 # detect a road sign if probability score of a box is better than a defined threshold
@@ -277,7 +284,7 @@ class ObjectDetector(Thread):
                                 self.setWidthSmallObjectGlobalVariable(width=w)       
                             if (detected_medium):
                                 print ("i have found a medium sized object !")
-                                w = min(detected_medium)
+                                w = min(width_medium)
                                 self.setWidthMediumObjectGlobalVariable(width=w)  
                             if (detected_big):
                                 print ("i have found a big sized object !")

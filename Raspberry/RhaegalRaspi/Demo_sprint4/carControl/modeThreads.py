@@ -56,7 +56,6 @@ class ModeAutoThread (ModeThread):
         ModeThread.__init__(self,bus,2)
         
     def run(self):
-        self.sendMesgToMot(CMD_V_SLOW,CMD_STOP)     
         currentModeL=self.intModeL
         #counter to stop the car in front of a stop sign (if detected)
         counterStopOn = False
@@ -77,6 +76,8 @@ class ModeAutoThread (ModeThread):
                 R.lockMode.acquire()
                 R.mode = "assist"
                 R.lockMode.release()
+            else:
+                self.sendMesgToMot(CMD_V_SLOW,CMD_STOP)   
                
             # Stop sign block
             if(counterStopOn):                 
@@ -115,7 +116,7 @@ class ModeAutoThread (ModeThread):
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = True
                     R.lockSearchModeActivated.release()
-                    time.sleep(30)
+                    time.sleep(10)
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = False
                     R.lockSearchModeActivated.release()
