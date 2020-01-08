@@ -75,6 +75,17 @@
         android:layout_marginEnd="0dp"
         android:textColor="@android:color/white"/>
 
+    <TextView
+        android:id="@+id/speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginRight="30dp"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/autonomous"
+        android:textSize="30sp"
+        android:textStyle="bold" />
 
     <io.github.controlwear.virtual.joystick.android.JoystickView xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:id="@+id/joystick"
@@ -83,9 +94,10 @@
         android:layout_marginBottom="50dp"
         android:layout_marginStart="0dp"
         android:layout_marginEnd="0dp"
-        app:layout_constraintBottom_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/battery"
         custom:JV_backgroundColor="@color/colorPrimaryDark"
         custom:JV_backgroundSizeRatio="70%"
         custom:JV_borderColor="@color/colorPrimary"
@@ -97,26 +109,14 @@
     <ImageView
         android:id="@+id/battery"
         android:layout_width="60dp"
-        android:layout_height="60dp"
-        app:srcCompat="@drawable/ic_batt_full"
-        android:layout_marginStart="30dp"
+        android:layout_height="46dp"
         android:layout_marginTop="20dp"
+        android:layout_marginLeft="30dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/connect"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="71dp" />
+        app:srcCompat="@drawable/ic_batt_full" />
 
-    <TextView
-        android:id="@+id/speed"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="30dp"
-        android:layout_marginTop="30dp"
-        android:textColor="@color/colorPrimary"
-        android:textSize="30sp"
-        android:textStyle="bold"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/connect"/>
+
 
 
 

@@ -282,18 +282,28 @@ public class ControlPanel extends AppCompatActivity {
                         turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
                         sendMessage(Constants.MODE,Constants.ASSISTED);
                     } else {
-                        auto.setText(R.string.autonomous);
-                        autonomous = true;
-                        started = false;
-                        turboed = false;
-                        driving = false;
-                        joystickValue = Constants.NOTHING;
-                        resetSymbols();
-                        //Log.i(TAG, "autonomous\n");
-                        start.setText(R.string.start);
-                        start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                        turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                        sendMessage(Constants.MODE,Constants.AUTONOMOUS);
+                        if(emergencyFront){
+                            dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
+                            runOnUiThread(new Runnable() {
+                                public void run() {
+                                    dialogEmergencyStop.show();
+                                }
+                            });
+                        }
+                        else {
+                            auto.setText(R.string.autonomous);
+                            autonomous = true;
+                            started = false;
+                            turboed = false;
+                            driving = false;
+                            joystickValue = Constants.NOTHING;
+                            resetSymbols();
+                            //Log.i(TAG, "autonomous\n");
+                            start.setText(R.string.start);
+                            start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                            turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                            sendMessage(Constants.MODE, Constants.AUTONOMOUS);
+                        }
                     }
                 }
             }
@@ -545,14 +555,20 @@ public class ControlPanel extends AppCompatActivity {
 
     private void objectFound(final String sizeValue){
         if (sizeValue.equals(Constants.BIG)){
-            Toast.makeText(ControlPanel.this,"Found a big object",Toast.LENGTH_SHORT).show();
+            runOnUiThread(new Runnable() {
+                              public void run() {
+            Toast.makeText(ControlPanel.this,"Found a big object",Toast.LENGTH_LONG).show();}});
         }
         else if (sizeValue.equals(Constants.MEDIUM)){
-            Toast.makeText(ControlPanel.this,"Found a medium object",Toast.LENGTH_SHORT).show();
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    Toast.makeText(ControlPanel.this,"Found a medium object",Toast.LENGTH_LONG).show();}});
 
         }
         else{
-            Toast.makeText(ControlPanel.this,"Found a small object",Toast.LENGTH_SHORT).show();
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    Toast.makeText(ControlPanel.this,"Found a small object",Toast.LENGTH_LONG).show();}});
 
         }
     }
@@ -665,6 +681,7 @@ public class ControlPanel extends AppCompatActivity {
                     start.setText(R.string.start);
                     turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
                     start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                    sendMessage(Constants.MODE,Constants.AUTONOMOUS);
 
                 } else if (modeValue.equals(Constants.ASSISTED)) {
                     if(autonomous) {
@@ -789,7 +806,7 @@ public class ControlPanel extends AppCompatActivity {
 
             }
         }
-        else if (areaValue.equals(Constants.BACK)){
+        else if (areaValue.equals(Constants.REAR)){
             if(!autonomous) {
                 if (stateValue.equals(Constants.ON)) {
                     emergencyBack = true;
@@ -803,7 +820,7 @@ public class ControlPanel extends AppCompatActivity {
     }
 
     private void getImage(final byte[] dataValue){
-        if (counterSearchImage < 30){
+        if (counterSearchImage < 100){
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
             try {
                 outputStream.write(searchImage);
@@ -815,16 +832,18 @@ public class ControlPanel extends AppCompatActivity {
             }
             counterSearchImage +=1;
             searchImage = outputStream.toByteArray( );
-            if(counterSearchImage == 30) {
+            if(counterSearchImage == 100) {
                 FileOutputStream myOutput = createDataFile();
                 Bitmap myBitmap = BitmapFactory.decodeByteArray(searchImage, 0, searchImage.length);
                 try {
                     myBitmap.compress(Bitmap.CompressFormat.JPEG, 85, myOutput);
                     myOutput.close();
+                    Toast.makeText(ControlPanel.this,"Image received",Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     Toast.makeText(ControlPanel.this, "Can't write in file", Toast.LENGTH_LONG).show();
                 }
                 searchImage = new byte[0];
+                counterSearchImage = 0;
             }
         }
 

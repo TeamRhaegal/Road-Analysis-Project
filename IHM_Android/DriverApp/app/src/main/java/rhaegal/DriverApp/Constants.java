@@ -38,6 +38,7 @@ public class Constants {
     public static final String LEFT="left";
     public static final String FRONT="front";
     public static final String BACK="back";
+    public static final String REAR="rear";
     public static final String CRITICAL="critic";
     public static final String ON="on";
     public static final String OFF="off";

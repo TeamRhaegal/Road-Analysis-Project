@@ -13,6 +13,8 @@ import android.widget.Spinner;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class LogDisplay extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
@@ -39,19 +41,18 @@ public class LogDisplay extends AppCompatActivity implements AdapterView.OnItemS
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
             list.add("You don't have access to the files");
         }
-        else{
+        else {
             File[] searchFiles = rootFile.listFiles();
             if (searchFiles.length > 0) {
                 for (File f : searchFiles) {
                     String fileName = f.getName();
                     list.add(fileName.substring(0, fileName.lastIndexOf(".")));
                 }
-            }
-            else{
+            } else {
                 list.add("You don't have any result saved");
             }
-
         }
+        Collections.sort(list);
         ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, list);
         dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
