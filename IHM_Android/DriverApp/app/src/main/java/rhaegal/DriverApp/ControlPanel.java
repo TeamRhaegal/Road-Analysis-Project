@@ -21,16 +21,16 @@ import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -68,6 +68,8 @@ public class ControlPanel extends AppCompatActivity {
     private boolean searchSignDetected = false;
     private String joystickValue = Constants.NOTHING;
     private double speedValue = 0.0;
+    private boolean isSearchModeOn;
+    private boolean isStopOn;
 
     //view variables
     private Button connect;
@@ -87,18 +89,28 @@ public class ControlPanel extends AppCompatActivity {
     private ImageView imageSignalRear;
     private ImageView imageAttentionRear;
     private TextView obstacleRear;
+    private TextView smallObject;
+    private TextView mediumObject;
+    private TextView largeObject;
+    private ImageView smallBox;
+    private ImageView mediumBox;
+    private ImageView largeBox;
 
-    //STOP sign
+    //behavioral variables
     private AlertDialog dialogEmergencyStop;
     private AlertDialog dialogSearchSign;
+    private AlertDialog dialogExit;
+    private AlertDialog dialogStopAction;
+    private AlertDialog dialogSearchMode;
     private Boolean emergencyFront = false;
     private Boolean emergencyBack = false;
     private boolean doRecvImgNotif = false;
     private boolean isSendingMesg  = false;
     private boolean doDisconnect = false;
     private CountDownTimer timerDisco;
-
-
+    private CountDownTimer timerSearchMode;
+    private CountDownTimer timerStopAction;
+    private boolean isKeyDownPressed = false;
 
     private byte[] searchImage = new byte[0];
     private int counterSearchImage;
@@ -147,7 +159,6 @@ public class ControlPanel extends AppCompatActivity {
                         dialog.cancel();
                     }
                 });
-
         dialogEmergencyStop = builderEmergency.create();
 
         AlertDialog.Builder builderSearch = new AlertDialog.Builder(ControlPanel.this);
@@ -166,11 +177,52 @@ public class ControlPanel extends AppCompatActivity {
                         dialog.cancel();
                     }
                 });
-
         dialogSearchSign = builderSearch.create();
 
-        setBt();
+        AlertDialog.Builder builderExit = new AlertDialog.Builder(ControlPanel.this);
+        builderExit.setMessage(R.string.exitMsg)
+                .setTitle(R.string.exitTitle)
+                .setCancelable(false)
+                .setPositiveButton(R.string.yesExit, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        isKeyDownPressed = true;
+                        resetSymbols();
+                        connect.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        connect.setText(R.string.disconnecting);
+                        btGatt.disconnect();
+                        dialog.cancel();
+                    }
+                })
+                .setNegativeButton(R.string.noExit, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        dialogExit = builderExit.create();
 
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.stop_action, null);
+        AlertDialog.Builder builderStopAction = new AlertDialog.Builder(ControlPanel.this);
+        builderStopAction.setView(dialogView)
+                .setCancelable(false);
+        dialogStopAction = builderStopAction.create();
+
+        inflater = this.getLayoutInflater();
+        dialogView = inflater.inflate(R.layout.search_mode_layout, null);
+        smallObject =  dialogView.findViewById(R.id.smallobject_text) ;
+        mediumObject =  dialogView.findViewById(R.id.mediumobject_text) ;
+        largeObject = dialogView.findViewById(R.id.largeobject_text) ;
+        smallBox = dialogView.findViewById(R.id.image_small_object) ;
+        mediumBox = dialogView.findViewById(R.id.image_medium_object) ;
+        largeBox = dialogView.findViewById(R.id.image_large_object) ;
+        AlertDialog.Builder builderSearchMode = new AlertDialog.Builder(ControlPanel.this);
+        builderSearchMode .setView(dialogView)
+                .setCancelable(false);
+        dialogSearchMode = builderSearchMode.create();
+
+        setBt();
         setConnectButton();
         setStartButton();
         setAutoButton();
@@ -185,6 +237,25 @@ public class ControlPanel extends AppCompatActivity {
                 if (btGatt!=null){
                     btGatt.disconnect();
                 }
+            }
+        };
+
+        timerSearchMode = new CountDownTimer(10000,1000) {
+            @Override
+            public void onTick(long l) {}
+            @Override
+            public void onFinish() {
+                isSearchModeOn=false;
+                dialogSearchMode.cancel();
+            }
+        };
+        timerStopAction = new CountDownTimer(4000,1000) {
+            @Override
+            public void onTick(long l) {}
+            @Override
+            public void onFinish() {
+                isStopOn = false;
+                dialogStopAction.cancel();
             }
         };
         
@@ -238,15 +309,16 @@ public class ControlPanel extends AppCompatActivity {
 
         connect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (connected) {
-                    doDisconnect = true;
-                    connect.setText(R.string.disconnecting);
-                    constructMessage(Constants.CONNECTION,Constants.OFF);
-                }
-                else {
-                    if (btGatt == null) {
-                        connect.setText(R.string.connecting);
-                        btGatt = btDevice.connectGatt(ControlPanel.this, false, gattCallback, TRANSPORT_LE);
+                if(!isKeyDownPressed) {
+                    if (connected) {
+                        doDisconnect = true;
+                        connect.setText(R.string.disconnecting);
+                        constructMessage(Constants.CONNECTION, Constants.OFF);
+                    } else {
+                        if (btGatt == null) {
+                            connect.setText(R.string.connecting);
+                            btGatt = btDevice.connectGatt(ControlPanel.this, false, gattCallback, TRANSPORT_LE);
+                        }
                     }
                 }
             }
@@ -362,7 +434,6 @@ public class ControlPanel extends AppCompatActivity {
                     }
                     if (strength < 50 & driving) {
                         driving = false;
-                        //Log.i(TAG, "stopped");
                     }
                     computeJoystickValue(angle);
                 }
@@ -395,27 +466,29 @@ public class ControlPanel extends AppCompatActivity {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                //Log.i(TAG, "Connected to GATT server\n");
                 connexionChange();
                 btGatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
                 btGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 connected = false;
                 connexionChange();
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                        start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                        connect.setText(R.string.connect);
-                    }
-                });
-                //Log.i(TAG, "Disconnected from GATT server\n");
+                if(!isKeyDownPressed) {
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                            start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                            connect.setText(R.string.connect);
+                        }
+                    });
+                }
                 if (btGatt != null) {
                     btGatt.close();
                     btGatt = null;
                 }
+                if(isKeyDownPressed){
+                    ControlPanel.this.finish();
+                }
             }
-
         }
 
         /**
@@ -453,10 +526,8 @@ public class ControlPanel extends AppCompatActivity {
                                 transmitterCharacteristic = gattCharacteristic;
                                 break;
 
-                            //Log.i(TAG, "found state\n");
                             case Constants.uuidReceiverCharacteristic:
                                 receiverCharacteristic = gattCharacteristic;
-                                //Log.i(TAG, "found feedback\n");
                                 break;
                             case Constants.uuidImgReceiverCharacteristic:
                                 receiverImgCharacteristic = gattCharacteristic;
@@ -511,8 +582,13 @@ public class ControlPanel extends AppCompatActivity {
                         break;
                 }
             } else if (characteristic == receiverImgCharacteristic) {
-                final byte[] data = characteristic.getValue();
-                getImage(data);
+                byte[] data = Base64.decode(characteristic.getStringValue(0),Base64.DEFAULT);
+                int [] realData = new int[data.length];
+                for (int i =0;i<data.length;i++){
+                    realData[i] = (data[i] << 1) >> 1;
+                }
+                int i=realData.length;
+                //getImage(realData);
             }
         }
 
@@ -557,30 +633,26 @@ public class ControlPanel extends AppCompatActivity {
     //Bluetooth functions
 
     private void objectFound(final String sizeValue){
-        switch(sizeValue) {
-            case Constants.BIG :
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            Toast.makeText(ControlPanel.this, "Found a big object", Toast.LENGTH_LONG).show();
-                        }
-                    })
-                ;
-                break;
-        case Constants.MEDIUM :
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast.makeText(ControlPanel.this, "Found a medium object", Toast.LENGTH_LONG).show();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                if(isSearchModeOn) {
+                    switch (sizeValue) {
+                        case Constants.BIG:
+                            largeBox.setImageResource(R.drawable.box_icon_big);
+                            largeObject.setText(R.string.searchModeLarge);
+                            break;
+                        case Constants.MEDIUM:
+                            mediumBox.setImageResource(R.drawable.box_icon_medium);
+                            mediumObject.setText(R.string.searchModeMedium);
+                            break;
+                        case Constants.SMALL:
+                            smallBox.setImageResource(R.drawable.box_icon_small);
+                            smallObject.setText(R.string.searchModeSmall);
+                            break;
                     }
-                });
-            break;
-        case Constants.SMALL :
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    Toast.makeText(ControlPanel.this, "Found a small object", Toast.LENGTH_LONG).show();
                 }
-            });
-        break;
-        }
+            }
+        });
     }
 
 
@@ -603,6 +675,8 @@ public class ControlPanel extends AppCompatActivity {
         doRecvImgNotif = false;
         clearMsgSent();
         doDisconnect = false;
+        isSearchModeOn = false;
+        isStopOn = false;
     }
 
     /**
@@ -685,7 +759,8 @@ public class ControlPanel extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             public void run() {
                 if (modeValue.equals(Constants.AUTONOMOUS) & !autonomous) {
-                    if(emergencyFront){
+                    if(emergencyFront&&!isSearchModeOn&&!isStopOn){
+                        dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
                         dialogEmergencyStop.show();
                     }
                     else {
@@ -718,6 +793,32 @@ public class ControlPanel extends AppCompatActivity {
                     //Log.i(TAG, "manual\n");
                     start.setText(R.string.start);
                     start.getBackground().setColorFilter(Color.parseColor(Constants.green), PorterDuff.Mode.MULTIPLY);
+                }else if (modeValue.equals(Constants.STOP)){
+                    if(!isStopOn){
+                        isStopOn = true;
+                        dialogStopAction.show();
+                        timerStopAction.start();
+                        if(!autonomous){
+                            changeMode(Constants.AUTONOMOUS);
+                        }
+                    }
+                }
+                else if (modeValue.equals(Constants.SEARCH)){
+                    if(!isSearchModeOn){
+                        isSearchModeOn = true;
+                        smallObject.setText("");
+                        smallBox.setImageResource(android.R.color.transparent);
+                        mediumObject.setText("");
+                        mediumBox.setImageResource(android.R.color.transparent);
+                        largeObject.setText("");
+                        largeBox.setImageResource(android.R.color.transparent);
+                        dialogSearchMode.show();
+                        timerSearchMode.start();
+                        if(!autonomous){
+                            changeMode(Constants.AUTONOMOUS);
+                        }
+
+                    }
                 }
             }
         });
@@ -816,7 +917,7 @@ public class ControlPanel extends AppCompatActivity {
                         obstacleFront.setText(R.string.obstacle);
                     }
                 });
-                if(autonomous) {
+                if(autonomous && !isSearchModeOn && !isStopOn) {
                     changeMode(Constants.ASSISTED);
                     dialogEmergencyStop.setMessage(getString(R.string.emergencyMsg));
                     runOnUiThread(new Runnable() {
@@ -873,7 +974,6 @@ public class ControlPanel extends AppCompatActivity {
     }
 
     private void getImage(final byte[] dataValue){
-        if (counterSearchImage < 309){
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
             try {
                 outputStream.write(searchImage);
@@ -885,7 +985,7 @@ public class ControlPanel extends AppCompatActivity {
             }
             counterSearchImage +=1;
             searchImage = outputStream.toByteArray( );
-            if(counterSearchImage == 309) {
+            if(counterSearchImage == 310) {
                 FileOutputStream myOutput = createDataFile();
                 Bitmap myBitmap = BitmapFactory.decodeByteArray(searchImage, 0, searchImage.length);
                 try {
@@ -898,7 +998,6 @@ public class ControlPanel extends AppCompatActivity {
                 searchImage = new byte[0];
                 counterSearchImage = 0;
             }
-        }
 
     }
 
@@ -1016,21 +1115,23 @@ public class ControlPanel extends AppCompatActivity {
         return msgTosend.size()!=0;
     }
 
-    /*public boolean onKeyDown(int keyCode, KeyEvent event) {
-        Intent returnScan = null;
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
         if(keyCode == KeyEvent.KEYCODE_BACK) {
                 if(btGatt!=null) {
-
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            dialogExit.show();
+                        }
+                    });
                 }
                 else{
-                    returnScan = new Intent(ControlPanel.this, scan.class);
-                    startActivity(returnScan);
+                    ControlPanel.this.finish();
                 }
 
             return true;
         }
         return super.onKeyDown(keyCode, event);
-    }*/
+    }
 
 
 }
