@@ -1,0 +1,26 @@
+<annotation>
+	<folder>augmented_data</folder>
+	<filename>15.jpg</filename>
+	<path>/home/anais/Documents/Road-Analysis-Project/machineLearning_model/training_search/images/train/augmented_data/15.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>300</width>
+		<height>300</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>big</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>94</xmin>
+			<ymin>166</ymin>
+			<xmax>169</xmax>
+			<ymax>215</ymax>
+		</bndbox>
+	</object>
+</annotation>
