@@ -14,12 +14,10 @@ class BLEServer(Application):
     def initService(self):
         self.add_service(RaspService(0))
         self.register()
-	print ("init Service OK")
 		
     def initAdvertisement(self):
         adv = RaspAdvertisement(0) #advertize
         adv.register()
-	print ("initAdvertissement OK ")
 
 class BLETransmitterThread(Thread):
 
@@ -29,7 +27,6 @@ class BLETransmitterThread(Thread):
         self.TXImgChara = self.retrieveTXCharacteristic(server,1)
         self.setDaemon(True)
         self.runEvent= runRaspiCodeEvent
-        print('Open transmitter thread')
 
     def retrieveTXCharacteristic(self, server,nbChara):               #get the transmitter characteristic
     	serverService=server.services[0]                            #only one service in the app 
@@ -49,11 +46,11 @@ class BLETransmitterThread(Thread):
     		    r.lockMessagesToSend.release()
                 
     		    if myMessagesToSend :
-        			for i in range(0,len(myMessagesToSend)):				
-        			    print ("To IHM : ", myMessagesToSend[0])
-                        for k in range(0,2):
-                            self.TXchara.send_tx(myMessagesToSend[0])
-                        myMessagesToSend.remove(0)
+                        for i in range(0,len(myMessagesToSend)):				
+                                print ("To IHM : ", myMessagesToSend[0])
+                                for k in range(0,3):
+                                        self.TXChara.send_tx(myMessagesToSend[0])
+                                myMessagesToSend.pop(0)
                         
                 r.lockImgPartToSend.acquire()
                 myImgParts = r.listImgPartToSend

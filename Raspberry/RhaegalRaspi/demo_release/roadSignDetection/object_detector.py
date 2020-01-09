@@ -143,7 +143,9 @@ class ObjectDetector(Thread):
         # no detection counter. Useful to detect if no road sign/object is present in the image, or if there is just a recognition error.
         no_stopsign_detection_count = 0
         no_searchsign_detection_count = 0
-        no_object_detection_count = 0
+        no_small_object_detection_count = 0
+        no_medium_object_detection_count = 0
+        no_big_object_detection_count = 0
         # variable used to check if connection is established between smartphone (HMI) and car
         self.check_connected = False
         """
@@ -168,6 +170,10 @@ class ObjectDetector(Thread):
                         #    Road sign detection if we are in "common" mode (auto, assist)
                         #------------------------------------------------------------------------
                         if (not self.check_searchmode):
+                            # put objects width to 0 
+                            self.setWidthSmallObjectGlobalVariable(width=0)
+                            self.setWidthMediumObjectGlobalVariable(width=0)
+                            self.setWidthBigObjectGlobalVariable(width=0)  
                             # process prediction from roadsign model and get scores + corresponding boxes (for each detected box in image)
                             roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectObjectsFromNumpyArray(roadsign_sess, input_image.copy())
                             """
@@ -216,6 +222,7 @@ class ObjectDetector(Thread):
                                 # if "no_stopsign_detection_count" after multiple try, then set widths to 0
                                 if (no_stopsign_detection_count >= 2):
                                     self.setWidthStopGlobalVariable(width=0)
+                                    
                             if (detected_search):
                                 print("I have found a SEARCH SIGN !")
                                 w = min(width_search)
@@ -224,13 +231,16 @@ class ObjectDetector(Thread):
                                 no_searchsign_detection_count = 0    
                             else :
                                 no_searchsign_detection_count += 1   
-                                if (no_searchsign_detection_count >= 2):
+                                if (no_searchsign_detection_count >= 4):
                                     self.setWidthSearchGlobalVariable(width=0)  
          
                         #------------------------------------------------------------------------
                         #    Object detection (small, medium, big) if we are in "search" mode"
                         #------------------------------------------------------------------------
                         elif (self.check_searchmode):
+                            # put sign widths to 0 
+                            self.setWidthStopGlobalVariable(width=0)
+                            self.setWidthSearchGlobalVariable(width=0)  
                             # process prediction from search mode model and get scores + corresponding boxes FOR SEARCH MODE MODEL
                             output_image = input_image.copy()
                             search_location_boxes, search_location_score, search_location_classes = self.search_model.detectObjectsFromNumpyArray(search_sess, output_image)
@@ -263,18 +273,19 @@ class ObjectDetector(Thread):
                                     y2 = int(search_location_boxes[0][i][2]*output_image.shape[0])
                                     # compute width of the road sign in pixels
                                     w = x2 - x1
-                                    # detected small object : add width to list of widths for this type of object
-                                    if (result == 1):
-                                        detected_small = True
-                                        width_small.append(w)
-                                    # detected medium object : add width to list of widths for this type of object
-                                    elif (result == 2):
-                                        detected_medium = True
-                                        width_medium.append(w)
-                                    # detected big object : add width to list of widths for this type of object
-                                    elif (result == 3):
-                                        detected_big = True
-                                        width_big.append(w)
+                                    if (w != 0):
+                                        # detected small object : add width to list of widths for this type of object
+                                        if (result == 1):
+                                            detected_small = True
+                                            width_small.append(w)
+                                        # detected medium object : add width to list of widths for this type of object
+                                        elif (result == 2):
+                                            detected_medium = True
+                                            width_medium.append(w)
+                                        # detected big object : add width to list of widths for this type of object
+                                        elif (result == 3):
+                                            detected_big = True
+                                            width_big.append(w)
                                         
                             # save image with rectangle boxes around detected objects (if objects are detected), as global variable
                             if (detected_small or detected_medium or detected_big):
@@ -283,23 +294,39 @@ class ObjectDetector(Thread):
                             if (detected_small):
                                 print ("i have found a small sized object !")
                                 w = min(width_small)
-                                self.setWidthSmallObjectGlobalVariable(width=w)       
+                                self.setWidthSmallObjectGlobalVariable(width=w)    
+                                no_small_object_detection_count = 0
+                            else : 
+                                # increase no small object detection counter
+                                no_small_object_detection_count += 1
+                                # if "no_small_object_detection_count" after multiple try, then set width to 0
+                                if (no_small_object_detection_count >= 3):
+                                    self.setWidthSmallObjectGlobalVariable(width=0)
+                                
                             if (detected_medium):
                                 print ("i have found a medium sized object !")
                                 w = min(width_medium)
                                 self.setWidthMediumObjectGlobalVariable(width=w)  
+                                no_medium_object_detection_count = 0
+                            else : 
+                                # increase no medium object detection counter
+                                no_medium_object_detection_count += 1
+                                # if "no_medium_object_detection_count" after multiple try, then set width to 0
+                                if (no_medium_object_detection_count >= 3):
+                                    self.setWidthMediumObjectGlobalVariable(width=0)
+                                    
                             if (detected_big):
                                 print ("i have found a big sized object !")
                                 w = min(width_big)
-                                self.setWidthBigObjectGlobalVariable(width=w)             
-                            if (not detected_small and not detected_medium and not detected_big):
-                                # increase no detection counter
-                                no_object_detection_count += 1
-                                # if "no_object_detection_count" after multiple try, then set widths to 0
-                                if (no_object_detection_count >= 5):
-                                    self.setWidthSmallObjectGlobalVariable(width=0)
-                                    self.setWidthMediumObjectGlobalVariable(width=0)
-                                    self.setWidthBigObjectGlobalVariable(width=0)     
+                                self.setWidthBigObjectGlobalVariable(width=w) 
+                                no_big_object_detection_count = 0            
+                            else:
+                                # increase no big object detection counter
+                                no_big_object_detection_count += 1
+                                # if "no_big_object_detection_count" after multiple try, then set width to 0
+                                if (no_big_object_detection_count >= 3):
+                                    self.setWidthBigObjectGlobalVariable(width=0)   
+
         pass
         
         
