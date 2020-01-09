@@ -45,7 +45,7 @@ PATH_TO_ROADSIGN_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Ra
 # List of the strings that is used to add correct label for each box : '.pbtxt' file
 PATH_TO_ROADSIGN_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_labelmap.pbtxt"
 # Number of classes to detect
-ROADSIGN_NUM_CLASSES = 3
+ROADSIGN_NUM_CLASSES = 2
 
 """
     Define different paths for objects (search mode) location model...
@@ -201,9 +201,6 @@ class ObjectDetector(Thread):
                                     elif (result == 2):
                                         detected_search = True
                                         width_search.append(w)
-                                    # detected prohibited way sign
-                                    elif(result == 3):
-                                        print("i have found a PROHIBITED SIGN")
     
                             # save sign width (minimum bounding box around the sign)
                             if (detected_stop):
