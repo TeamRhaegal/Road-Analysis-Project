@@ -49,8 +49,7 @@ class BLETransmitterThread(Thread):
                         r.lockImgPartToSend.release()
                         
                         if myImgParts :
-                                for i in range(0,len(myImgParts)):				
-                                    print ("To IHM : ", myImgParts[-1])
+                                for i in range(0,len(myImgParts)):	
                                     self.TXImgChara.send_tx(myImgParts.pop())               
     
     		time.sleep(0.2)

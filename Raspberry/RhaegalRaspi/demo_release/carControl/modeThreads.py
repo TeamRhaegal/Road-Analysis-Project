@@ -78,6 +78,7 @@ class ModeAutoThread (ModeThread):
                     counterStop+=0.1
                 else:
                     # reaction to the stop sign : the car stop during 4 seconds and go forward again
+                    R.constructMsgToIHM("mode","stop")
                     self.sendMesgToMot(CMD_STOP,CMD_STOP)   
                     time.sleep(4)
                     self.sendMesgToMot(CMD_V_FRONT,CMD_STOP) 
@@ -109,12 +110,11 @@ class ModeAutoThread (ModeThread):
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = True
                     R.lockSearchModeActivated.release()
-                    R.constructMsgToIHM("mode","search","on")
+                    R.constructMsgToIHM("mode","search")
                     time.sleep(10)
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = False
                     R.lockSearchModeActivated.release()
-                    R.constructMsgToIHM("mode","search","off")
                     self.sendMesgToMot(CMD_V_FRONT,CMD_STOP) 
                     counterSearch=0
                     finalValueSearchCounter=0
