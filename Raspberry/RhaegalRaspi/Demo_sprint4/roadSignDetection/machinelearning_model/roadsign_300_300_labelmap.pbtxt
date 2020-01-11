@@ -7,8 +7,3 @@ item {
   id: 2
   name: 'search'
 }
-
-item {
-  id: 3
-  name: 'prohibited'
-}
