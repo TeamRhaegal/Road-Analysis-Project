@@ -25,7 +25,7 @@ import cv2, imutils
 import numpy as np
 import tensorflow as tf
 # hardware and machine learning imports
-sys.path.append('/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/roadsign_python_source/')
+sys.path.append('/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_sprint4/roadSignDetection/roadsign_python_source/')
 from roadsign_python_source import location_machinelearning
 from roadsign_python_source import raspicam
     
@@ -39,11 +39,11 @@ SEARCH_DRAW = True
     Define different paths for Roadsigns location model...
 """
 # path to configuration model file : '.config' file
-PATH_TO_ROADSIGN_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_pipeline.config"
+PATH_TO_ROADSIGN_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_pipeline.config"
 # Path to frozen detection graph. This is the actual model that is used for the object detection : '.pb' file
-PATH_TO_ROADSIGN_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_frozen_inference_graph.pb"
+PATH_TO_ROADSIGN_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_frozen_inference_graph.pb"
 # List of the strings that is used to add correct label for each box : '.pbtxt' file
-PATH_TO_ROADSIGN_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_labelmap.pbtxt"
+PATH_TO_ROADSIGN_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_sprint4/roadSignDetection/machinelearning_model/roadsign_300_300_labelmap.pbtxt"
 # Number of classes to detect
 ROADSIGN_NUM_CLASSES = 2
 
@@ -51,11 +51,11 @@ ROADSIGN_NUM_CLASSES = 2
     Define different paths for objects (search mode) location model...
 """
 # path to configuration model file : '.config' file
-PATH_TO_SEARCH_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_pipeline.config"
+PATH_TO_SEARCH_MODEL = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_pipeline.config"
 # Path to frozen detection graph. This is the actual model that is used for the object detection : '.pb' file
-PATH_TO_SEARCH_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_frozen_inference_graph.pb"
+PATH_TO_SEARCH_CKPT = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_frozen_inference_graph.pb"
 # List of the strings that is used to add correct label for each box : '.pbtxt' file
-PATH_TO_SEARCH_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/Demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_labelmap.pbtxt"
+PATH_TO_SEARCH_LABELS = "/home/pi/Documents/projet_SIEC/Road-Analysis-Project/Raspberry/RhaegalRaspi/demo_sprint4/roadSignDetection/machinelearning_model/search_300_300_labelmap.pbtxt"
 # Number of classes to detect
 SEARCH_NUM_CLASSES = 3
 
