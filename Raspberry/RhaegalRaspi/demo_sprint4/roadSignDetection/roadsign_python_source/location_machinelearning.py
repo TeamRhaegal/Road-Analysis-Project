@@ -5,34 +5,37 @@
     LOCATION_MACHINELEARNING.PY
 
     the program is a library that allows you to make predictions from a given machine learning model, and to retrieve data such as areas of interest or classes. 
-    It is a problem of classification AND location of panels in an image.
+    It is a problem of classification AND location of objects in an image.
 
-    the code is then used with models of type R-NN, FR-CNN, or SSD ssd_mobinet 
+    the code is then used with models of type R-NN, FR-CNN, or SSD ssd_mobinet. 
+    SSD_mobilnets are used in this project because they are lighter than other models, while having decent precision.
     
-    WARNING ! IF YOU WANT TO USE THIS LIBRARY, YOU NEED TO AT LEAST MODIFY PATH TO TENSORFLOW OBJECT DETECTION FOLDER TO THE EFFECTIVE FOLDER IN 
+    WARNING ! IF YOU WANT TO USE THIS LIBRARY, YOU NEED TO AT LEAST MODIFY PATH TO TENSORFLOW OBJECT DETECTION FOLDER TO THE EFFECTIVE FOLDER ON 
     YOUR COMPUTER !
 """
+
+# import libraries
 import numpy as np
 import sys, time
 import tensorflow as tf
 import cv2
-
+# add path to Tensorflow's Object Detection folder in PATH (modify it depending on your folder location
 sys.path.insert(1, "/home/pi/Documents/Tensorflow/models/research/object_detection")
 
 from utils import label_map_util
 from utils import visualization_utils as vis_util
 
-# path to configuration model file
+# path to configuration model file : '.config' file
 DEFAULT_PATH_TO_MODEL = ""
-# Path to frozen detection graph. This is the actual model that is used for the object detection.
+# Path to frozen detection graph. This is the actual model that is used for the object detection : '.pb' file
 DEFAULT_PATH_TO_CKPT = ""
-# List of the strings that is used to add correct label for each box.
+# List of the strings that is used to add correct label for each box : '.pbtxt' file
 DEFAULT_PATH_TO_LABELS = ""
 # Number of classes to detect
 DEFAULT_NUM_CLASSES = 3
 
 """
-    Class used to predict location of road sign in an image and its class
+    Instance of this class allows to create and load a model from different configuration file paths
 """
 class LocationModel (object):
     
@@ -60,8 +63,8 @@ class LocationModel (object):
         with tf.Graph().as_default() as graph:
             tf.import_graph_def(self.od_graph_def, name='')
         self.detection_graph = graph     
-        # Loading label map
-        # Label maps map indices to category names, so that when our convolution network predicts `5`, we know that this corresponds to `airplane`.  Here we use internal utility functions, but anything that returns a dictionary mapping integers to appropriate string labels would be fine
+        # Loading label map / categories
+        # Label maps map indices to category names, so that for example when our model predicts `5`, we know that this corresponds to `airplane`.  Here we use internal utility functions, but anything that returns a dictionary mapping integers to appropriate string labels would be fine
         self.label_map = label_map_util.load_labelmap(label_path)
         self.categories = label_map_util.convert_label_map_to_categories(self.label_map, max_num_classes=num_classes, use_display_name=True)
         self.category_index = label_map_util.create_category_index(self.categories)
@@ -69,8 +72,7 @@ class LocationModel (object):
         return self.detection_graph
             
     """
-        next function : load image data to numpy array if it is a common image format  (Jpeg, png, bmp ...)
-        useful if an example image is used (and not camera. py file where you can store images as numpy arrays)
+        loadImageIntoNumpyArray : load image data to numpy array if it is a common image format  (Jpeg, png, bmp ...)
     """
     def loadImageIntoNumpyArray(image):
         (im_width, im_height) = image.size

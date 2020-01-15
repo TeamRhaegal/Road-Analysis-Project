@@ -6,6 +6,8 @@
         - capture image from raspicam
         - run SSD mobilenet machine learning model to find and classify road signs (stop, prohibited way and search signs)
         - run another SSD mobilenet model in search mode to find and classify different objects (small, medium, big
+        
+    Everything run as a thread from the "main.py" code so you have to run it this way
 """
 
 # import libraries 
@@ -76,8 +78,8 @@ search_object_types  =  [   ["small",                       ""],
                         ]
 
 """
-    Capture an image from the raspicam, then process it, find location of different shapes (road signs in "common mode", objects in "search mode") and classify them. 
-    Modify roadsign class and width global variables in order to be used by other threads
+    Next class allows to : capture an image from the raspicam, then process it, find location of different shapes (road signs in "common mode", objects in "search mode") and classify them. 
+    Modify roadsign classes and width global variables in order to be used by other threads
 """
 class ObjectDetector(Thread):
     
@@ -159,19 +161,18 @@ class ObjectDetector(Thread):
                         # capture and save image from raspicam
                         self.camera.captureImage()
                         input_image = self.camera.readImageAsNumpyArray(save=False)
-                        #input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR) 
                         # check if we are in search mode or not
                         self.check_searchmode = self.getSearchModeGlobalVariable()
                         #------------------------------------------------------------------------
                         #    Road sign detection if we are in "common" mode (auto, assist)
                         #------------------------------------------------------------------------
                         if (not self.check_searchmode):
-                            # process prediction from roadsign model and get scores + corresponding boxes FOR ROADSIGN DETECTION MODEL
+                            # process prediction from roadsign model and get scores + corresponding boxes (for each detected box in image)
                             roadsign_location_boxes, roadsign_location_score, roadsign_location_classes = self.roadsign_model.detectObjectsFromNumpyArray(roadsign_sess, input_image.copy())
                             """
                                 Next part of code :
                                     - save each box where the probability score is better than a defined threshold 
-                                If DEBUG is True, print, save and show image with all the boxes rendered. 
+                                If DEBUG global variables are True, then print, save and show image with all the boxes rendered. 
                             """
                             # assume we start with no detection
                             result = 0
@@ -206,7 +207,7 @@ class ObjectDetector(Thread):
                                 print("I have found a STOP SIGN !")
                                 w = min(width_stop)
                                 self.setWidthStopGlobalVariable(width=w)   
-                                # assign "no_stopsign_detection_count" to 0  because a stop sign has been detected
+                                # assign "no_stopsign_detection_count" to 0 because a stop sign has been detected
                                 no_stopsign_detection_count = 0    
                             else :
                                 # increase no detection counter
@@ -218,7 +219,7 @@ class ObjectDetector(Thread):
                                 print("I have found a SEARCH SIGN !")
                                 w = min(width_search)
                                 self.setWidthSearchGlobalVariable(width=w)  
-                                # assign "no_searchsign_detection_count" to 0  because a search sign has been detected
+                                # assign "no_searchsign_detection_count" to 0 because a search sign has been detected
                                 no_searchsign_detection_count = 0    
                             else :
                                 no_searchsign_detection_count += 1   
@@ -317,6 +318,7 @@ class ObjectDetector(Thread):
         pass
     
     # Next functions are useful to get or modify datas from shared (global) variables
+    # get "connectedDevice" global variable, used to check if the smartphone is connected to the car using Bluetooth
     def getConnectedGlobalVariable(self):
         sharedRessources.lockConnectedDevice.acquire()
         check_connected = sharedRessources.connectedDevice
@@ -324,6 +326,7 @@ class ObjectDetector(Thread):
         return check_connected
         pass
     
+    # get "SearchModeActivated" global variable, used to check if we need to switch to search mode or not
     def getSearchModeGlobalVariable(self):
         sharedRessources.lockSearchModeActivated.acquire()
         check_searchmode = sharedRessources.searchModeActivated
@@ -331,36 +334,42 @@ class ObjectDetector(Thread):
         return check_searchmode
         pass
 
+    # set "widthStop" global variable, if the width is different than 0, then a stop sign exists and is detected
     def setWidthStopGlobalVariable(self, width=0):
         sharedRessources.lockWidthStop.acquire()
         sharedRessources.widthStop = width
         sharedRessources.lockWidthStop.release()
         pass
     
+    # set "widthSearch" global variable, if the width is different than 0, then a search sign exists and is detected
     def setWidthSearchGlobalVariable(self, width=0):
         sharedRessources.lockWidthSearch.acquire()
         sharedRessources.widthSearch = width
         sharedRessources.lockWidthSearch.release()
         pass
     
+    # set "widthSmall" global variable, if the width is different than 0, then a small object (search mode) exists and is detected
     def setWidthSmallObjectGlobalVariable(self, width=0):
         sharedRessources.lockWidthSmall.acquire()
         sharedRessources.widthSmall = width
         sharedRessources.lockWidthSmall.release()
         pass
     
+    # set "widthMedium" global variable, if the width is different than 0, then a medium object (search mode) exists and is detected
     def setWidthMediumObjectGlobalVariable(self, width=0): 
         sharedRessources.lockWidthMedium.acquire()
         sharedRessources.widthMedium = width
         sharedRessources.lockWidthMedium.release()
         pass
     
+    # set "widthBig" global variable, if the width is different than 0, then a big object (search mode) exists and is detected
     def setWidthBigObjectGlobalVariable(self, width=0):
         sharedRessources.lockWidthBig.acquire()
         sharedRessources.widthBig = width
         sharedRessources.lockWidthBig.release()
         pass
     
+    # set "imageSearchObject" variable. It contains an image data that is sent to the HMI
     def setImageSearchObjectGlobalVariable(self, image=np.empty(0)):
         sharedRessources.lockImageSearchObject.acquire()
         sharedRessources.imageSearchObject = image
