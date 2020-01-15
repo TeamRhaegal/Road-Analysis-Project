@@ -20,16 +20,9 @@ CMD_O_LEFT = 0x80  # command to turn the wheel to left
 CMD_O_RIGHT = 100 + 0x80  # command to turn the wheel to right
 CMD_O_MIN = 50
 
-
 #for auto only
 REAL_SIGN_WIDTH = 0.20  #real size of the sign in cm
 FOCAL = 342   # computed focal of the raspicam
-
-#thread emergency+modeThread
-"""
-emergencyOn = False
-lockEmergencyOn = Lock()
-"""
 
 """
 The class mode is the mother class of Mode auto and Mode assist : 
@@ -46,7 +39,6 @@ class ModeThread(Thread):
         msg = can.Message(arbitration_id=MOT,data=[cmdV, cmdV, cmdO,0,0,0,0,0],extended_id=False)
         time.sleep(0.01)
         self.bus.send(msg)
-        
         
 """
     New Autonomous mode with search mode 

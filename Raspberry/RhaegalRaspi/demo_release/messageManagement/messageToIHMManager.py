@@ -9,7 +9,8 @@ import time
 import sharedRessources as R
 import numpy as np
 
-MAX_DISTANCE_US = 30  #maximum distance in cm when an obstacle is considered as a danger
+MAX_DISTANCE_FRONT = 35  #FRONT maximum distance in cm when an obstacle is considered as a danger
+MAX_DISTANCE_BACK = 45 #BACK maximum distance in cm when an obstacle is considered as a danger
 
 class BatteryLevelThread(Thread):
     def __init__(self, runEvent):
@@ -81,7 +82,7 @@ class EmergencyStopThread(Thread):
             distanceCenterRear = R.URC
             R.lockRearRadar.release()
             #emergency stop avant
-            if((distanceLeftFront<MAX_DISTANCE_US or distanceRightFront<MAX_DISTANCE_US or distanceCenterFront<MAX_DISTANCE_US)and not(oldEmergencyStateFront)):
+            if((distanceLeftFront<MAX_DISTANCE_FRONT or distanceRightFront<MAX_DISTANCE_FRONT or distanceCenterFront<MAX_DISTANCE_FRONT)and not(oldEmergencyStateFront)):
                 R.constructMsgToIHM("urgent","front","on")
                 R.lockEmergencyFrontOn.acquire()
                 R.emergencyFrontOn = True
@@ -89,7 +90,7 @@ class EmergencyStopThread(Thread):
                 oldEmergencyStateFront = True
                 counterEmergencyStopFront=0
             # emergency stop arrière
-            elif((distanceLeftRear<MAX_DISTANCE_US or distanceRightRear<MAX_DISTANCE_US or distanceCenterRear<MAX_DISTANCE_US)and not(oldEmergencyStateRear)):
+            elif((distanceLeftRear<MAX_DISTANCE_BACK or distanceRightRear<MAX_DISTANCE_BACK or distanceCenterRear<MAX_DISTANCE_BACK)and not(oldEmergencyStateRear)):
                 R.constructMsgToIHM("urgent","rear","on")
                 R.lockEmergencyRearOn.acquire()
                 R.emergencyRearOn = True
@@ -97,7 +98,7 @@ class EmergencyStopThread(Thread):
                 oldEmergencyStateRear = True
                 counterEmergencyStopRear=0
             #  Emergency stop avant 
-            elif(not(distanceLeftFront<MAX_DISTANCE_US or distanceRightFront<MAX_DISTANCE_US or distanceCenterFront<MAX_DISTANCE_US) and oldEmergencyStateFront):
+            elif(not(distanceLeftFront<MAX_DISTANCE_FRONT or distanceRightFront<MAX_DISTANCE_FRONT or distanceCenterFront<MAX_DISTANCE_FRONT) and oldEmergencyStateFront):
                 if(counterEmergencyStopFront<5):
                     counterEmergencyStopFront+=1
                 else :
@@ -108,7 +109,7 @@ class EmergencyStopThread(Thread):
                     oldEmergencyStateFront = False
                     counterEmergencyStopFront=0
             #emergency stop  arrière
-            elif(not(distanceLeftRear<MAX_DISTANCE_US or distanceRightRear<MAX_DISTANCE_US or distanceCenterRear<MAX_DISTANCE_US) and oldEmergencyStateRear):
+            elif(not(distanceLeftRear<MAX_DISTANCE_BACK or distanceRightRear<MAX_DISTANCE_BACK or distanceCenterRear<MAX_DISTANCE_BACK) and oldEmergencyStateRear):
                 if(counterEmergencyStopRear<5):
                     counterEmergencyStopRear+=1
                 else :

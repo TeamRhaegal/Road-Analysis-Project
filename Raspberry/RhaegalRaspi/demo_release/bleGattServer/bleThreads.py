@@ -20,9 +20,6 @@ class BLEServer(Application):
         adv = RaspAdvertisement(0) #advertize
         adv.register()
 	print ("initAdvertissement OK ")
-	
-		
-
 
 class BLETransmitterThread(Thread):
 
