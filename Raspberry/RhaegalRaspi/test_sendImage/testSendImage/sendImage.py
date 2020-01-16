@@ -23,14 +23,15 @@ class SendImageThread(Thread):
                 time.sleep(1)
                 shared_image = cv2.imread(IMAGE_PATH)
                 encodedImage = cv2.imencode('.jpg', shared_image)[1].tobytes()
-                reconstitueBytes = []
-                
-                
+                             
                 for i in range (0,309):
-                    #R.constructMsgToIHM("img",encodedImage[900*i:(900*i)+900])
-                    reconstitueBytes = reconstitueBytes + encodedImage[900*i:(900*i)+900]
-                #R.constructMsgToIHM("img",encodedImage[900*i:-1])
-                reconstitueBytes = reconstitueBytes + encodedImage[900*i:-1]
+                    R.lockImagePartsToSend.acquire()
+                    R.listImagePartsToSend.append(bytearray(encodedImage[900*i:(900*i)+900]))
+                    R.lockImagePartsToSend.release()
+                    time.sleep(0.3)
+                R.lockImagePartsToSend.acquire()
+                R.listImagePartsToSend.append(bytearray(encodedImage[900*i:-1]))
+                R.lockImagePartsToSend.release()
                 
                 flag = 1
             time.sleep(0.5)
