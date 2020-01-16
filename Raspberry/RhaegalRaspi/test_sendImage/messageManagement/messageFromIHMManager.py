@@ -38,10 +38,6 @@ class MessageFromIHMThread(Thread):
                         sr.lockJoystick.acquire()
                         sr.joystick = value #slice
                         sr.lockJoystick.release()
-                    elif key == 'turbo':
-                        sr.lockTurbo.acquire()
-                        sr.turbo = value #slice
-                        sr.lockTurbo.release()
                     elif key == 'state':
                         sr.lockState.acquire()
                         sr.state = value 
@@ -58,9 +54,6 @@ class MessageFromIHMThread(Thread):
                             sr.lockJoystick.acquire()
                             sr.joystick = "none" #slice
                             sr.lockJoystick.release()
-                            sr.lockTurbo.acquire()
-                            sr.turbo = "off" #slice
-                            sr.lockTurbo.release()
                         
                             
                         sr.lockConnectedDevice.release()

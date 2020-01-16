@@ -21,11 +21,9 @@ SOFTWARE.
 """
 
 import dbus
-import sys 
 
 from advertisement import Advertisement
-from service import Service, Characteristic, Descriptor
-from gi.repository import GObject
+from service import Service, Characteristic
 import sharedRessources as r
 
 
@@ -34,6 +32,7 @@ NOTIFY_TIMEOUT = 5000
 RASP_SERVICE_UUID =            '7fb9ad0f-3040-496f-af83-c7bc55c304db'
 RASP_RX_CHARACTERISTIC_UUID =  '7a9eb5fc-8b0f-4057-ba14-ebcc98bbeb11'
 RASP_TX_CHARACTERISTIC_UUID =  'f83c3290-43fa-469b-a819-73b8ffb6890e'
+RASP_TX_IMAGE_CHARACTERISTIC_UUID =  '389487b8-e0d8-425e-8940-6878ac2b0a77'
 LOCAL_NAME =                   'RaspberryPi3_Rhaegal'
 
 class RaspAdvertisement(Advertisement):
@@ -45,12 +44,13 @@ class RaspAdvertisement(Advertisement):
 class RaspService(Service):
     def __init__(self,index):
         Service.__init__(self, index, RASP_SERVICE_UUID, True)
-        self.add_characteristic(TxCharacteristic(self))
+        self.add_characteristic(TxCharacteristic(self,RASP_TX_CHARACTERISTIC_UUID))
+        self.add_characteristic(TxImageCharacteristic(self,RASP_TX_IMAGE_CHARACTERISTIC_UUID))
         self.add_characteristic(RxCharacteristic(self))
 
 class TxCharacteristic(Characteristic):
-    def __init__(self, service):
-        Characteristic.__init__(self, RASP_TX_CHARACTERISTIC_UUID,
+    def __init__(self, service, UUID):
+        Characteristic.__init__(self,  UUID,
                                 ['notify'], service)
         self.notifying = True
  
@@ -59,7 +59,7 @@ class TxCharacteristic(Characteristic):
             return
         value = []
         for c in s:
-            value.append(dbus.Byte(c))
+            value.append(dbus.Byte(c.encode()))
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
  
     def StartNotify(self):
@@ -71,6 +71,18 @@ class TxCharacteristic(Characteristic):
         if not self.notifying:
             return
         self.notifying = False
+
+class TxImageCharacteristic(TxCharacteristic):
+    def __init__(self, service,UUID):
+         TxCharacteristic.__init__(self,  service, UUID)
+         
+    def send_tx(self, s):
+        if not self.notifying:
+            return
+        value = []
+        for c in s:
+            value.append(dbus.Byte(c))
+        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         
 class RxCharacteristic(Characteristic):
     def __init__(self, service):

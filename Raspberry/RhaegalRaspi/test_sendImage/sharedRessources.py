@@ -3,7 +3,6 @@ import numpy as np
 
 #Global values
 wheelSpeed = 0  
-turbo ="off"
 joystick = "none"
 mode = "assist"
 state = "off"
@@ -36,6 +35,7 @@ widthBig = 0
 imageSearchObject = np.empty(0)
 
 listMessagesToSend = []
+listImgPartToSend = []
 listMessagesReceived = []
 connectedDevice= False
 
@@ -48,6 +48,7 @@ lockModeLaunched = Lock()
 lockSearchModeActivated = Lock()
 
 lockMessagesToSend = Lock()
+lockImgPartToSend = Lock ()
 lockMessagesReceived = Lock()
 lockConnectedDevice = Lock()
 
@@ -63,19 +64,8 @@ lockEmergencyRearOn = Lock()
 
 lockMode = Lock()
 lockJoystick = Lock()
-lockTurbo = Lock()
 lockSpeed = Lock()
 lockState = Lock()
-
-"""
-NEXT VARIABLES ARE NOW USELESS ! (replaced by the ones just before) 
-
-modeLock = Lock()
-joystickLock = Lock()
-turboLock = Lock()
-speedLock = Lock()
-stateLock = Lock()
-"""
 
 
 def constructMsgToIHM(key,*args):
