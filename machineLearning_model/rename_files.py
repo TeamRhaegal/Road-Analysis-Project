@@ -5,10 +5,10 @@ import sys, os
 import glob
 
 
-input_path = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/machineLearning_model/dummy/output/"
-output_path = "/home/vincent/Documents/INSA/5A/Projet_SIEC/Road-Analysis-Project/machineLearning_model/dummy/"
+input_path = "/home/vincent/Documents/Travail/dummywork/temp/"
+output_path = "/home/vincent/Documents/Travail/dummywork/stupid/"
 
-image_counter = 1
+image_counter = 794
 
 FOLDERNAME = input_path
 IMAGE_FOLDER = glob.glob(FOLDERNAME+"*.jpg")

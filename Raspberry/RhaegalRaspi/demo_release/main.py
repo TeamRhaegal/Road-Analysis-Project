@@ -7,6 +7,7 @@ from roadSignDetection.object_detector import ObjectDetector
 import messageManagement.messageFromIHMManager as msgManager
 from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread, SearchObjectNotificationThread
 import os, sys
+sys.dont_write_bytecode = True
 
 def main():   
     
