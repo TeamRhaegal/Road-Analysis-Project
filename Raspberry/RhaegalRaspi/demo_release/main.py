@@ -5,7 +5,7 @@ from bleGattServer.bleThreads import BLETransmitterThread, BLEServer
 import carControl.canControllerThreads as C
 from roadSignDetection.object_detector import ObjectDetector
 import messageManagement.messageFromIHMManager as msgManager
-from messageManagement.messageToIHMManager import BatteryLevelThread, SpeedThread, EmergencyStopThread, SignNotificationThread, SearchObjectNotificationThread
+from messageManagement.messageToIHMManager import SpeedThread, EmergencyStopThread, SignNotificationThread, SearchObjectNotificationThread
 import os, sys
 sys.dont_write_bytecode = True
 
@@ -26,33 +26,21 @@ def main():
     
     #message management part
     messageFromIHMThread = msgManager.MessageFromIHMThread(runRaspiCodeEvent)
-    batteryLevelThread = BatteryLevelThread(runRaspiCodeEvent)
     speedLevelThread = SpeedThread(runRaspiCodeEvent)
     emergencyStopThread = EmergencyStopThread(runRaspiCodeEvent)
     signNotificationThread = SignNotificationThread(runRaspiCodeEvent)
     searchObjectNotificationThread = SearchObjectNotificationThread(runRaspiCodeEvent)
     
     try:
-        canControllerThread.daemon = True
-        bleTransmitterThread.daemon = True
-        objectDetectorThread.daemon = True
-        messageFromIHMThread.daemon = True
-        batteryLevelThread.daemon = True
-        speedLevelThread.daemon = True
-        emergencyStopThread.daemon = True
-        signNotificationThread.daemon = True
-        searchObjectNotificationThread.daemon = True
-
         canControllerThread.start()
         bleTransmitterThread.start()
         objectDetectorThread.start()
         messageFromIHMThread.start()
-        batteryLevelThread.start()
         speedLevelThread.start()
         emergencyStopThread.start()
         signNotificationThread.start()
         searchObjectNotificationThread.start()
-        bleServer.run() ##################################################################################################### a la fin
+        bleServer.run() ########################################################### to be run after all threads have started
 
     except KeyboardInterrupt:
         print ('Attempting to close all threads')
@@ -61,7 +49,6 @@ def main():
         bleTransmitterThread.join()
         objectDetectorThread.join()
         messageFromIHMThread.join()
-        batteryLevelThread.join()
         speedLevelThread.join()
         emergencyStopThread.join()
         signNotificationThread.join()

@@ -147,9 +147,6 @@ class ModeAssistThread (ModeThread):
         currentModeL=self.intModeL
         cmdV = CMD_STOP
         cmdO = CMD_STOP
-        R.lockTurbo.acquire()
-        R.turbo ="off"
-        R.lockTurbo.release()
         R.lockJoystick.acquire()
         R.joystick = "none"
         R.lockJoystick.release()
@@ -190,15 +187,7 @@ class ModeAssistThread (ModeThread):
                     cmdV = CMD_V_MIN 
 
                 elif(currentJoystick=="front" and not(emergencyFront)):
-                    R.lockTurbo.acquire()                 
-                    currentTurbo = R.turbo        
-                    R.lockTurbo.release()
-
-                    if(currentTurbo=="on"):
-                        cmdV=CMD_V_TURBO
-                    else:
-                        cmdV= CMD_V_SLOW
-
+                    cmdV= CMD_V_SLOW
                     cmdO = CMD_O_MIN                    
                          
                 elif(currentJoystick=="front&right" and not(emergencyFront)):
