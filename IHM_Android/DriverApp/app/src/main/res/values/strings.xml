@@ -12,7 +12,7 @@
     <string name="autonomous">Autonomous</string>
     <string name="manual">Assisted</string>
     <string name="turbo">Turbo</string>
-    <string name="speed">0.0 km/h</string>
+    <string name="speed0">0.0 km/h</string>
     <string name="advStop">Warning ! Stop sign detected</string>
     <string name="advSearch">Warning ! Search sign detected</string>
     <string name="emergencyTitle">Emergency stop</string>
@@ -25,6 +25,8 @@
     <string name="yes">YES</string>
     <string name="no">NO</string>
     <string name="file_prompt">Choose a session date</string>
+    <string name="obstacle">obstacle</string>
+    <string name="ahead">ahead</string>
 
 
 

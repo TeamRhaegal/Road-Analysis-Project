@@ -36,7 +36,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -54,38 +56,50 @@ public class ControlPanel extends AppCompatActivity {
     private BluetoothDevice btDevice;
     private BluetoothGattCharacteristic transmitterCharacteristic = null;
     private BluetoothGattCharacteristic receiverCharacteristic = null;
+    private BluetoothGattCharacteristic receiverImgCharacteristic = null;
 
     //state variables
-    private boolean started;
-    private boolean connected;
-    private boolean turboed;
-    private boolean autonomous;
-    private boolean driving;
-    private String joystickValue;
+    private boolean started = false;
+    private boolean connected = false;
+    private boolean autonomous = false;
+    private boolean driving = false;
+    private boolean stopSignDetected = false;
+    private boolean searchSignDetected = false;
+    private String joystickValue = Constants.NOTHING;
+    private double speedValue = 0.0;
 
     //view variables
     private Button connect;
     private Button auto;
     private Button start;
-    private Button turbo;
     private JoystickView joystick;
-    private ImageView battery;
     private TextView speed;
-    private ImageView imageSign;
-    private TextView advSign;
     private Button logButton;
+    private ImageView imageStopSign;
+    private ImageView imageSearchSign;
+    private TextView stopSignAhead;
+    private TextView searchSignAhead;
+    private ImageView imageCar;
+    private ImageView imageSignalFront;
+    private ImageView imageAttentionFront;
+    private TextView obstacleFront;
+    private ImageView imageSignalRear;
+    private ImageView imageAttentionRear;
+    private TextView obstacleRear;
 
     //STOP sign
-    private Toast signToast;
     private AlertDialog dialogEmergencyStop;
     private AlertDialog dialogSearchSign;
     private Boolean emergencyFront = false;
     private Boolean emergencyBack = false;
+    private boolean doRecvImgNotif = false;
+    private boolean isSendingMesg  = false;
 
-    private CountDownTimer timerNotif;
-    private CountDownTimer timerDisconnect;
-    private byte[] searchImage;
+
+
+    private byte[] searchImage = new byte[0];
     private int counterSearchImage;
+    private List<String> msgTosend = new ArrayList<>();
 
     /**
      * Finds all the objects in the view, link them to lacal variables
@@ -104,24 +118,22 @@ public class ControlPanel extends AppCompatActivity {
         auto = findViewById(R.id.autonomous);
         connect = findViewById(R.id.connect);
         start = findViewById(R.id.move);
-        turbo = findViewById(R.id.turbo);
         joystick = findViewById(R.id.joystick);
-        battery = findViewById(R.id.battery);
         speed = findViewById(R.id.speed);
         logButton = findViewById(R.id.file);
+        imageSearchSign = findViewById(R.id.image_searchsign);
+        searchSignAhead = findViewById(R.id.searchsign_text);
+        imageStopSign = findViewById(R.id.image_stopsign);
+        stopSignAhead = findViewById(R.id.stopsign_text);
+        imageCar = findViewById(R.id.image_car);
+        imageSignalFront = findViewById(R.id.image_signal_front);
+        imageAttentionFront = findViewById(R.id.image_attention_front);
+        obstacleFront = findViewById(R.id.attention_front_text);
+        imageSignalRear = findViewById(R.id.image_signal_rear);
+        imageAttentionRear = findViewById(R.id.image_attention_rear);
+        obstacleRear = findViewById(R.id.attention_rear_text);
         counterSearchImage = 0;
 
-        LayoutInflater inflater = getLayoutInflater();
-        View layoutSign = inflater.inflate(R.layout.sign_toast,
-                (ViewGroup) findViewById(R.id.custom_toast_container));
-
-        imageSign = layoutSign.findViewById(R.id.imageSign);
-        advSign = layoutSign.findViewById(R.id.textSign);
-
-        signToast = new Toast(getApplicationContext());
-        signToast.setGravity(Gravity.TOP, 0, 0);
-        signToast.setDuration(Toast.LENGTH_LONG);
-        signToast.setView(layoutSign);
 
         AlertDialog.Builder builderEmergency = new AlertDialog.Builder(ControlPanel.this);
         builderEmergency.setTitle(R.string.emergencyTitle)
@@ -139,7 +151,7 @@ public class ControlPanel extends AppCompatActivity {
         builderSearch.setMessage(R.string.searchMsg)
                 .setTitle(R.string.searchTitle)
                 .setCancelable(false)
-                .setIcon(R.drawable.search_sign)
+                .setIcon(R.drawable.stop_sign)
                 .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         changeMode(Constants.AUTONOMOUS);
@@ -154,51 +166,14 @@ public class ControlPanel extends AppCompatActivity {
 
         dialogSearchSign = builderSearch.create();
 
-
-
         setBt();
 
         setConnectButton();
         setStartButton();
         setAutoButton();
-        setTurboButton();
         setJoystick();
         setLogButton();
-
-        speed.setText(R.string.speed);
-
-        started = false;
-        connected = false;
-        autonomous = false;
-        turboed = false;
-        driving = false;
-        joystickValue = Constants.NOTHING;
-
-        timerNotif = new CountDownTimer(1000, 100) {
-
-            public void onTick(long millisUntilFinished) {
-                //Nothing
-            }
-
-            public void onFinish() {
-                enableNotification(btGatt);
-            }
-
-        };
-        timerDisconnect = new CountDownTimer(1000, 100) {
-
-            public void onTick(long millisUntilFinished) {
-                //Nothing
-            }
-
-            public void onFinish() {
-                if (btGatt != null) {
-                    btGatt.disconnect();
-                }
-            }
-
-        };
-
+        
     }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -242,15 +217,14 @@ public class ControlPanel extends AppCompatActivity {
         connect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (connected) {
-                    sendMessage(Constants.CONNECTION,Constants.OFF);
-                    timerDisconnect.start();
-                    //Log.i(TAG, "disconnect\n");
-                } else {
+                    connected =false;
+                    constructMessage(Constants.CONNECTION,Constants.OFF);
+                }
+                else {
                     if (btGatt == null) {
                         connect.setText(R.string.connecting);
                         btGatt = btDevice.connectGatt(ControlPanel.this, false, gattCallback, TRANSPORT_LE);
                     }
-                    //Log.i(TAG, "connect\n");
                 }
             }
         });
@@ -273,14 +247,12 @@ public class ControlPanel extends AppCompatActivity {
                         auto.setText(R.string.manual);
                         autonomous = false;
                         started = false;
-                        turboed = false;
                         driving = false;
-                        resetSymbols();
+                        joystickValue = Constants.NOTHING;
                         //Log.i(TAG, "manual\n");
                         start.setText(R.string.start);
-                        start.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                        turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                        sendMessage(Constants.MODE,Constants.ASSISTED);
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.green), PorterDuff.Mode.MULTIPLY);
+                        constructMessage(Constants.MODE,Constants.ASSISTED);
                     } else {
                         if(emergencyFront){
                             dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
@@ -294,15 +266,13 @@ public class ControlPanel extends AppCompatActivity {
                             auto.setText(R.string.autonomous);
                             autonomous = true;
                             started = false;
-                            turboed = false;
                             driving = false;
                             joystickValue = Constants.NOTHING;
-                            resetSymbols();
+                            resetJoystick();
                             //Log.i(TAG, "autonomous\n");
                             start.setText(R.string.start);
                             start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                            turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                            sendMessage(Constants.MODE, Constants.AUTONOMOUS);
+                            constructMessage(Constants.MODE, Constants.AUTONOMOUS);
                         }
                     }
                 }
@@ -323,66 +293,33 @@ public class ControlPanel extends AppCompatActivity {
         //start button
         start.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (connected) {
-                    if (!autonomous){
-                        if (started) {
-                            start.setText(R.string.start);
-                            started = false;
-                            turboed = false;
-                            driving = false;
-                            joystickValue = Constants.NOTHING;
-                            resetSymbols();
-                            //Log.i(TAG, "stop\n");
-                            turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                            sendMessage(Constants.STATE,Constants.OFF);
-                        } else {
-                            start.setText(R.string.stop);
-                            turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                            started = true;
-                            resetSymbols();
-                            //Log.i(TAG, "start\n");
-                            joystick.setEnabled(true);
-                            joystick.invalidate();
-                            sendMessage(Constants.STATE,Constants.ON);
-                        }
+                if (connected && !autonomous) {
+                    if (started) {
+                        start.setText(R.string.start);
+                        started = false;
+                        driving = false;
+                        joystickValue = Constants.NOTHING;
+                        resetJoystick();
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.green), PorterDuff.Mode.MULTIPLY);
+                        //Log.i(TAG, "stop\n");
+                        constructMessage(Constants.STATE,Constants.OFF);
+                    } else {
+                        start.setText(R.string.stop);
+                        started = true;
+                        //Log.i(TAG, "start\n");
+                        joystick.setEnabled(true);
+                        joystick.invalidate();
+                        joystick.setBorderColor(Color.parseColor(Constants.blue));
+                        joystick.setBackgroundColor(Color.parseColor(Constants.night));
+                        joystick.setButtonColor(Color.parseColor(Constants.ice));
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.red), PorterDuff.Mode.MULTIPLY);
+                        constructMessage(Constants.STATE,Constants.ON);
                     }
                 }
             }
         });
     }
 
-    /**
-     * Initializes the Turbo button
-     * adds an on click listener for the button
-     * sets the actions executed by the button:
-     * change state variables
-     * change button text and color depending on the state
-     */
-    private void setTurboButton() {
-        //turbo button
-        turbo.setText(R.string.turbo);
-        turbo.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if (connected) {
-                    if (!autonomous){
-                        if (started) {
-                            if (turboed) {
-                                turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                                turboed = false;
-                                //Log.i(TAG, "turbo off\n");
-                                sendMessage(Constants.TURBO,Constants.OFF);
-                            } else {
-                                turbo.getBackground().setColorFilter(Color.parseColor(Constants.purple), PorterDuff.Mode.MULTIPLY);
-                                turboed = true;
-                                //Log.i(TAG, "turbo on\n");
-                                sendMessage(Constants.TURBO,Constants.ON);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
 
     /**
      * Initializes the Joystick button
@@ -394,23 +331,20 @@ public class ControlPanel extends AppCompatActivity {
      */
     private void setJoystick() {
         joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
-
             @Override
             public void onMove(int angle, int strength) {
-                if (connected) {
-                    if (started) {
-                        if (strength > 50) {
-                            driving = true;
-                        }
-                        if (strength < 50 & driving) {
-                            driving = false;
-                            //Log.i(TAG, "stopped");
-                        }
-                        computeJoystickValue(angle);
+                if (started) {
+                    if (strength > 50) {
+                        driving = true;
                     }
+                    if (strength < 50 & driving) {
+                        driving = false;
+                        //Log.i(TAG, "stopped");
+                    }
+                    computeJoystickValue(angle);
                 }
             }
-        }, 50);
+        }, 100);
     }
 
     private void setLogButton() {
@@ -431,21 +365,18 @@ public class ControlPanel extends AppCompatActivity {
         /**
          * Callback indicating when GATT client has connected/disconnected to/from a remote GATT server.
          *
-         * @param  gatt   GATT client
-         * @param  status Status of the connect or disconnect operation. GATT_SUCCESS if the operation succeeds
-         * @param  newState Returns the new connection state. Can be one of STATE_DISCONNECTED or STATE_CONNECTED
+         * @param gatt     GATT client
+         * @param status   Status of the connect or disconnect operation. GATT_SUCCESS if the operation succeeds
+         * @param newState Returns the new connection state. Can be one of STATE_DISCONNECTED or STATE_CONNECTED
          */
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                resetSymbols();
-                connected = true;
-                connexionChange();
                 //Log.i(TAG, "Connected to GATT server\n");
+                connexionChange();
                 btGatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
                 btGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                resetSymbols();
                 connected = false;
                 connexionChange();
                 //Log.i(TAG, "Disconnected from GATT server\n");
@@ -463,8 +394,8 @@ public class ControlPanel extends AppCompatActivity {
          * searches for the awaited service and characteristics
          * initializes the bluetooth variables associates to service and characteristics
          *
-         * @param  gatt   GATT client
-         * @param  status Status of the connect or disconnect operation. GATT_SUCCESS if the operation succeeds
+         * @param gatt   GATT client
+         * @param status Status of the connect or disconnect operation. GATT_SUCCESS if the operation succeeds
          */
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
@@ -487,65 +418,109 @@ public class ControlPanel extends AppCompatActivity {
                     for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                         uuid = gattCharacteristic.getUuid().toString();
                         //Log.i(TAG, uuid + "\n");
-                        if (uuid.equals(Constants.uuidTransmitterCharacteristic)) {
-                            transmitterCharacteristic = gattCharacteristic;
-                            sendMessage(Constants.CONNECTION,Constants.ON);
+                        switch (uuid) {
+                            case Constants.uuidTransmitterCharacteristic:
+                                transmitterCharacteristic = gattCharacteristic;
+                                break;
 
                             //Log.i(TAG, "found state\n");
-                        } else if (uuid.equals(Constants.uuidReceiverCharacteristic)) {
-                            receiverCharacteristic = gattCharacteristic;
-                            //Log.i(TAG, "found feedback\n");
-                            timerNotif.start();
+                            case Constants.uuidReceiverCharacteristic:
+                                receiverCharacteristic = gattCharacteristic;
+                                //Log.i(TAG, "found feedback\n");
+                                break;
+                            case Constants.uuidImgReceiverCharacteristic:
+                                receiverImgCharacteristic = gattCharacteristic;
+                                break;
                         }
                     }
+                    enableNotification(receiverCharacteristic);
                 }
             }
+
         }
 
         /**
          * Callback triggered as a result of a remote characteristic notification.
          * calls functions associated with dashboard element that need to be updated
          *
-         * @param  gatt   GATT client the characteristic is associated with
-         * @param  characteristic Characteristic that has been updated as a result of a remote notification event.
+         * @param gatt           GATT client the characteristic is associated with
+         * @param characteristic Characteristic that has been updated as a result of a remote notification event.
          */
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             //Log.i(TAG, "notification!");
-            final String data = characteristic.getStringValue(0);
-            //Log.i(TAG, "data: " + data + "\n");
+            if (characteristic == receiverCharacteristic) {
+                final String data = characteristic.getStringValue(0);
+                //Log.i(TAG, "data: " + data + "\n");
 
-            StringTokenizer tokens = new StringTokenizer(data, "$");
-            String key = tokens.nextToken();
-            String value1 = tokens.nextToken();
-            String value2 = "";
-            try{
-                value2 = tokens.nextToken();}
-            catch(Exception e){
+                StringTokenizer tokens = new StringTokenizer(data, "$");
+                String key = tokens.nextToken();
+                String value1 = tokens.nextToken();
+                String value2 = "";
+                try {
+                    value2 = tokens.nextToken();
+                } catch (Exception e) {
 
+                }
+
+                switch (key) {
+                    case Constants.MODE:
+                        changeMode(value1);
+                        break;
+                    case Constants.SPEED:
+                        changeSpeed(value1);
+                        break;
+                    case Constants.SIGN:
+                        advertizeSign(value1, value2);
+                        break;
+                    case Constants.EMERGENCYSTOP:
+                        advertizeEmergency(value1, value2);
+                        break;
+                    case Constants.OBJECT:
+                        objectFound(value1);
+                        break;
+                }
+            } else if (characteristic == receiverImgCharacteristic) {
+                final byte[] data = characteristic.getValue();
+                getImage(data);
             }
+        }
 
-            switch (key) {
-                case Constants.MODE :
-                    changeMode(value1);
-                    break;
-                case Constants.BATTERY :
-                    changeBatt(value1);
-                    break;
-                case Constants.SPEED:
-                    changeSpeed(value1);
-                    break;
-                case Constants.SIGN:
-                    advertizeSign(value1);
-                    break;
-                case Constants.EMERGENCYSTOP:
-                    advertizeEmergency(value1,value2);
-                    break;
-                case Constants.IMAGE:
-                    getImage(value1.getBytes());
-                case Constants.OBJECT:
-                    objectFound(value1);
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt,
+                                      BluetoothGattDescriptor descriptor,
+                                      int status) {
+            if (doRecvImgNotif) {
+                enableNotification(receiverImgCharacteristic);
 
+            } else {
+                connected = true;
+                constructMessage(Constants.CONNECTION, Constants.ON);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        auto.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.green), PorterDuff.Mode.MULTIPLY);
+                        connect.setText(R.string.disconnect);
+                    }
+                });
+            }
+            doRecvImgNotif = false;
+        }
+
+        @Override
+        public void onCharacteristicWrite (BluetoothGatt gatt,
+                                           BluetoothGattCharacteristic characteristic,
+                                           int status){
+            removeMsgSent();
+            if(ckeckRecvMsgList()){
+                sendMessage(msgTosend.get(0));
+            }else{
+                isSendingMesg = false;
+                if(!connected){
+                    if (btGatt != null) {
+                        btGatt.disconnect();
+                    }
+                }
             }
         }
     };
@@ -554,22 +529,29 @@ public class ControlPanel extends AppCompatActivity {
     //Bluetooth functions
 
     private void objectFound(final String sizeValue){
-        if (sizeValue.equals(Constants.BIG)){
-            runOnUiThread(new Runnable() {
-                              public void run() {
-            Toast.makeText(ControlPanel.this,"Found a big object",Toast.LENGTH_LONG).show();}});
-        }
-        else if (sizeValue.equals(Constants.MEDIUM)){
+        switch(sizeValue) {
+            case Constants.BIG :
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast.makeText(ControlPanel.this, "Found a big object", Toast.LENGTH_LONG).show();
+                        }
+                    })
+                ;
+                break;
+        case Constants.MEDIUM :
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(ControlPanel.this, "Found a medium object", Toast.LENGTH_LONG).show();
+                    }
+                });
+            break;
+        case Constants.SMALL :
             runOnUiThread(new Runnable() {
                 public void run() {
-                    Toast.makeText(ControlPanel.this,"Found a medium object",Toast.LENGTH_LONG).show();}});
-
-        }
-        else{
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    Toast.makeText(ControlPanel.this,"Found a small object",Toast.LENGTH_LONG).show();}});
-
+                    Toast.makeText(ControlPanel.this, "Found a small object", Toast.LENGTH_LONG).show();
+                }
+            });
+        break;
         }
     }
 
@@ -578,70 +560,62 @@ public class ControlPanel extends AppCompatActivity {
      * Function changing the UI and changing state variables according to the connection state
      */
     private void connexionChange() {
-        if (connected) {
-            started = false;
-            turboed = false;
-            autonomous = false;
-            driving = false;
-            joystickValue = Constants.NOTHING;
-            runOnUiThread(new Runnable() {
-                public void run() {
+        resetSymbols();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                if(connected) {
                     auto.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                    start.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                    turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                    start.setText(R.string.start);
-                    auto.setText(R.string.manual);
+                    start.getBackground().setColorFilter(Color.parseColor(Constants.green), PorterDuff.Mode.MULTIPLY);
                     connect.setText(R.string.disconnect);
                 }
-            });
-        } else {
-            started = false;
-            turboed = false;
-            autonomous = false;
-            driving = false;
-            emergencyBack = false;
-            emergencyFront = false;
-            joystickValue = Constants.NOTHING;
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                    start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                    turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                    start.setText(R.string.start);
-                    auto.setText(R.string.manual);
-                    connect.setText(R.string.connect);
-                    String conSpeedString = 0.0 + " km/h";
-                    speed.setText(conSpeedString);
-                    battery.setImageResource(R.drawable.ic_batt_full);
+                else{
+                    if(btGatt!=null) {
+                        auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        connect.setText(R.string.connect);
+                    }
                 }
-            });
-            transmitterCharacteristic = null;
-            receiverCharacteristic = null;
-        }
+            }
+        });
+        started = false;
+        autonomous = false;
+        driving = false;
+        joystickValue = Constants.NOTHING;
+        emergencyBack = false;
+        emergencyFront = false;
+        transmitterCharacteristic = null;
+        receiverCharacteristic = null;
+        receiverImgCharacteristic = null;
+        isSendingMesg = false;
+        speedValue = 0.0;
+        doRecvImgNotif = false;
+        clearMsgSent();
     }
 
     /**
      * Function enabling Notification for a characteristic and creating the associated descriptor.
      *
-     * @param gatt GATT client the characteristic is associated with
+     * @param characteristic characteristic to be enabled
      */
-    private void enableNotification(BluetoothGatt gatt) {
-        if (receiverCharacteristic != null) {
-            boolean result;
-            BluetoothGattCharacteristic characteristic = receiverCharacteristic;
-            gatt.setCharacteristicNotification(characteristic, true);
-            UUID uuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(uuid);
 
-            if(descriptor!=null) {
-                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                if (!gatt.writeDescriptor(descriptor)) {
-                    Toast.makeText(ControlPanel.this, "succeed write descriptor", Toast.LENGTH_LONG).show();
-                }
+    private void enableNotification(BluetoothGattCharacteristic characteristic) {
+        UUID uuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+        doRecvImgNotif = true;
+        btGatt.setCharacteristicNotification(characteristic, true);
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(uuid);
+
+        if(descriptor!=null) {
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            if (!btGatt.writeDescriptor(descriptor)) {
+                Toast.makeText(ControlPanel.this, "can't write descriptor", Toast.LENGTH_LONG).show();
             }
         }
-
     }
+
+
+
+
+
 
     ////////////////////////////////////////////////////////////////////////////////
     //Symbol functions
@@ -650,16 +624,44 @@ public class ControlPanel extends AppCompatActivity {
      * Function resetting all symbols to their rest appearance
      */
     public void resetSymbols() {
+        resetJoystick();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                imageCar.setImageResource(R.drawable.car_icon_ice);
+                imageAttentionFront.setImageResource(android.R.color.transparent);
+                imageAttentionRear.setImageResource(android.R.color.transparent);
+                imageSignalFront.setImageResource(android.R.color.transparent);
+                imageSignalRear.setImageResource(android.R.color.transparent);
+                imageSearchSign.setImageResource(R.drawable.search_sign_ice);
+                imageStopSign.setImageResource(R.drawable.stop_sign_ice);
+                obstacleFront.setText("");
+                obstacleRear.setText("");
+                stopSignAhead.setText("");
+                searchSignAhead.setText("");
+                speed.setText(R.string.speed0);
+                start.setText(R.string.start);
+                auto.setText(R.string.manual);
+
+            }
+        });
+    }
+
+    /**
+     * Function resetting joystick when it is disabled
+     */
+    public void resetJoystick() {
         runOnUiThread(new Runnable() {
             public void run() {
                 joystick.setEnabled(false);
                 joystick.resetButtonPosition();
                 joystick.invalidate();
-                joystickValue = Constants.NOTHING;
-
+                joystick.setBorderColor(Color.parseColor(Constants.ice));
+                joystick.setBackgroundColor(Color.parseColor(Constants.ice));
+                joystick.setButtonColor(Color.parseColor(Constants.blueLight));
             }
         });
     }
+
 
     /**
      * Function updating mode
@@ -673,15 +675,13 @@ public class ControlPanel extends AppCompatActivity {
                     auto.setText(R.string.autonomous);
                     autonomous = true;
                     started = false;
-                    turboed = false;
                     driving = false;
                     joystickValue = Constants.NOTHING;
-                    resetSymbols();
+                    resetJoystick();
                     //Log.i(TAG, "autonomous\n");
                     start.setText(R.string.start);
-                    turbo.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
                     start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                    sendMessage(Constants.MODE,Constants.AUTONOMOUS);
+                    constructMessage(Constants.MODE,Constants.AUTONOMOUS);
 
                 } else if (modeValue.equals(Constants.ASSISTED)) {
                     if(autonomous) {
@@ -690,23 +690,17 @@ public class ControlPanel extends AppCompatActivity {
                     }
                     else{
                         if (started){
-                            if(turboed){
-                                sendMessage(Constants.TURBO,Constants.OFF);
-                            }
-                            sendMessage(Constants.JOYSTIC,Constants.NOTHING);
+                            resetJoystick();
+                            constructMessage(Constants.JOYSTIC,Constants.NOTHING);
                         }
                     }
                     started = false;
-                    turboed = false;
                     driving = false;
                     joystickValue = Constants.NOTHING;
-                    resetSymbols();
                     //Log.i(TAG, "manual\n");
                     start.setText(R.string.start);
-                    turbo.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                    start.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
+                    start.getBackground().setColorFilter(Color.parseColor(Constants.green), PorterDuff.Mode.MULTIPLY);
                 }
-
             }
         });
     }
@@ -715,81 +709,95 @@ public class ControlPanel extends AppCompatActivity {
     /**
      * Function updating speed indicator in hm/h according to vehicle speed
      *
-     * @param speedValue vehicle speed in m/s
+     * @param speedValueStr vehicle speed in m/s
      */
-    private void changeSpeed(String speedValue) {
-        double speedValueDb = Double.valueOf(speedValue);
-        if(speedValueDb!=0){
-            java.text.DecimalFormat df = new java.text.DecimalFormat("##.##");
-            double convSpeedValue = speedValueDb *(3.6);
-            final String conSpeedString = df.format(convSpeedValue) + " km/h";
+    private void changeSpeed(String speedValueStr) {
+        double speedValueDb = Double.valueOf(speedValueStr);
+        if (speedValueDb!=speedValue) {
+            speedValue = speedValueDb;
+            if (speedValueDb != 0) {
+                java.text.DecimalFormat df = new java.text.DecimalFormat("##.##");
+                double convSpeedValue = speedValueDb * (3.6);
+                final String conSpeedString = df.format(convSpeedValue) + " km/h";
 
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    speed.setText(conSpeedString);
-                }
-            });
-        }
-        else{
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    speed.setText(R.string.speed);
-                }
-            });
-        }
-    }
-
-
-    /**
-     * Function updating battery indicators according to battery level
-     *
-     * @param batteryValue battery level
-     */
-    private void changeBatt(final String batteryValue) {
-        runOnUiThread(new Runnable() {
-            public void run() {
-                switch (batteryValue) {
-                    case Constants.MIDDLE:
-                        battery.setImageResource(R.drawable.ic_batt_mid);
-                        break;
-                    case Constants.LOW:
-                        battery.setImageResource(R.drawable.ic_batt_low);
-                        break;
-                    case Constants.CRITICAL:
-                        battery.setImageResource(R.drawable.ic_batt_critical);
-                        break;
-                }
-            }
-        });
-    }
-
-
-    private void advertizeSign(final String signValue){
-        if (signValue.equals(Constants.STOP)){
-            advSign.setText(R.string.advStop);
-            imageSign.setImageResource(R.drawable.stop_sign);
-            signToast.show();
-        }
-        if (signValue.equals(Constants.SEARCH)){
-            if(autonomous) {
-                advSign.setText(R.string.advSearch);
-                imageSign.setImageResource(R.drawable.search_sign);
-                signToast.show();
-            }
-            else{
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        dialogSearchSign.show();
+                        speed.setText(conSpeedString);
+                    }
+                });
+            } else {
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        speed.setText(R.string.speed0);
                     }
                 });
             }
         }
     }
 
+
+
+    private void advertizeSign(final String signValue,final String stateValue){
+        if (signValue.equals(Constants.STOP)){
+            if(stateValue.equals(Constants.ON)& !stopSignDetected) {
+                stopSignDetected = true;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        imageStopSign.setImageResource(R.drawable.stop_sign);
+                        stopSignAhead.setText(R.string.ahead);
+                    }
+                });
+            }
+            else if (stateValue.equals(Constants.OFF)& stopSignDetected) {
+                stopSignDetected = false;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        imageStopSign.setImageResource(android.R.color.transparent);
+                        stopSignAhead.setText("");
+                    }
+                });
+            }
+        }
+        if (signValue.equals(Constants.SEARCH)){
+            if(stateValue.equals(Constants.ON)& !searchSignDetected) {
+                searchSignDetected = true;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        imageSearchSign.setImageResource(R.drawable.search_sign);
+                        searchSignAhead.setText(R.string.ahead);
+                        if(!autonomous){
+                            dialogSearchSign.show();
+                        }
+                    }
+                });
+            }
+            else if (stateValue.equals(Constants.OFF)& searchSignDetected) {
+                searchSignDetected = false;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        imageSearchSign.setImageResource(android.R.color.transparent);
+                        searchSignAhead.setText("");
+                    }
+                });
+            }
+
+        }
+    }
+
     private void advertizeEmergency(final String areaValue,final String stateValue){
         if (areaValue.equals(Constants.FRONT)){
-            if (stateValue.equals(Constants.ON)){
+            if (stateValue.equals(Constants.ON)& !emergencyFront){
                 emergencyFront = true;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        if(!emergencyBack){
+                            imageCar.setImageResource(R.drawable.car_icon);
+                        }
+                        imageSignalFront.setImageResource(R.drawable.signal_icon_front);
+                        imageAttentionFront.setImageResource(R.drawable.attention_icon);
+                        obstacleFront.setText(R.string.obstacle);
+                    }
+                });
                 if(autonomous) {
                     changeMode(Constants.ASSISTED);
                     dialogEmergencyStop.setMessage(getString(R.string.emergencyMsg));
@@ -801,26 +809,53 @@ public class ControlPanel extends AppCompatActivity {
                 }
 
             }
-            else if (stateValue.equals(Constants.OFF)){
+            else if (stateValue.equals(Constants.OFF)& emergencyFront){
                 emergencyFront = false;
-
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        imageSignalFront.setImageResource(android.R.color.transparent);
+                        imageAttentionFront.setImageResource(android.R.color.transparent);
+                        obstacleFront.setText("");
+                        if(!emergencyBack){
+                            imageCar.setImageResource(R.drawable.car_icon_ice);
+                        }
+                    }
+                });
             }
         }
         else if (areaValue.equals(Constants.REAR)){
-            if(!autonomous) {
-                if (stateValue.equals(Constants.ON)) {
-                    emergencyBack = true;
+            if (stateValue.equals(Constants.ON) & !emergencyBack) {
+                emergencyBack = true;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        if(!emergencyFront){
+                            imageCar.setImageResource(R.drawable.car_icon);
+                        }
+                        imageSignalRear.setImageResource(R.drawable.signal_icon_rear);
+                        imageAttentionRear.setImageResource(R.drawable.attention_icon);
+                        obstacleRear.setText(R.string.obstacle);
+                    }
+                });
 
-                } else if (stateValue.equals(Constants.OFF)) {
-                    emergencyBack = false;
+            } else if (stateValue.equals(Constants.OFF) & emergencyBack) {
+                emergencyBack = false;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        imageSignalRear.setImageResource(android.R.color.transparent);
+                        imageAttentionRear.setImageResource(android.R.color.transparent);
+                        obstacleRear.setText("");
+                        if(!emergencyFront){
+                            imageCar.setImageResource(R.drawable.car_icon_ice);
+                        }
+                    }
+                });
 
-                }
             }
         }
     }
 
     private void getImage(final byte[] dataValue){
-        if (counterSearchImage < 100){
+        if (counterSearchImage < 309){
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
             try {
                 outputStream.write(searchImage);
@@ -832,7 +867,7 @@ public class ControlPanel extends AppCompatActivity {
             }
             counterSearchImage +=1;
             searchImage = outputStream.toByteArray( );
-            if(counterSearchImage == 100) {
+            if(counterSearchImage == 309) {
                 FileOutputStream myOutput = createDataFile();
                 Bitmap myBitmap = BitmapFactory.decodeByteArray(searchImage, 0, searchImage.length);
                 try {
@@ -851,8 +886,8 @@ public class ControlPanel extends AppCompatActivity {
 
     private FileOutputStream createDataFile(){
 
-        String search_path = null;
-        String file_name_search = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+        String search_path;
+        String file_name_search = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
 
         // If there is external and writable storage
         if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(Environment.getExternalStorageState())) {
@@ -894,81 +929,33 @@ public class ControlPanel extends AppCompatActivity {
             else if (joystick_angle <= 200 && joystick_angle > 155)
                 joystickCurrentValue = Constants.LEFT;
             else if (joystick_angle <= 65 && joystick_angle > 20){
-                if(emergencyFront) {
-                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            dialogEmergencyStop.show();
-                        }
-                    });
-                }
-                else {
+                if(!emergencyFront) {
                     joystickCurrentValue = Constants.FRONT + "&" + Constants.RIGHT;
                 }
             }
             else if (joystick_angle <= 110 && joystick_angle > 65){
-                if(emergencyFront) {
-                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            dialogEmergencyStop.show();
-                        }
-                    });
-                }
-                else {
+                if(!emergencyFront) {
                     joystickCurrentValue = Constants.FRONT;
                 }
             }
             else if (joystick_angle <= 155 && joystick_angle > 110){
-                if(emergencyFront) {
-                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgFront));
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            dialogEmergencyStop.show();
-                        }
-                    });
-                }
-                else {
+                if(!emergencyFront) {
                     joystickCurrentValue = Constants.FRONT + "&" + Constants.LEFT;
                 }
             }
 
             else if (joystick_angle <= 245 && joystick_angle > 200){
-                if(emergencyBack) {
-                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgBack));
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            dialogEmergencyStop.show();
-                        }
-                    });
-                }
-                else {
+                if(!emergencyBack) {
                     joystickCurrentValue = Constants.BACK+"&"+Constants.LEFT;
                 }
             }
             else if (joystick_angle <= 290 && joystick_angle > 245){
-                if(emergencyBack) {
-                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgBack));
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            dialogEmergencyStop.show();
-                        }
-                    });
-                }
-                else {
+                if(!emergencyBack) {
                     joystickCurrentValue = Constants.BACK;
                 }
             }
             else if (joystick_angle <= 335 && joystick_angle > 290){
-                if(emergencyBack) {
-                    dialogEmergencyStop.setMessage(getString(R.string.emergencyMsgBack));
-                    runOnUiThread(new Runnable() {
-                        public void run() {
-                            dialogEmergencyStop.show();
-                        }
-                    });
-                }
-                else {
+                if(!emergencyBack) {
                     joystickCurrentValue = Constants.BACK+"&"+Constants.RIGHT;
                 }
             }
@@ -977,22 +964,38 @@ public class ControlPanel extends AppCompatActivity {
         } else {
             joystickCurrentValue = Constants.NOTHING;
         }
-        if (!joystickCurrentValue.equals(joystickValue)){
+        if(!joystickCurrentValue.equals(joystickValue)) {
             joystickValue = joystickCurrentValue;
-            sendMessage(Constants.JOYSTIC, joystickCurrentValue);
+            constructMessage(Constants.JOYSTIC, joystickCurrentValue);
         }
     }
 
-    private void sendMessage(String key, String value){
+    private void sendMessage(String message){
         if (btGatt != null) {
-            if (connected && transmitterCharacteristic != null) {
-                String message = key + "$" + value;
-                //Log.i(TAG, "to send: " + message + "\n");
-                transmitterCharacteristic.setValue(message);
-                transmitterCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-                btGatt.writeCharacteristic(transmitterCharacteristic);
+            if (transmitterCharacteristic != null) {
+                    transmitterCharacteristic.setValue(message);
+                    transmitterCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                    btGatt.writeCharacteristic(transmitterCharacteristic);
             }
         }
+    }
+    private synchronized void constructMessage(String key,String value){
+        String message = key + "$" + value;
+        Collections.addAll(msgTosend, message,message,message);
+        if (!isSendingMesg){
+            isSendingMesg = true;
+            sendMessage(message);
+        }
+    }
+    private synchronized void removeMsgSent(){
+        msgTosend.remove(0);
+    }
+    private synchronized void clearMsgSent(){
+        msgTosend.clear();
+    }
+
+    private synchronized boolean ckeckRecvMsgList(){
+        return msgTosend.size()!=0;
     }
 
 

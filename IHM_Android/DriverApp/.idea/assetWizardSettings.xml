@@ -93,8 +93,8 @@
                                   <option name="values">
                                     <map>
                                       <entry key="assetType" value="IMAGE" />
-                                      <entry key="imageAsset" value="D:\INSA\5e\projetRhaegal\rhaegal_dragon.jpg" />
-                                      <entry key="outputName" value="rhaegal_dragon" />
+                                      <entry key="imageAsset" value="D:\INSA\5e\projetRhaegal\IHM_Android\DriverApp\app\src\main\res\drawable\search_sign.png" />
+                                      <entry key="outputName" value="search_sign" />
                                     </map>
                                   </option>
                                 </PersistentState>

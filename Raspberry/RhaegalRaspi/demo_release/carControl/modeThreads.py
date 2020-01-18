@@ -186,7 +186,7 @@ class ModeAssistThread (ModeThread):
                     cmdO = CMD_O_LEFT
                     cmdV = CMD_V_MIN 
 
-                elif(currentJoystick=="front" and not(emergencyFront)):
+                elif(currentJoystick=="front" and not(emergencyFront)):                 
                     cmdV= CMD_V_SLOW
                     cmdO = CMD_O_MIN                    
                          

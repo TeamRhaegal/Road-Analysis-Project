@@ -41,7 +41,7 @@ import java.util.ArrayList;
 
 public class scan extends AppCompatActivity {
 
-    private final static String TAG = remote.class.getSimpleName();
+    private final static String TAG = ControlPanel.class.getSimpleName();
 
 
     //variables

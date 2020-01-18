@@ -6,12 +6,15 @@ public class Constants {
     public static final String uuidRemoteService = "7fb9ad0f-3040-496f-af83-c7bc55c304db";
     public static final String uuidTransmitterCharacteristic = "7a9eb5fc-8b0f-4057-ba14-ebcc98bbeb11";
     public static final String uuidReceiverCharacteristic = "f83c3290-43fa-469b-a819-73b8ffb6890e";
+    public static final String uuidImgReceiverCharacteristic = "389487b8-e0d8-425e-8940-6878ac2b0a77";
 
     //color constants
     public static final String ice = "#94d3e2";
+    public static final String blueLight = "#e1f5fe";
+    public static final String red = "#d32f2f";
     public static final String blue = "#0097bd";
     public static final String night = "#002e39";
-    public static final String purple = "#842f7a";
+    public static final String green = "#43a047";
     public static final String white = "#ffffff";
 
     /* Message norms */
