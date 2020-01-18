@@ -23,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -94,6 +95,8 @@ public class ControlPanel extends AppCompatActivity {
     private Boolean emergencyBack = false;
     private boolean doRecvImgNotif = false;
     private boolean isSendingMesg  = false;
+    private boolean doDisconnect = false;
+    private CountDownTimer timerDisco;
 
 
 
@@ -151,7 +154,7 @@ public class ControlPanel extends AppCompatActivity {
         builderSearch.setMessage(R.string.searchMsg)
                 .setTitle(R.string.searchTitle)
                 .setCancelable(false)
-                .setIcon(R.drawable.stop_sign)
+                .setIcon(R.drawable.search_sign)
                 .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         changeMode(Constants.AUTONOMOUS);
@@ -173,6 +176,17 @@ public class ControlPanel extends AppCompatActivity {
         setAutoButton();
         setJoystick();
         setLogButton();
+
+        timerDisco = new CountDownTimer(1000,100) {
+            @Override
+            public void onTick(long l) {}
+            @Override
+            public void onFinish() {
+                if (btGatt!=null){
+                    btGatt.disconnect();
+                }
+            }
+        };
         
     }
 
@@ -211,13 +225,22 @@ public class ControlPanel extends AppCompatActivity {
         //Connect button
         connected = false;
         connexionChange();
-        connect.getBackground().setColorFilter(Color.parseColor(Constants.night), PorterDuff.Mode.MULTIPLY);
+        runOnUiThread(new Runnable() {
+            public void run() {
+                connect.getBackground().setColorFilter(Color.parseColor(Constants.night), PorterDuff.Mode.MULTIPLY);
+                auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                connect.setText(R.string.connect);
+            }
+        });
+
         //Log.i(TAG, "Buttons\n");
 
         connect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (connected) {
-                    connected =false;
+                    doDisconnect = true;
+                    connect.setText(R.string.disconnecting);
                     constructMessage(Constants.CONNECTION,Constants.OFF);
                 }
                 else {
@@ -379,6 +402,13 @@ public class ControlPanel extends AppCompatActivity {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 connected = false;
                 connexionChange();
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        connect.setText(R.string.connect);
+                    }
+                });
                 //Log.i(TAG, "Disconnected from GATT server\n");
                 if (btGatt != null) {
                     btGatt.close();
@@ -516,10 +546,8 @@ public class ControlPanel extends AppCompatActivity {
                 sendMessage(msgTosend.get(0));
             }else{
                 isSendingMesg = false;
-                if(!connected){
-                    if (btGatt != null) {
-                        btGatt.disconnect();
-                    }
+                if(doDisconnect){
+                    timerDisco.start();
                 }
             }
         }
@@ -561,22 +589,6 @@ public class ControlPanel extends AppCompatActivity {
      */
     private void connexionChange() {
         resetSymbols();
-        runOnUiThread(new Runnable() {
-            public void run() {
-                if(connected) {
-                    auto.getBackground().setColorFilter(Color.parseColor(Constants.blue), PorterDuff.Mode.MULTIPLY);
-                    start.getBackground().setColorFilter(Color.parseColor(Constants.green), PorterDuff.Mode.MULTIPLY);
-                    connect.setText(R.string.disconnect);
-                }
-                else{
-                    if(btGatt!=null) {
-                        auto.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                        start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                        connect.setText(R.string.connect);
-                    }
-                }
-            }
-        });
         started = false;
         autonomous = false;
         driving = false;
@@ -590,6 +602,7 @@ public class ControlPanel extends AppCompatActivity {
         speedValue = 0.0;
         doRecvImgNotif = false;
         clearMsgSent();
+        doDisconnect = false;
     }
 
     /**
@@ -672,16 +685,21 @@ public class ControlPanel extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             public void run() {
                 if (modeValue.equals(Constants.AUTONOMOUS) & !autonomous) {
-                    auto.setText(R.string.autonomous);
-                    autonomous = true;
-                    started = false;
-                    driving = false;
-                    joystickValue = Constants.NOTHING;
-                    resetJoystick();
-                    //Log.i(TAG, "autonomous\n");
-                    start.setText(R.string.start);
-                    start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
-                    constructMessage(Constants.MODE,Constants.AUTONOMOUS);
+                    if(emergencyFront){
+                        dialogEmergencyStop.show();
+                    }
+                    else {
+                        auto.setText(R.string.autonomous);
+                        autonomous = true;
+                        started = false;
+                        driving = false;
+                        joystickValue = Constants.NOTHING;
+                        resetJoystick();
+                        //Log.i(TAG, "autonomous\n");
+                        start.setText(R.string.start);
+                        start.getBackground().setColorFilter(Color.parseColor(Constants.ice), PorterDuff.Mode.MULTIPLY);
+                        constructMessage(Constants.MODE, Constants.AUTONOMOUS);
+                    }
 
                 } else if (modeValue.equals(Constants.ASSISTED)) {
                     if(autonomous) {
@@ -752,7 +770,7 @@ public class ControlPanel extends AppCompatActivity {
                 stopSignDetected = false;
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        imageStopSign.setImageResource(android.R.color.transparent);
+                        imageStopSign.setImageResource(R.drawable.stop_sign_ice);
                         stopSignAhead.setText("");
                     }
                 });
@@ -765,7 +783,7 @@ public class ControlPanel extends AppCompatActivity {
                     public void run() {
                         imageSearchSign.setImageResource(R.drawable.search_sign);
                         searchSignAhead.setText(R.string.ahead);
-                        if(!autonomous){
+                        if(!autonomous && !emergencyFront){
                             dialogSearchSign.show();
                         }
                     }
@@ -775,7 +793,7 @@ public class ControlPanel extends AppCompatActivity {
                 searchSignDetected = false;
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        imageSearchSign.setImageResource(android.R.color.transparent);
+                        imageSearchSign.setImageResource(R.drawable.search_sign_ice);
                         searchSignAhead.setText("");
                     }
                 });
@@ -997,6 +1015,22 @@ public class ControlPanel extends AppCompatActivity {
     private synchronized boolean ckeckRecvMsgList(){
         return msgTosend.size()!=0;
     }
+
+    /*public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Intent returnScan = null;
+        if(keyCode == KeyEvent.KEYCODE_BACK) {
+                if(btGatt!=null) {
+
+                }
+                else{
+                    returnScan = new Intent(ControlPanel.this, scan.class);
+                    startActivity(returnScan);
+                }
+
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }*/
 
 
 }

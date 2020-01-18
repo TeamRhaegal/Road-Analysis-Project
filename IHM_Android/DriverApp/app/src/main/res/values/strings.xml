@@ -8,6 +8,7 @@
     <string name="choose">Choose</string>
     <string name="connect">Connect</string>
     <string name="connecting">Connecting…</string>
+    <string name="disconnecting">Disconnecting…</string>
     <string name="disconnect">Disconnect</string>
     <string name="autonomous">Autonomous</string>
     <string name="manual">Assisted</string>
