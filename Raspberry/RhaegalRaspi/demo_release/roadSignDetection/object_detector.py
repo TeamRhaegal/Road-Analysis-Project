@@ -97,6 +97,7 @@ class ObjectDetector(Thread):
         self.roadsign_detection_graph = self.loadLocationModel(location_model=self.roadsign_model, model_path=self.path_to_roadsign_model, ckpt_path=self.path_to_roadsign_ckpt, label_path=self.path_to_roadsign_labels, num_classes=self.roadsign_num_classes)
         self.search_model = self.initLocationModel(self.search_draw)
         self.search_detection_graph = self.loadLocationModel(location_model=self.search_model, model_path=self.path_to_search_model, ckpt_path=self.path_to_search_ckpt, label_path=self.path_to_search_labels, num_classes=self.search_num_classes)
+        self.setDaemon(True)
         print("Initialized hardware and machine learning model. Time taken : {} seconds".format(time.time()-begin))
         pass
     

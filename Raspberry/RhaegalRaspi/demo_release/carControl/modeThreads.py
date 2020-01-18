@@ -6,7 +6,7 @@ Created on Sat Dec 07 11:28:11 2019
 """
 import time
 import can
-from threading import Thread, Lock
+from threading import Thread
 import sharedRessources as R
 
 
@@ -14,8 +14,7 @@ MOT=0x010     #identifiant commande moteur CAN
 CMD_STOP = 0x00     # command to stop the motor
 CMD_V_BACK = 35 + 0x80 # command to go backward 
 CMD_V_MIN = 50      
-CMD_V_SLOW = 65 + 0x80 # command to go forward at a small speed
-CMD_V_TURBO = 75 + 0x80 # command to go forward at a high speed
+CMD_V_FRONT = 65 + 0x80 # command to go forward 
 CMD_O_LEFT = 0x80  # command to turn the wheel to left
 CMD_O_RIGHT = 100 + 0x80  # command to turn the wheel to right
 CMD_O_MIN = 50
@@ -34,6 +33,7 @@ class ModeThread(Thread):
         Thread.__init__(self)
         self.bus = bus
         self.intModeL = intModeL
+        self.setDaemon(True)
     
     def sendMesgToMot(self,cmdV,cmdO):
         msg = can.Message(arbitration_id=MOT,data=[cmdV, cmdV, cmdO,0,0,0,0,0],extended_id=False)
@@ -46,6 +46,7 @@ class ModeThread(Thread):
 class ModeAutoThread (ModeThread):
     def __init__(self, bus):
         ModeThread.__init__(self,bus,2)
+        self.setDaemon(True)
         
     def run(self):
         currentModeL=self.intModeL
@@ -69,7 +70,7 @@ class ModeAutoThread (ModeThread):
                 R.mode = "assist"
                 R.lockMode.release()
             else:
-                self.sendMesgToMot(CMD_V_SLOW,CMD_STOP)   
+                self.sendMesgToMot(CMD_V_FRONT,CMD_STOP)   
                
             # Stop sign block
             if(counterStopOn):                 
@@ -79,7 +80,7 @@ class ModeAutoThread (ModeThread):
                     # reaction to the stop sign : the car stop during 4 seconds and go forward again
                     self.sendMesgToMot(CMD_STOP,CMD_STOP)   
                     time.sleep(4)
-                    self.sendMesgToMot(CMD_V_SLOW,CMD_STOP) 
+                    self.sendMesgToMot(CMD_V_FRONT,CMD_STOP) 
                     counterStop=0
                     finalValueStopCounter=0
                     counterStopOn = False
@@ -112,7 +113,7 @@ class ModeAutoThread (ModeThread):
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = False
                     R.lockSearchModeActivated.release()
-                    self.sendMesgToMot(CMD_V_SLOW,CMD_STOP) 
+                    self.sendMesgToMot(CMD_V_FRONT,CMD_STOP) 
                     counterSearch=0
                     finalValueSearchCounter=0
                     counterSearchOn = False
@@ -140,6 +141,7 @@ class ModeAutoThread (ModeThread):
 class ModeAssistThread (ModeThread):
     def __init__(self, bus):
         ModeThread.__init__(self,bus,1)
+        self.setDaemon(True)
         
     def run(self):
         self.sendMesgToMot(CMD_STOP,CMD_STOP)     
@@ -187,16 +189,16 @@ class ModeAssistThread (ModeThread):
                     cmdV = CMD_V_MIN 
 
                 elif(currentJoystick=="front" and not(emergencyFront)):                 
-                    cmdV= CMD_V_SLOW
+                    cmdV= CMD_V_FRONT
                     cmdO = CMD_O_MIN                    
                          
                 elif(currentJoystick=="front&right" and not(emergencyFront)):
                     cmdO = CMD_O_RIGHT
-                    cmdV= CMD_V_SLOW
+                    cmdV= CMD_V_FRONT
 
                 elif(currentJoystick=="front&left" and not(emergencyFront)):
                     cmdO = CMD_O_LEFT
-                    cmdV= CMD_V_SLOW
+                    cmdV= CMD_V_FRONT
                  
                 elif(currentJoystick=="back" and not(emergencyRear)):
                     cmdO = CMD_O_MIN

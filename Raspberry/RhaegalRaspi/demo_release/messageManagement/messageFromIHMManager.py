@@ -11,6 +11,7 @@ class MessageFromIHMThread(Thread):
     def __init__(self, runEvent):
         Thread.__init__(self)
         self.runEvent = runEvent
+        self.setDaemon(True)
     def run(self):
         while self.runEvent.isSet():
         #Lock!!!

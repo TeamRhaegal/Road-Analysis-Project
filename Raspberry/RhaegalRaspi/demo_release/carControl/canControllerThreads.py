@@ -28,6 +28,7 @@ class CanControllerThread(Thread):
         self.connectEvent = Event()  
         self.modeControlThread = ModeControlThread(self.bus,self.connectEvent) 
         self.canReceiverThread = CanReceiverThread(self.bus,self.connectEvent)
+        self.setDaemon(True)
         
     def getBus(self):
         os.system("sudo /sbin/ip link set can0 up type can bitrate 400000")
@@ -70,6 +71,7 @@ class ModeControlThread(Thread):
         self.connectEvent= connectEvent
         self.modeAutoThread = ModeAutoThread(self.bus)
         self.modeAssistThread = ModeAssistThread(self.bus)
+        self.setDaemon(True)
     
     def run(self):
         while self.connectEvent.isSet():                             
@@ -122,6 +124,7 @@ class CanReceiverThread(Thread):
         Thread.__init__(self)
         self.bus = bus
         self.connectEvent= connectEvent
+        self.setDaemon(True)
         
     def run(self):
         while self.connectEvent.isSet():    

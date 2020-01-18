@@ -50,8 +50,10 @@ class BLETransmitterThread(Thread):
                 
     		    if myMessagesToSend :
         			for i in range(0,len(myMessagesToSend)):				
-        			    print ("To IHM : ", myMessagesToSend[-1])
-        			    self.TXChara.send_tx(myMessagesToSend.pop())
+        			    print ("To IHM : ", myMessagesToSend[0])
+                        for k in range(0,2):
+                            self.TXchara.send_tx(myMessagesToSend[0])
+                        myMessagesToSend.remove(0)
                         
                 r.lockImgPartToSend.acquire()
                 myImgParts = r.listImgPartToSend
@@ -60,8 +62,8 @@ class BLETransmitterThread(Thread):
                 
                 if myImgParts :
         			for i in range(0,len(myImgParts)):				
-        			    print ("To IHM : ", myImgParts[-1])
-        			    self.TXImgChara.send_tx(myImgParts.pop())               
+        			    print ("To IHM : ", myImgParts[0])
+        			    self.TXImgChara.send_tx(myImgParts.pop(0))               
     
     		time.sleep(0.2)
 
