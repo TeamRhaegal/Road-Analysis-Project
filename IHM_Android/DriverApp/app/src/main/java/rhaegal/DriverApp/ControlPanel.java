@@ -240,7 +240,7 @@ public class ControlPanel extends AppCompatActivity {
             }
         };
 
-        timerSearchMode = new CountDownTimer(30000,1000) {
+        timerSearchMode = new CountDownTimer(10000,1000) {
             @Override
             public void onTick(long l) {}
             @Override
@@ -583,7 +583,12 @@ public class ControlPanel extends AppCompatActivity {
                 }
             } else if (characteristic == receiverImgCharacteristic) {
                 byte[] data = Base64.decode(characteristic.getStringValue(0),Base64.DEFAULT);
-                getImage(data);
+                int [] realData = new int[data.length];
+                for (int i =0;i<data.length;i++){
+                    realData[i] = (data[i] << 1) >> 1;
+                }
+                int i=realData.length;
+                //getImage(realData);
             }
         }
 
