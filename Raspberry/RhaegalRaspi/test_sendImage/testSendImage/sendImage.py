@@ -25,13 +25,13 @@ class SendImageThread(Thread):
                 encodedImage = cv2.imencode('.jpg', shared_image)[1].tobytes()
                              
                 for i in range (0,309):
-                    R.lockImagePartsToSend.acquire()
-                    R.listImagePartsToSend.append(bytearray(encodedImage[900*i:(900*i)+900]))
-                    R.lockImagePartsToSend.release()
+                    R.lockImgPartToSend.acquire()
+                    R.listImgPartToSend.append(bytearray(encodedImage[900*i:(900*i)+900]))
+                    R.lockImgPartToSend.release()
                     time.sleep(0.3)
-                R.lockImagePartsToSend.acquire()
-                R.listImagePartsToSend.append(bytearray(encodedImage[900*i:-1]))
-                R.lockImagePartsToSend.release()
+                R.lockImgPartToSend.acquire()
+                R.listImgPartToSend.append(bytearray(encodedImage[900*i:-1]))
+                R.lockImgPartToSend.release()
                 
                 flag = 1
             time.sleep(0.5)

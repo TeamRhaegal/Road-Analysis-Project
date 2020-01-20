@@ -20,8 +20,8 @@ CMD_O_RIGHT = 100 + 0x80  # command to turn the wheel to right
 CMD_O_MIN = 50
 
 #for auto only
-REAL_SIGN_WIDTH = 0.20  #real size of the sign in cm
-FOCAL = 342   # computed focal of the raspicam
+REAL_SIGN_WIDTH = 0.195  #real size of the sign in m
+FOCAL = 299   # computed focal of the raspicam
 
 """
 The class mode is the mother class of Mode auto and Mode assist : 
@@ -109,10 +109,12 @@ class ModeAutoThread (ModeThread):
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = True
                     R.lockSearchModeActivated.release()
+                    R.constructMsgToIHM("mode","search","on")
                     time.sleep(10)
                     R.lockSearchModeActivated.acquire()
                     R.searchModeActivated = False
                     R.lockSearchModeActivated.release()
+                    R.constructMsgToIHM("mode","search","off")
                     self.sendMesgToMot(CMD_V_FRONT,CMD_STOP) 
                     counterSearch=0
                     finalValueSearchCounter=0

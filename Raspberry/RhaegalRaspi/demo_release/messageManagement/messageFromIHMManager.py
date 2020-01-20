@@ -48,7 +48,6 @@ class MessageFromIHMThread(Thread):
                         if(value=="on"):
                             sr.connectedDevice = True
                         else:
-                            sr.lockConnectedDevice.acquire()
                             sr.connectedDevice = False
                             sr.lockMode.acquire()
                             sr.mode = "assist" #slice
