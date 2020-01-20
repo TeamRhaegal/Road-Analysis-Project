@@ -20,19 +20,13 @@ public class Constants {
     /* Message norms */
     //key
     public static final String MODE = "mode";
-    public static final String DIRECTION = "dir";
-    public static final String BATTERY = "batt";
-    public static final String RADAR = "radar";
-    public static final String ROUTE = "route";
     public static final String SPEED = "speed";
     public static final String SIGN = "sign";
-    public static final String IMAGE = "img";
     public static final String OBJECT = "object";
 
 
     public static final String JOYSTIC = "joy";
     public static final String STATE = "state";
-    public static final String TURBO = "turbo";
     public static final String CONNECTION = "connect";
     public static final String EMERGENCYSTOP = "urgent";
 
@@ -42,13 +36,10 @@ public class Constants {
     public static final String FRONT="front";
     public static final String BACK="back";
     public static final String REAR="rear";
-    public static final String CRITICAL="critic";
     public static final String ON="on";
     public static final String OFF="off";
     public static final String AUTONOMOUS="auto";
     public static final String ASSISTED="assist";
-    public static final String LOW ="low";
-    public static final String MIDDLE = "mid";
     public static final String NOTHING = "none";
     public static final String STOP = "stop";
     public static final String SEARCH = "search";

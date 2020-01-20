@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/border_search_mode">
+
+    <TextView
+        android:id="@+id/title_search_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:textSize="30sp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:text = "@string/searchModeTitle"
+        android:textColor="#8b1fb4"/>
+
+    <TextView
+        android:id="@+id/message_search_mode"
+        android:layout_width="236dp"
+        android:layout_height="88dp"
+        android:gravity="center"
+        android:text="@string/searchModeMsg"
+        android:textColor="#8b1fb4"
+        android:textSize="15sp"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title_search_mode" />
+
+    <ImageView
+        android:id="@+id/image_small_object"
+        android:layout_width="41dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="152dp"
+        android:layout_marginStart="30dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/image_medium_object"
+        app:layout_constraintTop_toBottomOf="@+id/title_search_mode"
+        app:srcCompat="@drawable/box_icon_small" />
+
+    <TextView
+        android:id="@+id/smallobject_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#f39428"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:layout_marginTop="125dp"
+        android:layout_marginBottom="60dp"
+        app:layout_constraintLeft_toLeftOf="@+id/image_small_object"
+        app:layout_constraintRight_toRightOf="@+id/image_small_object"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/message_search_mode"
+        android:text = "@string/searchModeSmall"/>
+
+    <ImageView
+        android:id="@+id/image_medium_object"
+        android:layout_width="67dp"
+        android:layout_height="83dp"
+        android:layout_marginTop="124dp"
+        app:layout_constraintLeft_toRightOf="@+id/image_small_object"
+        app:layout_constraintRight_toLeftOf="@+id/image_large_object"
+        app:layout_constraintTop_toBottomOf="@+id/title_search_mode"
+        app:srcCompat="@drawable/box_icon_medium" />
+
+    <TextView
+        android:id="@+id/mediumobject_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#0ada59"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:layout_marginTop="125dp"
+        android:layout_marginBottom="60dp"
+        app:layout_constraintLeft_toLeftOf="@+id/image_medium_object"
+        app:layout_constraintRight_toRightOf="@+id/image_medium_object"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/message_search_mode"
+
+        android:text = "@string/searchModeMedium"/>
+
+
+    <ImageView
+        android:id="@+id/image_large_object"
+        android:layout_width="97dp"
+        android:layout_height="124dp"
+        android:layout_marginTop="84dp"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintLeft_toRightOf="@+id/image_medium_object"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title_search_mode"
+        app:srcCompat="@drawable/box_icon_big" />
+
+    <TextView
+        android:id="@+id/largeobject_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#0a8eda"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:layout_marginTop="125dp"
+        android:layout_marginBottom="60dp"
+        app:layout_constraintLeft_toLeftOf="@+id/image_large_object"
+        app:layout_constraintRight_toRightOf="@+id/image_large_object"
+        app:layout_constraintTop_toBottomOf="@+id/message_search_mode"
+        android:text = "@string/searchModeLarge"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</android.support.constraint.ConstraintLayout>
